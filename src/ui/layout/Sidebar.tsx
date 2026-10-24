@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { ElementType } from 'react'
 import {
   Activity, ArrowUpRight, BarChart2, CalendarDays, ChevronLeft, ChevronRight,
@@ -8,6 +8,7 @@ import {
   Power, Settings2, Shield, Stethoscope, Target, User, Users,
 } from 'lucide-react'
 import { canAccessPage, type User as AuthUser } from '@/lib/auth'
+import { getPendingUsersCount } from '@/lib/auth/mock-users'
 import { Logo } from './Logo'
 
 export interface SidebarProps {
@@ -34,12 +35,23 @@ export function Sidebar({
   user,
 }: SidebarProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [pendingCount, setPendingCount] = useState<number>(() =>
+    typeof window !== 'undefined' ? getPendingUsersCount() : 0
+  )
+
+  useEffect(() => {
+    const updateCount = () => setPendingCount(getPendingUsersCount())
+    updateCount()
+    window.addEventListener('navigen_users_updated', updateCount)
+    return () => window.removeEventListener('navigen_users_updated', updateCount)
+  }, [])
 
   interface NavItem {
     label: string
     activeKey: string
     icon: ElementType
     badge?: string
+    badgeTone?: 'amber'
   }
 
   // Standard items visible to both Admin and Rep
@@ -59,7 +71,13 @@ export function Sidebar({
   const adminNav: NavItem[] = [
     { label: 'Reports', activeKey: 'Reports', icon: BarChart2 },
     { label: 'Admin', activeKey: 'Admin', icon: Shield },
-    { label: 'Users', activeKey: 'Users', icon: Users },
+    {
+      label: 'Users',
+      activeKey: 'Users',
+      icon: Users,
+      badge: pendingCount > 0 ? String(pendingCount) : undefined,
+      badgeTone: 'amber',
+    },
     { label: 'Products & Batches', activeKey: 'Products & Batches', icon: Package },
     { label: 'Territories', activeKey: 'Territories', icon: MapPin },
     { label: 'Audit log', activeKey: 'Audit log', icon: ClipboardCheck },
@@ -138,7 +156,29 @@ export function Sidebar({
                   <span className="sidebar-item-label">{item.label}</span>
                 )}
                 {!collapsed && item.badge && (
-                  <span className="sidebar-item-badge">{item.badge}</span>
+                  <span
+                    className="sidebar-item-badge"
+                    style={{
+                      background: item.badgeTone === 'amber' ? 'var(--amber, #f59e0b)' : undefined,
+                      color: item.badgeTone === 'amber' ? '#fff' : undefined,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+                {collapsed && item.badge && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: item.badgeTone === 'amber' ? 'var(--amber, #f59e0b)' : 'var(--ocean)',
+                    }}
+                  />
                 )}
               </button>
             )

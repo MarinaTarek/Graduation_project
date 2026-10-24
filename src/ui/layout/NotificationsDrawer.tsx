@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 import { Drawer } from '@/ui/design-system/components/Drawer'
+import { mockNotificationsList, earlierNotificationsList } from './notifications-mock'
 
 export interface NotificationsDrawerProps {
   isOpen: boolean
@@ -14,12 +15,6 @@ export function NotificationsDrawer({
 }: NotificationsDrawerProps) {
   if (!isOpen) return null
 
-  const todayNotices = [
-    'Invoice approval requested',
-    'Bevato is low in North warehouse',
-    'Batch CW-2401 expires in 12 days',
-  ]
-
   return (
     <Drawer title="Notifications" kicker="YOUR INBOX" onClose={onClose}>
       <button
@@ -30,24 +25,26 @@ export function NotificationsDrawer({
       </button>
       <div className="notice-list">
         <span className="eyebrow">TODAY</span>
-        {todayNotices.map((x, i) => (
-          <button key={x} onClick={() => onAction('Notification opened')}>
-            <div className={`notice-dot n-${i}`} />
+        {mockNotificationsList.map((item, i) => (
+          <button key={item.id} onClick={() => onAction('Notification opened')}>
+            <div className={`notice-dot ${item.dotClass || `n-${i % 3}`}`} />
             <div>
-              <strong>{x}</strong>
-              <small>{i + 1} hour ago</small>
+              <strong>{item.title}</strong>
+              <small>{item.time}</small>
             </div>
             <ChevronRight />
           </button>
         ))}
         <span className="eyebrow">EARLIER</span>
-        <button onClick={() => onAction('Notification opened')}>
-          <div className="notice-dot n-2" />
-          <div>
-            <strong>Invoice INV-1042 was rejected</strong>
-            <small>Yesterday</small>
-          </div>
-        </button>
+        {earlierNotificationsList.map((item) => (
+          <button key={item.id} onClick={() => onAction('Notification opened')}>
+            <div className={`notice-dot ${item.dotClass || 'n-2'}`} />
+            <div>
+              <strong>{item.title}</strong>
+              <small>{item.time}</small>
+            </div>
+          </button>
+        ))}
       </div>
     </Drawer>
   )

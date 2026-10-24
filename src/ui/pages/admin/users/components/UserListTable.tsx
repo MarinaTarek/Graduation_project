@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Plus, Trash2, Pencil, Check, X, Shield, Users as UsersIcon } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Trash2, Pencil, Check, X, Shield, Users as UsersIcon, AlertTriangle, UserCheck, UserX } from 'lucide-react'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Button } from '@/ui/design-system/components/Button'
 import { Drawer } from '@/ui/design-system/components/Drawer'
@@ -13,12 +13,55 @@ import {
   getDefaultPermissions,
 } from '@/lib/auth/permissions'
 import { updateMockUser } from '@/lib/auth/auth-service'
+import { getStoredUsers, saveStoredUsers, type MockUserRecord } from '@/lib/auth/mock-users'
+import { addMockNotification } from '@/ui/layout/notifications-mock'
 import { adminUsersMockData, type AdminUserRecord } from '../mock-data'
 import { adminAuditLogMockData } from '../../audit-log/mock-data'
 import { useUndo } from '@/lib/useUndo'
 
-export function UserListTable() {
+export interface UserListTableProps {
+  initialTab?: 'all' | 'pending'
+}
+
+export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const { user: currentUser } = useAuth()
+  const [activeTab, setActiveTab] = useState<'all' | 'pending'>(initialTab)
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
+
+  const [pendingRequests, setPendingRequests] = useState<MockUserRecord[]>(() =>
+    typeof window !== 'undefined'
+      ? getStoredUsers().filter((u) => u.status === 'pending')
+      : []
+  )
+
+  const loadPending = () => {
+    if (typeof window !== 'undefined') {
+      setPendingRequests(getStoredUsers().filter((u) => u.status === 'pending'))
+    }
+  }
+
+  useEffect(() => {
+    loadPending()
+    window.addEventListener('navigen_users_updated', loadPending)
+    return () => window.removeEventListener('navigen_users_updated', loadPending)
+  }, [])
+
+  // Approve drawer state
+  const [approvingUser, setApprovingUser] = useState<MockUserRecord | null>(null)
+  const [approveRole, setApproveRole] = useState<UserRole>('rep')
+  const [approveRegion, setApproveRegion] = useState('Central region')
+  const [approvePermissions, setApprovePermissions] = useState<UserPermissions>(getDefaultPermissions('rep'))
+  const [confirmAdminGrant, setConfirmAdminGrant] = useState(false)
+  const [isSavingApprove, setIsSavingApprove] = useState(false)
+  const [approveError, setApproveError] = useState<string | null>(null)
+
+  // Reject modal state
+  const [rejectingUser, setRejectingUser] = useState<MockUserRecord | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [isSavingReject, setIsSavingReject] = useState(false)
   const [users, setUsers] = useState<AdminUserRecord[]>(adminUsersMockData)
   const [deletedUser, setDeletedUser] = useState<AdminUserRecord | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -288,14 +331,346 @@ export function UserListTable() {
     }, 400)
   }
 
+  // ─── Approve Sign-up Request ─────────────────────────────────
+  const handleOpenApprove = (user: MockUserRecord) => {
+    if (currentUser?.role !== 'admin') {
+      showToast('Only administrators can approve account requests.')
+      return
+    }
+    setApprovingUser(user)
+    setApproveRole('rep')
+    setApproveRegion(user.region || 'Central region')
+    setApprovePermissions(getDefaultPermissions('rep'))
+    setConfirmAdminGrant(false)
+    setApproveError(null)
+  }
+
+  const handleApproveRoleChange = (newRole: UserRole) => {
+    setApproveRole(newRole)
+    setApprovePermissions(getDefaultPermissions(newRole))
+    if (newRole !== 'admin') {
+      setConfirmAdminGrant(false)
+    }
+  }
+
+  const handleToggleApprovePage = (pageName: string) => {
+    setApprovePermissions((prev) => {
+      const currentPages = prev.pages || []
+      const exists = currentPages.includes(pageName)
+      const nextPages = exists
+        ? currentPages.filter((p) => p !== pageName && (pageName !== 'Dashboard' || p !== 'Home'))
+        : [...currentPages, pageName, ...(pageName === 'Dashboard' ? ['Home'] : [])]
+      return { ...prev, pages: nextPages }
+    })
+  }
+
+  const handleToggleApproveAction = (actionKey: keyof Omit<UserPermissions, 'pages'>) => {
+    setApprovePermissions((prev) => ({
+      ...prev,
+      [actionKey]: !prev[actionKey],
+    }))
+  }
+
+  const handleConfirmApprove = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!approvingUser) return
+
+    if (currentUser?.role !== 'admin') {
+      setApproveError('Only administrators can approve account requests.')
+      return
+    }
+
+    if (approveRole === 'admin' && !confirmAdminGrant) {
+      setApproveError('Please confirm granting administrative privileges before proceeding.')
+      return
+    }
+
+    setIsSavingApprove(true)
+
+    setTimeout(() => {
+      const allStored = getStoredUsers()
+      const targetIdx = allStored.findIndex(
+        (u) => u.id === approvingUser.id || u.email.toLowerCase() === approvingUser.email.toLowerCase()
+      )
+
+      const updatedRecord: MockUserRecord = {
+        ...approvingUser,
+        role: approveRole,
+        region: approveRegion,
+        status: 'active',
+        permissions: approvePermissions,
+      }
+
+      if (targetIdx !== -1) {
+        allStored[targetIdx] = updatedRecord
+      } else {
+        allStored.unshift(updatedRecord)
+      }
+      saveStoredUsers(allStored)
+
+      const roleLabel = approveRole === 'admin' ? 'Admin' : 'Medical Representative'
+      const newAdminUser: AdminUserRecord = {
+        id: approvingUser.id,
+        name: approvingUser.name,
+        name_ar: approvingUser.name_ar,
+        email: approvingUser.email,
+        role: roleLabel,
+        roleType: approveRole,
+        region: approveRegion,
+        status: 'Active',
+        permissions: approvePermissions,
+      }
+
+      setUsers((prev) => [newAdminUser, ...prev.filter((u) => u.id !== approvingUser.id)])
+      adminUsersMockData.unshift(newAdminUser)
+
+      adminAuditLogMockData.unshift({
+        id: `LOG-${adminAuditLogMockData.length + 410}`,
+        action: 'Account Approved',
+        actor: currentUser?.name || 'Admin',
+        time: 'Just now',
+        details: `Account approved for ${approvingUser.name} as ${roleLabel}`,
+      })
+
+      addMockNotification(`Account approved for ${approvingUser.name} as ${roleLabel}`)
+      showToast(`Account approved for ${approvingUser.name} as ${roleLabel}`)
+
+      setIsSavingApprove(false)
+      setApprovingUser(null)
+      loadPending()
+    }, 300)
+  }
+
+  // ─── Reject Sign-up Request ─────────────────────────────────
+  const handleOpenReject = (user: MockUserRecord) => {
+    if (currentUser?.role !== 'admin') {
+      showToast('Only administrators can reject account requests.')
+      return
+    }
+    setRejectingUser(user)
+    setRejectReason('')
+  }
+
+  const handleConfirmReject = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!rejectingUser) return
+
+    setIsSavingReject(true)
+    const userToReject = rejectingUser
+    const reasonText = rejectReason.trim()
+
+    const allStored = getStoredUsers()
+    const targetIdx = allStored.findIndex(
+      (u) => u.id === userToReject.id || u.email.toLowerCase() === userToReject.email.toLowerCase()
+    )
+    if (targetIdx !== -1) {
+      allStored[targetIdx] = { ...allStored[targetIdx], status: 'rejected' }
+      saveStoredUsers(allStored)
+    }
+
+    adminAuditLogMockData.unshift({
+      id: `LOG-${adminAuditLogMockData.length + 410}`,
+      action: 'Account Rejected',
+      actor: currentUser?.name || 'Admin',
+      time: 'Just now',
+      details: `Account request rejected for ${userToReject.name}${reasonText ? `: ${reasonText}` : ''}`,
+    })
+
+    setPendingRequests((prev) => prev.filter((u) => u.id !== userToReject.id))
+
+    trigger(
+      `Account request rejected for ${userToReject.name}`,
+      () => {},
+      () => {
+        const currentStored = getStoredUsers()
+        const idx = currentStored.findIndex((u) => u.id === userToReject.id)
+        if (idx !== -1) {
+          currentStored[idx] = { ...currentStored[idx], status: 'pending' }
+          saveStoredUsers(currentStored)
+        }
+        loadPending()
+      }
+    )
+
+    showToast(`Account request rejected for ${userToReject.name}`, () => {
+      undo()
+      const currentStored = getStoredUsers()
+      const idx = currentStored.findIndex((u) => u.id === userToReject.id)
+      if (idx !== -1) {
+        currentStored[idx] = { ...currentStored[idx], status: 'pending' }
+        saveStoredUsers(currentStored)
+      }
+      loadPending()
+      setToastMessage(`Restored ${userToReject.name} request`)
+      setTimeout(() => setToastMessage(null), 3000)
+    })
+
+    setIsSavingReject(false)
+    setRejectingUser(null)
+  }
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-        <Button variant="primary" onClick={() => setIsAddOpen(true)}>
-          <Plus data-icon="inline-start" /> Add user
-        </Button>
+      {/* Segmented Control: All users | Pending requests (N) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'inline-flex', background: 'var(--input-bg)', borderRadius: '12px', padding: '4px' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('all')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: activeTab === 'all' ? 'var(--card-bg, #fff)' : 'transparent',
+              color: activeTab === 'all' ? 'var(--heading-text)' : 'var(--muted-text)',
+              boxShadow: activeTab === 'all' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            All users
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: activeTab === 'pending' ? 'var(--card-bg, #fff)' : 'transparent',
+              color: activeTab === 'pending' ? 'var(--heading-text)' : 'var(--muted-text)',
+              boxShadow: activeTab === 'pending' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Pending requests
+            {pendingRequests.length > 0 && (
+              <span
+                style={{
+                  background: 'var(--amber, #f59e0b)',
+                  color: '#fff',
+                  borderRadius: '999px',
+                  padding: '1px 7px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                }}
+              >
+                {pendingRequests.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeTab === 'all' && (
+          <Button variant="primary" onClick={() => setIsAddOpen(true)}>
+            <Plus data-icon="inline-start" /> Add user
+          </Button>
+        )}
       </div>
 
+      {activeTab === 'pending' && (
+        <div>
+          {pendingRequests.length === 0 ? (
+            <div
+              className="panel"
+              style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                color: 'var(--muted-text)',
+                borderRadius: '14px',
+              }}
+            >
+              <UsersIcon style={{ width: '32px', height: '32px', margin: '0 auto 12px', opacity: 0.5 }} />
+              <div style={{ fontWeight: 600, color: 'var(--heading-text)', marginBottom: '4px' }}>
+                No pending requests
+              </div>
+              <p style={{ margin: 0, fontSize: '13px' }}>
+                New sign-up requests from the login page will appear here for administrator review.
+              </p>
+            </div>
+          ) : (
+            <div className="collection-list">
+              {pendingRequests.map((req) => (
+                <div key={req.id || req.email} className="collection-item" style={{ alignItems: 'center' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <strong style={{ fontSize: '14px', color: 'var(--heading-text)' }}>{req.name}</strong>
+                      {req.emailVerified ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: 'var(--story-em, #3e9a78)',
+                            background: 'rgba(62, 154, 120, 0.1)',
+                            padding: '2px 8px',
+                            borderRadius: '99px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <Check size={12} /> Email verified
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: 'var(--amber-text, #d97706)',
+                            background: 'rgba(217, 119, 6, 0.1)',
+                            padding: '2px 8px',
+                            borderRadius: '99px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <AlertTriangle size={12} /> Unverified email
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--muted-text)', display: 'block', marginTop: '4px' }}>
+                      {req.email} · {req.phone || 'No phone'} · Requested {req.requestedDate || 'Recent'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <Button
+                      variant="primary"
+                      onClick={() => handleOpenApprove(req)}
+                      style={{ padding: '6px 14px', fontSize: '13px' }}
+                    >
+                      <UserCheck data-icon="inline-start" size={14} /> Approve
+                    </Button>
+                    <Button
+                      variant="text"
+                      onClick={() => handleOpenReject(req)}
+                      style={{
+                        padding: '6px 14px',
+                        fontSize: '13px',
+                        color: 'var(--rose, #d9798b)',
+                      }}
+                    >
+                      <UserX data-icon="inline-start" size={14} /> Reject
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'all' && (
       <div className="collection-list">
         {users.map((user) => (
           <div key={user.id || user.name} className="collection-item">
@@ -349,6 +724,7 @@ export function UserListTable() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -758,6 +1134,320 @@ export function UserListTable() {
           </div>
         </form>
       </Drawer>
+
+      {/* Approve Sign-up Request Drawer */}
+      {approvingUser && (
+        <Drawer
+          title={`Approve: ${approvingUser.name}`}
+          kicker="ACCOUNT APPROVAL"
+          isOpen={Boolean(approvingUser)}
+          onClose={() => setApprovingUser(null)}
+        >
+          <form onSubmit={handleConfirmApprove} style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+            {approveError && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  color: 'var(--rose, #d9798b)',
+                  fontSize: '13px',
+                  marginBottom: '16px',
+                }}
+              >
+                {approveError}
+              </div>
+            )}
+
+            {/* User Info Strip */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                background: 'var(--surface-raised)',
+                border: '1px solid var(--border-soft)',
+                marginBottom: '16px',
+                fontSize: '12px',
+                color: 'var(--muted-text)',
+              }}
+            >
+              <div style={{ color: 'var(--heading-text)', fontWeight: 600, fontSize: '13px', marginBottom: '2px' }}>
+                {approvingUser.name}
+              </div>
+              <div>{approvingUser.email} · {approvingUser.phone || 'No phone'} · Requested {approvingUser.requestedDate || 'Recent'}</div>
+            </div>
+
+            {/* Email Verification Warning if unverified */}
+            {!approvingUser.emailVerified && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  background: 'rgba(217, 119, 6, 0.1)',
+                  border: '1px solid rgba(217, 119, 6, 0.3)',
+                  color: 'var(--amber-text, #d97706)',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '16px',
+                }}
+              >
+                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Unverified email:</strong> This user has not entered their verification code yet. You can still approve them.
+                </span>
+              </div>
+            )}
+
+            <div className="form-grid" style={{ gridTemplateColumns: '1fr', gap: '16px', flex: 1 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <label>
+                  Role Assignment *
+                  <select
+                    value={approveRole}
+                    onChange={(e) => handleApproveRoleChange(e.target.value as UserRole)}
+                    disabled={isSavingApprove}
+                  >
+                    <option value="rep">Medical Representative</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </label>
+
+                <label>
+                  Assigned Region *
+                  <select
+                    value={approveRegion}
+                    onChange={(e) => setApproveRegion(e.target.value)}
+                    disabled={isSavingApprove}
+                  >
+                    <option value="North region">North region</option>
+                    <option value="West region">West region</option>
+                    <option value="Central region">Central region</option>
+                    <option value="East region">East region</option>
+                    <option value="HQ - Global">HQ - Global</option>
+                  </select>
+                </label>
+              </div>
+
+              {/* Extra Confirmation for Admin Role */}
+              {approveRole === 'admin' && (
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(217, 121, 139, 0.1)',
+                    border: '1px solid rgba(217, 121, 139, 0.3)',
+                  }}
+                >
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
+                    <input
+                      type="checkbox"
+                      checked={confirmAdminGrant}
+                      onChange={(e) => setConfirmAdminGrant(e.target.checked)}
+                      style={{ marginTop: '2px', accentColor: 'var(--rose, #d9798b)' }}
+                    />
+                    <span style={{ color: 'var(--heading-text)', fontWeight: 600 }}>
+                      I confirm granting full Administrative privileges to this user.
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Grouped Checklist: Permissions Overrides */}
+              <div
+                style={{
+                  borderTop: '1px solid var(--border-soft)',
+                  paddingTop: '16px',
+                  marginTop: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span className="eyebrow" style={{ margin: 0 }}>PERMISSIONS OVERRIDES</span>
+                  <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
+                    Role defaults pre-filled
+                  </span>
+                </div>
+
+                {/* Pages Checklist */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Standard Workspace Pages
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                    {ALL_STANDARD_PAGES.map((pg) => {
+                      const isChecked = approvePermissions.pages?.includes(pg) || (pg === 'Dashboard' && approvePermissions.pages?.includes('Home'))
+                      return (
+                        <label
+                          key={pg}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            background: 'var(--surface-raised)',
+                            border: '1px solid var(--border-soft)',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            color: 'var(--heading-text)',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(isChecked)}
+                            onChange={() => handleToggleApprovePage(pg)}
+                            style={{ accentColor: 'var(--ocean)' }}
+                          />
+                          <span>{pg}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Administrative Hub Pages
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {ALL_ADMIN_PAGES.map((pg) => {
+                      const isChecked = approvePermissions.pages?.includes(pg)
+                      return (
+                        <label
+                          key={pg}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            background: 'var(--surface-raised)',
+                            border: '1px solid var(--border-soft)',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            color: 'var(--heading-text)',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(isChecked)}
+                            onChange={() => handleToggleApprovePage(pg)}
+                            style={{ accentColor: 'var(--ocean)' }}
+                          />
+                          <span>{pg}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Actions Checklist */}
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Action Privileges
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {[
+                      { key: 'canApproveInvoices' as const, label: 'Approve invoices' },
+                      { key: 'canEditPrices' as const, label: 'Edit product prices' },
+                      { key: 'canExport' as const, label: 'Export data (CSV/PDF)' },
+                      { key: 'canDeleteData' as const, label: 'Delete data' },
+                    ].map((act) => (
+                      <label
+                        key={act.key}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          background: 'var(--surface-raised)',
+                          border: '1px solid var(--border-soft)',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          color: 'var(--heading-text)',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(approvePermissions[act.key])}
+                          onChange={() => handleToggleApproveAction(act.key)}
+                          style={{ accentColor: 'var(--ocean)' }}
+                        />
+                        <span>{act.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="sheet-actions" style={{ marginTop: '24px' }}>
+              <Button variant="secondary" type="button" onClick={() => setApprovingUser(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" loading={isSavingApprove}>
+                <Check data-icon="inline-start" /> Approve account
+              </Button>
+            </div>
+          </form>
+        </Drawer>
+      )}
+
+      {/* Reject Confirmation Modal Dialog */}
+      {rejectingUser && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '16px',
+          }}
+          onClick={() => setRejectingUser(null)}
+        >
+          <div
+            className="panel"
+            style={{ maxWidth: '440px', width: '100%', borderRadius: '16px', padding: '24px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '18px', margin: '0 0 8px', color: 'var(--heading-text)' }}>
+              Reject Sign-up Request
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--muted-text)', margin: '0 0 16px', lineHeight: 1.5 }}>
+              Are you sure you want to reject the sign-up request for <strong>{rejectingUser.name}</strong> ({rejectingUser.email})?
+            </p>
+            <form onSubmit={handleConfirmReject}>
+              <label style={{ display: 'block', fontSize: '13px', marginBottom: '16px' }}>
+                Reason <span style={{ color: 'var(--muted-text)' }}>(optional)</span>
+                <input
+                  type="text"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="e.g. Unrecognized team member"
+                  style={{ width: '100%', marginTop: '6px' }}
+                />
+              </label>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <Button variant="secondary" type="button" onClick={() => setRejectingUser(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  type="submit"
+                  loading={isSavingReject}
+                  style={{ background: 'var(--rose, #d9798b)', borderColor: 'var(--rose, #d9798b)' }}
+                >
+                  Reject request
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

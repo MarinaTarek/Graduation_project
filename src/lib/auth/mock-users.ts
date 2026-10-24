@@ -46,15 +46,49 @@ export const MOCK_USERS: MockUserRecord[] = [
 
 const USERS_STORAGE_KEY = 'navigen_users'
 
+export const INITIAL_STORED_USERS: MockUserRecord[] = [
+  {
+    id: 'u-req-1',
+    name: 'Tarek Mansour',
+    name_ar: 'طارق منصور',
+    email: 'tarek.mansour@navigenpharma.net',
+    phone: '+20 100 123 4567',
+    role: 'rep',
+    region: 'North region',
+    status: 'pending',
+    emailVerified: true,
+    requestedDate: '2026-10-24',
+    permissions: getDefaultPermissions('rep'),
+    passwordHash: 'Rep123!',
+  },
+  {
+    id: 'u-req-2',
+    name: 'Nour El-Din',
+    name_ar: 'نور الدين',
+    email: 'nour.eldin@navigenpharma.net',
+    phone: '+20 111 987 6543',
+    role: 'rep',
+    region: 'Central region',
+    status: 'pending',
+    emailVerified: false,
+    requestedDate: '2026-10-23',
+    permissions: getDefaultPermissions('rep'),
+    passwordHash: 'Rep123!',
+  },
+]
+
 /** Load extra users registered via sign-up from localStorage */
 export function getStoredUsers(): MockUserRecord[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === 'undefined') return INITIAL_STORED_USERS
   try {
     const raw = localStorage.getItem(USERS_STORAGE_KEY)
-    if (!raw) return []
+    if (!raw) {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_STORED_USERS))
+      return [...INITIAL_STORED_USERS]
+    }
     return JSON.parse(raw) as MockUserRecord[]
   } catch {
-    return []
+    return [...INITIAL_STORED_USERS]
   }
 }
 
@@ -62,7 +96,13 @@ export function getStoredUsers(): MockUserRecord[] {
 export function saveStoredUsers(users: MockUserRecord[]): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
+    window.dispatchEvent(new CustomEvent('navigen_users_updated'))
   }
+}
+
+/** Get count of pending sign-up requests */
+export function getPendingUsersCount(): number {
+  return getStoredUsers().filter((u) => u.status === 'pending').length
 }
 
 /** Get all users (built-in + stored) */

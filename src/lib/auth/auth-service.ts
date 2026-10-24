@@ -66,6 +66,7 @@ export async function signUp(data: SignUpData): Promise<User> {
     name: data.name.trim(),
     email: cleanEmail,
     phone: data.phone?.trim() || undefined,
+    requestedDate: new Date().toISOString().slice(0, 10),
     role: 'rep' as const,
     status: 'pending' as const,
     emailVerified: false,

@@ -273,7 +273,9 @@ function AppContent() {
             />
           )}
           {active === 'Admin' && canAccessPage('Admin', role, user) && <AdminPage />}
-          {active === 'Users' && canAccessPage('Users', role, user) && <AdminPage initialSubpage="users" />}
+          {active === 'Users' && canAccessPage('Users', role, user) && (
+            <AdminPage initialSubpage="users" filter={pageFilter['Users']} />
+          )}
           {active === 'Products & Batches' && canAccessPage('Products & Batches', role, user) && <AdminPage initialSubpage="products" />}
           {active === 'Territories' && canAccessPage('Territories', role, user) && <AdminPage initialSubpage="territories" />}
           {active === 'Audit log' && canAccessPage('Audit log', role, user) && <AdminPage initialSubpage="audit-log" />}

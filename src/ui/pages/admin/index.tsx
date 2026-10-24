@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, Settings2 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { AdminNavCards } from './components/AdminNavCards'
@@ -10,10 +10,15 @@ import AdminSettingsPage from './settings'
 
 export interface AdminPageProps {
   initialSubpage?: string
+  filter?: string | null
 }
 
-export default function AdminPage({ initialSubpage }: AdminPageProps) {
+export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
   const [selected, setSelected] = useState<string | null>(initialSubpage || null)
+
+  useEffect(() => {
+    if (initialSubpage) setSelected(initialSubpage)
+  }, [initialSubpage])
 
   if (selected === 'users') {
     return (
@@ -23,7 +28,7 @@ export default function AdminPage({ initialSubpage }: AdminPageProps) {
             <ArrowLeft /> Back to Admin
           </Button>
         </div>
-        <AdminUsersPage />
+        <AdminUsersPage initialTab={filter === 'pending' ? 'pending' : 'all'} />
       </div>
     )
   }

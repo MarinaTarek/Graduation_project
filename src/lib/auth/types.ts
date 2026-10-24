@@ -15,6 +15,7 @@ export interface User {
   name_ar?: string
   email: string
   phone?: string
+  requestedDate?: string
   role: UserRole
   region?: string
   status?: UserStatus

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { useAuth } from '@/lib/auth'
+import { getPendingUsersCount } from '@/lib/auth/mock-users'
 import { HomeFilters, type HomeFiltersState } from './components/HomeFilters'
 import { AttentionSection } from './components/AttentionSection'
 import { SellInChartPanel } from './components/SellInChartPanel'
@@ -50,6 +51,16 @@ export default function HomePage({
 }: HomePageProps) {
   const { user, role } = useAuth()
   const [daysRemaining, setDaysRemaining] = useState(12)
+  const [pendingCount, setPendingCount] = useState<number>(() =>
+    typeof window !== 'undefined' ? getPendingUsersCount() : 0
+  )
+
+  useEffect(() => {
+    const updateCount = () => setPendingCount(getPendingUsersCount())
+    updateCount()
+    window.addEventListener('navigen_users_updated', updateCount)
+    return () => window.removeEventListener('navigen_users_updated', updateCount)
+  }, [])
 
   useEffect(() => {
     const now = new Date()
@@ -170,7 +181,20 @@ export default function HomePage({
       />
 
       <AttentionSection
-        items={homeAttentionItems}
+        items={
+          role === 'admin' && pendingCount > 0
+            ? [
+                {
+                  icon: Users,
+                  label: 'Account requests',
+                  count: String(pendingCount),
+                  tone: 'amber' as const,
+                  detail: `${pendingCount} pending review`,
+                },
+                ...homeAttentionItems,
+              ]
+            : homeAttentionItems
+        }
         onAction={onAction}
         onOpenNotifications={() => onOpen('notifications')}
         onNavigateWithFilter={onNavigateWithFilter}

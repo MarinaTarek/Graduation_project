@@ -35,6 +35,12 @@ export function AttentionSection({
       } else {
         onAction('Opening expiring batch details')
       }
+    } else if (normalized.includes('account') || normalized.includes('request')) {
+      if (onNavigateWithFilter) {
+        onNavigateWithFilter('Users', { filter: 'pending' })
+      } else {
+        onAction('Opening pending user requests')
+      }
     } else {
       onAction(`Opening ${label.toLowerCase()}`)
     }

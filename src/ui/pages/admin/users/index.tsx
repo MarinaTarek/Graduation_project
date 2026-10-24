@@ -2,7 +2,12 @@ import { Users } from 'lucide-react'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { UserListTable } from './components/UserListTable'
 
-export default function AdminUsersPage() {
+export interface AdminUsersPageProps {
+  initialTab?: 'all' | 'pending' | null
+}
+
+export default function AdminUsersPage({ initialTab }: AdminUsersPageProps) {
+  const activeTab = initialTab === 'pending' ? 'pending' : 'all'
   return (
     <section className="content">
       <div className="page-intro">
@@ -15,9 +20,9 @@ export default function AdminUsersPage() {
         </div>
       </div>
       <div style={{ marginTop: '36px' }}>
-        <UserListTable />
+        <UserListTable initialTab={activeTab} />
       </div>
-      <EmptyState message="All 5 team user accounts authenticated and active" />
+      <EmptyState message="All team user accounts authenticated and active" />
     </section>
   )
 }
