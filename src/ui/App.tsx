@@ -186,7 +186,13 @@ export default function App() {
             />
           )}
           {active === 'Visit plan' && <VisitPlanPage />}
-          {active === 'Reports' && role === 'admin' && <ReportsPage />}
+          {active === 'Reports' && (
+            <ReportsPage
+              role={role}
+              currentUserName="Alex Morgan"
+              onAction={action}
+            />
+          )}
           {active === 'Profile' && (
             <ProfilePage
               userName="Alex Morgan"

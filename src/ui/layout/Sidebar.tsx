@@ -63,6 +63,7 @@ export function Sidebar({
 
   // Rep-only items
   const repNav: NavItem[] = [
+    { label: 'My scorecard', activeKey: 'Reports', icon: BarChart2 },
     { label: 'My profile', activeKey: 'Profile', icon: User },
   ]
 

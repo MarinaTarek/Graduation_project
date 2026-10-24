@@ -34,7 +34,7 @@
 | 8 | **Sidebar** | Targets | `src/ui/layout/Sidebar.tsx:107` | `OK` | Navigates to `TargetsPage` (`Targets`) |
 | 9 | **Sidebar** | Visits | `src/ui/layout/Sidebar.tsx:107` | `OK` | Navigates to `VisitsPage` (`Visits`) |
 | 10 | **Sidebar** | Visit plan | `src/ui/layout/Sidebar.tsx:107` | `OK` | Navigates to `VisitPlanPage` (`Visit plan`) |
-| 11 | **Sidebar** | Reports (Admin view) | `src/ui/layout/Sidebar.tsx:107` | `OK (FIXED)` | Navigates to dedicated `ReportsPage` (`src/ui/pages/reports/index.tsx`) |
+| 11 | **Sidebar** | Reports (Admin) / My scorecard (Rep) | `src/ui/layout/Sidebar.tsx:107` | `OK (FIXED)` | Navigates to full Reports page (`src/ui/pages/reports/index.tsx`); Admin sees 6 report cards, Rep sees My scorecard |
 | 12 | **Sidebar** | My profile (Rep view) | `src/ui/layout/Sidebar.tsx:107` | `OK (FIXED)` | Navigates to `ProfilePage` (`src/ui/pages/profile/index.tsx`); Admin Org Settings hidden from Rep |
 | 13 | **Sidebar** | Users (Admin view) | `src/ui/layout/Sidebar.tsx:107` | `OK` | Navigates to `AdminUsersPage` (`Users`) |
 | 14 | **Sidebar** | Products & Batches (Admin) | `src/ui/layout/Sidebar.tsx:107` | `OK` | Navigates to `AdminProductsPage` (`Products & Batches`) |
@@ -141,7 +141,7 @@
 ### Priority 1: Main Navigation & Layout Issues (All Resolved)
 1. **Sidebar "Reports" Route** (`src/ui/layout/Sidebar.tsx:107`):  
    - *Status*: `RESOLVED`  
-   - *Fix*: Kept for Admin, created dedicated `src/ui/pages/reports/index.tsx` with friendly `EmptyState`, and routed in `App.tsx`.
+   - *Fix*: Full Reports suite built at `src/ui/pages/reports/index.tsx`. Admin sees Hub of 6 reports (Sales Performance, Sell-in vs Sell-out, Visit Coverage, Stock & Expiry, Invoices & Approvals, Rep Scorecard). Rep sees "My scorecard" directly. Includes multi-select filter chips (Month, Region, Rep, Product), 3 summary stat capsules, responsive SVG charts, rounded-row tables, export buttons (Excel, PDF, Print), skeleton loaders, empty state, and error recovery. Route connected in `App.tsx` and `Sidebar.tsx`.
 2. **Sidebar "Settings" Role Mismatch** (`src/ui/layout/Sidebar.tsx:107`):  
    - *Status*: `RESOLVED`  
    - *Fix*: Renamed to "My profile" for Reps pointing to `src/ui/pages/profile/index.tsx` with Avatar, Name, Email, Telegram link, and Dark Mode switch. Admin Org settings are completely hidden from Reps.
