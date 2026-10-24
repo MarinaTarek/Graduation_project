@@ -6,9 +6,14 @@ import { homeReps } from '../mock-data'
 export interface TopRepsPanelProps {
   onNavigateMore: () => void
   onAction: (s: string) => void
+  onSelectRep?: (repName: string) => void
 }
 
-export function TopRepsPanel({ onNavigateMore, onAction }: TopRepsPanelProps) {
+export function TopRepsPanel({
+  onNavigateMore,
+  onAction,
+  onSelectRep,
+}: TopRepsPanelProps) {
   return (
     <section className="panel reps-panel">
       <div className="panel-head">
@@ -25,7 +30,13 @@ export function TopRepsPanel({ onNavigateMore, onAction }: TopRepsPanelProps) {
           <button
             className="rep-row"
             key={name}
-            onClick={() => onAction(`${name}'s profile opened`)}
+            onClick={() => {
+              if (onSelectRep) {
+                onSelectRep(name)
+              } else {
+                onAction(`${name}'s profile opened`)
+              }
+            }}
           >
             <Avatar
               initials={name

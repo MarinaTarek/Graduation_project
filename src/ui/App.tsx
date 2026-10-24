@@ -54,14 +54,40 @@ export default function App() {
     action('Saved successfully')
   }
 
+  // Shared navigation state with optional page filter and overlay intent.
+  // Reusable pattern: pass { filter?: string, overlay?: string } to navigate to a target page
+  // in a pre-filtered state (e.g. Invoices -> Pending, Clients -> Overdue only, Visits -> Rep).
+  // Navigating normally from the Sidebar clears the page filter.
+  const [pageFilter, setPageFilter] = useState<{ [page: string]: string | null }>({})
+
+  const navigateTo = (page: string, options?: { filter?: string; overlay?: string }) => {
+    setActive(page)
+    setPageFilter((prev) => ({
+      ...prev,
+      [page]: options?.filter || null,
+    }))
+    if (options?.overlay) {
+      setOverlay(options.overlay)
+    } else {
+      setOverlay(null)
+    }
+    setProfileOpen(false)
+  }
+
+  const clearPageFilter = (page: string) => {
+    setPageFilter((prev) => ({
+      ...prev,
+      [page]: null,
+    }))
+  }
+
   const selectNav = (label: string) => {
     if (label === 'More' || label === 'Menu') {
       setProfileOpen((prev) => !prev)
       return
     }
-    setActive(label)
-    setOverlay(null)
-    setProfileOpen(false)
+    // Normal sidebar navigation resets active filters for this page
+    navigateTo(label)
   }
 
   const toggleRole = () => {
@@ -113,18 +139,24 @@ export default function App() {
               range={range}
               setRange={setRange}
               setActive={setActive}
+              onNavigateWithFilter={(page, options) => navigateTo(page, options)}
+              onSelectRep={(repName) => navigateTo('Visits', { filter: repName })}
             />
           )}
           {active === 'Clients' && (
             <ClientsPage
               onAdd={() => open('add doctor')}
               onItem={() => open('doctor profile')}
+              filter={pageFilter['Clients']}
+              onClearFilter={() => clearPageFilter('Clients')}
             />
           )}
           {active === 'Invoices' && (
             <InvoicesPage
               onAdd={() => open('upload invoice')}
               onItem={() => open('invoice detail')}
+              filter={pageFilter['Invoices']}
+              onClearFilter={() => clearPageFilter('Invoices')}
             />
           )}
           {active === 'Stock' && (
@@ -136,7 +168,15 @@ export default function App() {
           {active === 'Sell-in' && <SellInPage />}
           {active === 'Sell-out' && <SellOutPage />}
           {active === 'Targets' && <TargetsPage />}
-          {active === 'Visits' && <VisitsPage onNewVisit={() => open('new visit')} />}
+          {active === 'Visits' && (
+            <VisitsPage
+              onNewVisit={() => open('new visit')}
+              filterRep={pageFilter['Visits']}
+              onClearFilter={() => clearPageFilter('Visits')}
+              role={role}
+              currentUserName="Alex Morgan"
+            />
+          )}
           {active === 'Visit plan' && <VisitPlanPage />}
           {active === 'Reports' && role === 'admin' && <ReportsPage />}
           {active === 'Profile' && (

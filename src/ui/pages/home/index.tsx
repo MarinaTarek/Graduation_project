@@ -15,6 +15,8 @@ export interface HomePageProps {
   range: string
   setRange: (s: string) => void
   setActive: (s: string) => void
+  onNavigateWithFilter?: (page: string, options?: { filter?: string; overlay?: string }) => void
+  onSelectRep?: (repName: string) => void
 }
 
 export default function HomePage({
@@ -23,6 +25,8 @@ export default function HomePage({
   range,
   setRange,
   setActive,
+  onNavigateWithFilter,
+  onSelectRep,
 }: HomePageProps) {
   return (
     <section className="content">
@@ -47,7 +51,12 @@ export default function HomePage({
 
       <HomeFilters range={range} setRange={setRange} />
 
-      <AttentionSection items={homeAttentionItems} onAction={onAction} />
+      <AttentionSection
+        items={homeAttentionItems}
+        onAction={onAction}
+        onOpenNotifications={() => onOpen('notifications')}
+        onNavigateWithFilter={onNavigateWithFilter}
+      />
 
       <div className="bento-grid">
         <SellInChartPanel onClick={() => setActive('Sell-in')} />
@@ -59,6 +68,7 @@ export default function HomePage({
         <TopRepsPanel
           onNavigateMore={() => setActive('More')}
           onAction={onAction}
+          onSelectRep={onSelectRep}
         />
       </div>
 

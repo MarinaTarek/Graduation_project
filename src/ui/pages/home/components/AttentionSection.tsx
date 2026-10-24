@@ -5,9 +5,41 @@ import type { HomeAttentionItem } from '../mock-data'
 export interface AttentionSectionProps {
   items: HomeAttentionItem[]
   onAction: (s: string) => void
+  onOpenNotifications?: () => void
+  onNavigateWithFilter?: (page: string, options?: { filter?: string; overlay?: string }) => void
 }
 
-export function AttentionSection({ items, onAction }: AttentionSectionProps) {
+export function AttentionSection({
+  items,
+  onAction,
+  onOpenNotifications,
+  onNavigateWithFilter,
+}: AttentionSectionProps) {
+  const handleCardClick = (label: string) => {
+    const normalized = label.toLowerCase()
+    if (normalized.includes('invoice')) {
+      if (onNavigateWithFilter) {
+        onNavigateWithFilter('Invoices', { filter: 'Pending' })
+      } else {
+        onAction('Opening pending invoices')
+      }
+    } else if (normalized.includes('client') || normalized.includes('doctor') || normalized.includes('visit')) {
+      if (onNavigateWithFilter) {
+        onNavigateWithFilter('Clients', { filter: 'Overdue only' })
+      } else {
+        onAction('Opening overdue clients')
+      }
+    } else if (normalized.includes('batch') || normalized.includes('expir')) {
+      if (onNavigateWithFilter) {
+        onNavigateWithFilter('Stock', { overlay: 'stock detail' })
+      } else {
+        onAction('Opening expiring batch details')
+      }
+    } else {
+      onAction(`Opening ${label.toLowerCase()}`)
+    }
+  }
+
   return (
     <section className="attention-section">
       <div className="section-heading">
@@ -15,7 +47,10 @@ export function AttentionSection({ items, onAction }: AttentionSectionProps) {
           <span className="eyebrow">KEEPING THINGS MOVING</span>
           <h2>Needs your attention</h2>
         </div>
-        <Button variant="text" onClick={() => onAction('Everything is up to date')}>
+        <Button
+          variant="text"
+          onClick={onOpenNotifications || (() => onAction('Opening notifications'))}
+        >
           View all <ArrowUpRight />
         </Button>
       </div>
@@ -24,7 +59,7 @@ export function AttentionSection({ items, onAction }: AttentionSectionProps) {
           <button
             key={label}
             className={`attention-card ${tone}`}
-            onClick={() => onAction(`Opening ${label.toLowerCase()}`)}
+            onClick={() => handleCardClick(label)}
           >
             <div className="attention-icon">
               <Icon />

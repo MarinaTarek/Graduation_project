@@ -1,5 +1,6 @@
 import { FileText, Plus } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { InvoiceToolbar } from './components/InvoiceToolbar'
 import { InvoiceListItem } from './components/InvoiceListItem'
@@ -8,9 +9,20 @@ import { invoicesMockData } from './mock-data'
 export interface InvoicesPageProps {
   onAdd: () => void
   onItem: () => void
+  filter?: string | null
+  onClearFilter?: () => void
 }
 
-export default function InvoicesPage({ onAdd, onItem }: InvoicesPageProps) {
+export default function InvoicesPage({
+  onAdd,
+  onItem,
+  filter,
+  onClearFilter,
+}: InvoicesPageProps) {
+  const displayedInvoices = filter
+    ? invoicesMockData.filter((inv) => inv.status.toLowerCase() === filter.toLowerCase())
+    : invoicesMockData
+
   return (
     <section className="content">
       <div className="page-intro">
@@ -28,8 +40,18 @@ export default function InvoicesPage({ onAdd, onItem }: InvoicesPageProps) {
 
       <InvoiceToolbar />
 
+      {/* Removable filter chip when filter prop is active */}
+      {filter && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '16px 0 8px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Active filter:</span>
+          <Chip active onClick={onClearFilter} title="Click to clear filter">
+            {filter} &times;
+          </Chip>
+        </div>
+      )}
+
       <div className="collection-list">
-        {invoicesMockData.map((invoice) => (
+        {displayedInvoices.map((invoice) => (
           <InvoiceListItem key={invoice.name} item={invoice} onClick={onItem} />
         ))}
       </div>

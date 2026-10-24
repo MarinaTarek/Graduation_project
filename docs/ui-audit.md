@@ -70,14 +70,14 @@
 | 44 | **Home** | Filter Chip "All reps" | `src/ui/pages/home/components/HomeFilters.tsx:18` | `NO HANDLER` | Medical representative filter dropdown / popover |
 | 45 | **Home** | Filter Chip "All products" | `src/ui/pages/home/components/HomeFilters.tsx:21` | `NO HANDLER` | Product portfolio filter dropdown / popover |
 | 46 | **Home** | View toggle button ("Month/Week") | `src/ui/pages/home/components/HomeFilters.tsx:25` | `OK` | Toggles time range state between Month and Week |
-| 47 | **Home** | Needs Attention "View all" | `src/ui/pages/home/components/AttentionSection.tsx:18` | `EMPTY HANDLER` | Shows toast notice; should open Attention queue / Notifications drawer |
-| 48 | **Home** | Card "Invoices to review" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `EMPTY HANDLER` | Shows toast notice; should navigate to Invoices page (`setActive('Invoices')`) |
-| 49 | **Home** | Card "Clients without visit" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `EMPTY HANDLER` | Shows toast notice; should navigate to Clients page (`setActive('Clients')`) |
-| 50 | **Home** | Card "Expiring batches" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `EMPTY HANDLER` | Shows toast notice; should navigate to Stock page (`setActive('Stock')`) |
+| 47 | **Home** | Needs Attention "View all" | `src/ui/pages/home/components/AttentionSection.tsx:18` | `OK (FIXED)` | Opens Notifications panel (`NotificationsDrawer`) |
+| 48 | **Home** | Card "Invoices to review" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `OK (FIXED)` | Navigates to `InvoicesPage` pre-filtered to "Pending" with removable filter chip |
+| 49 | **Home** | Card "Clients without visit" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `OK (FIXED)` | Navigates to `ClientsPage` pre-filtered to "Overdue only" with removable filter chip |
+| 50 | **Home** | Card "Expiring batches" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `OK (FIXED)` | Navigates to `StockPage` with expiring batch detail drawer opened |
 | 51 | **Home** | Products panel round arrow | `src/ui/pages/home/components/ProductsPanel.tsx:22` | `OK` | Navigates to Stock page (`setActive('Stock')`) |
 | 52 | **Home** | Product capsules (3 items) | `src/ui/pages/home/components/ProductsPanel.tsx:36` | `OK` | Opens Stock Product detail sheet (`StockDetailSheet`) |
 | 53 | **Home** | Top reps round arrow | `src/ui/pages/home/components/TopRepsPanel.tsx:19` | `OK` | Navigates to More page (`setActive('More')`) / Users list |
-| 54 | **Home** | Top rep rows (4 items) | `src/ui/pages/home/components/TopRepsPanel.tsx:25` | `EMPTY HANDLER` | Shows toast notice; should open Rep detail drawer or user profile |
+| 54 | **Home** | Top rep rows (4 items) | `src/ui/pages/home/components/TopRepsPanel.tsx:25` | `OK (FIXED)` | Opens `VisitsPage` pre-filtered to clicked representative with removable filter chip |
 | 55 | **Clients** | Primary button "Add new" | `src/ui/pages/clients/index.tsx:24` | `OK` | Opens `RecordFormDrawer` with title "Add doctor" |
 | 56 | **Clients** | Toolbar "Filters" button | `src/ui/pages/clients/components/ClientToolbar.tsx:11` | `NO HANDLER` | Client filter options popover |
 | 57 | **Clients** | Toolbar "View" button | `src/ui/pages/clients/components/ClientToolbar.tsx:14` | `NO HANDLER` | Client layout toggle (List / Grid view) |
@@ -104,7 +104,7 @@
 | 78 | **Stock Detail** | Tab "In pharmacies" | `src/ui/pages/stock/components/StockDetailSheet.tsx:24` | `NO HANDLER` | Filters batch view to Consigned pharmacy inventory |
 | 79 | **Stock Detail** | Button "Stock count" | `src/ui/pages/stock/components/StockDetailSheet.tsx:35` | `OK` | Opens `RecordFormDrawer` with title "Stock count" |
 | 80 | **Visits** | Primary button "New visit" | `src/ui/pages/visits/index.tsx:24` | `OK` | Opens New Visit wizard drawer (`NewVisitWizard`) |
-| 81 | **Visits** | Visit list item rows (3 items) | `src/ui/pages/visits/index.tsx:31` | `NO HANDLER` | Renders `<VisitListItem>` without `onClick`; should open visit record drawer |
+| 81 | **Visits** | Visit list item rows (5 items) | `src/ui/pages/visits/index.tsx:63` | `OK (FIXED)` | Opens `VisitDetailDrawer` with date/time, doctor, rep, products presented, samples quantity, reaction emoji, notes, next visit date, GPS verified badge |
 | 82 | **New Visit** | Close backdrop / X | `src/ui/pages/visits/components/NewVisitWizard.tsx:28` | `OK` | Dismisses New Visit wizard drawer |
 | 83 | **New Visit** | Button "Continue" | `src/ui/pages/visits/components/NewVisitWizard.tsx:37` | `OK` | Saves visit record, shows confirmation toast, closes drawer |
 | 84 | **Admin Hub** | Card "Users" | `src/ui/pages/admin/components/AdminNavCards.tsx:14` | `OK` | Opens Admin Users subpage |
@@ -154,23 +154,19 @@
 
 ---
 
-### Priority 2: Primary Actions per Page
+### Priority 2: Primary Actions per Page (All Resolved)
 5. **Visits List Items Have No Click Handler** (`src/ui/pages/visits/index.tsx:31`):  
-   - *Status*: `NO HANDLER`  
-   - *Issue*: Rendered as clickable buttons (`VisitListItem`), but `onClick` is omitted in `VisitsPage`.  
-   - *Target*: Connect to a visit detail drawer or physician recap view.
+   - *Status*: `RESOLVED`  
+   - *Fix*: Wired `onClick` on each `<VisitListItem>` to open `VisitDetailDrawer` with date/time, doctor, rep, products presented, samples quantity, reaction emoji, notes, next visit date, and GPS verified badge. Reps only see their own visits.
 6. **Needs Attention Cards are Toast-Only** (`src/ui/pages/home/components/AttentionSection.tsx:24`):  
-   - *Status*: `EMPTY HANDLER`  
-   - *Issue*: "Invoices to review", "Clients without visit", and "Expiring batches" trigger temporary toasts rather than routing to respective workflows.  
-   - *Target*: Wire to `setActive('Invoices')`, `setActive('Clients')`, and `setActive('Stock')`.
+   - *Status*: `RESOLVED`  
+   - *Fix*: Wired to navigate with active filter state: "invoices waiting approval" -> Invoices filtered to Pending; "doctors not visited" -> Clients filtered to Overdue only; "batch expiring" -> Stock with expiring batch detail drawer open.
 7. **Attention "View all" Button is Toast-Only** (`src/ui/pages/home/components/AttentionSection.tsx:18`):  
-   - *Status*: `EMPTY HANDLER`  
-   - *Issue*: Displays toast "Everything is up to date".  
-   - *Target*: Wire to open `NotificationsDrawer` or a full attention list.
+   - *Status*: `RESOLVED`  
+   - *Fix*: Wired to open the existing Notifications panel drawer (`NotificationsDrawer`).
 8. **Top Reps Row Items are Toast-Only** (`src/ui/pages/home/components/TopRepsPanel.tsx:25`):  
-   - *Status*: `EMPTY HANDLER`  
-   - *Issue*: Displays toast `"{name}'s profile opened"`.  
-   - *Target*: Wire to open a Rep detail drawer or user profile modal.
+   - *Status*: `RESOLVED`  
+   - *Fix*: Wired to navigate to `VisitsPage` filtered to the clicked representative with a removable filter chip. Normal sidebar navigation resets the filter.
 
 ---
 
