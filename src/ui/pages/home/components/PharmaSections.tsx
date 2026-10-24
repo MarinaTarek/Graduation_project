@@ -1,0 +1,450 @@
+import { useMemo, useState } from 'react'
+import {
+  Stethoscope, TrendingUp, FileText, Package,
+  ChevronRight, X, AlertTriangle
+} from 'lucide-react'
+import { Skeleton } from '@/ui/design-system/components/Skeleton'
+import {
+  VISIT_INTERVAL_DAYS,
+  homeCustomers,
+  homeSamples,
+  homeExpiringBatches,
+  homeRegions,
+  homeReceivables,
+  homeReturns,
+  homeKpiStrip,
+  type HomeCustomer,
+  type HomeReceivable,
+} from '../mock-data'
+
+// ── shared helpers ──────────────────────────────────────────────────────────
+function daysSince(isoDate: string): number {
+  return Math.floor((Date.now() - new Date(isoDate).getTime()) / 86_400_000)
+}
+
+function isOverdue(c: HomeCustomer): boolean {
+  return daysSince(c.last_visit_date) > VISIT_INTERVAL_DAYS[c.classification]
+}
+
+function pill(label: string, color: string, textColor = '#fff') {
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700,
+        background: color, color: textColor, whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+function CardShell({ children, onClick, style }: {
+  children: React.ReactNode; onClick?: () => void; style?: React.CSSProperties
+}) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-card)',
+        boxShadow: 'var(--card-shadow)',
+        borderRadius: '20px',
+        padding: '20px',
+        cursor: onClick ? 'pointer' : 'default',
+        display: 'flex', flexDirection: 'column', gap: '14px',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function CardTitle({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <Icon style={{ width: '15px', height: '15px', color: 'var(--ocean)' }} />
+      <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted-text)' }}>
+        {label}
+      </span>
+    </div>
+  )
+}
+
+// ── 1. KPI Strip ────────────────────────────────────────────────────────────
+export function KpiStrip({
+  repId, onNav,
+}: {
+  repId?: string
+  onNav?: (page: string, opts?: { filter?: string }) => void
+}) {
+  const customers = repId ? homeCustomers.filter(c => c.rep_id === repId) : homeCustomers
+  const total = customers.length
+  const visited = customers.filter(c => !isOverdue(c)).length
+  const coveragePct = total > 0 ? Math.round((visited / total) * 100) : 0
+
+  const tiles = [
+    {
+      label: 'Visit Coverage',
+      value: `${coveragePct}%`,
+      sub: `${visited}/${total} doctors`,
+      color: coveragePct >= 80 ? 'var(--green-text, #16a34a)' : coveragePct >= 60 ? '#d97706' : 'var(--rose-text)',
+      onClick: () => onNav?.('Clients', { filter: 'Overdue only' }),
+    },
+    {
+      label: 'Sell-through',
+      value: `${homeKpiStrip.sell_through_pct}%`,
+      sub: 'vs 68% last month',
+      color: 'var(--ocean)',
+      onClick: () => onNav?.('Reports'),
+    },
+    {
+      label: 'Invoices Pending',
+      value: String(homeKpiStrip.invoices_pending),
+      sub: `avg ${homeKpiStrip.avg_approval_hours}h approval`,
+      color: '#d97706',
+      onClick: () => onNav?.('Invoices', { filter: 'Pending' }),
+    },
+    {
+      label: 'Batches Expiring',
+      value: String(homeKpiStrip.batches_near_expiry),
+      sub: 'next 90 days',
+      color: 'var(--rose-text)',
+      onClick: () => onNav?.('Stock', { filter: 'Expiring' }),
+    },
+  ]
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '12px',
+      }}
+    >
+      {tiles.map((t) => (
+        <button
+          key={t.label}
+          onClick={t.onClick}
+          style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border-card)',
+            boxShadow: 'var(--card-shadow)',
+            borderRadius: '16px',
+            padding: '16px',
+            textAlign: 'left',
+            cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', gap: '4px',
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {t.label}
+          </span>
+          <span style={{ fontSize: '26px', fontWeight: 800, color: t.color, lineHeight: 1.1 }}>
+            {t.value}
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t.sub}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── 2. Visit Coverage by Class ──────────────────────────────────────────────
+export function VisitCoverageByClass({
+  repId, onNav,
+}: {
+  repId?: string
+  onNav?: (page: string, opts?: { filter?: string }) => void
+}) {
+  const customers = repId ? homeCustomers.filter(c => c.rep_id === repId) : homeCustomers
+  const classes = ['A', 'B', 'C'] as const
+
+  const stats = classes.map((cls) => {
+    const group = customers.filter(c => c.classification === cls)
+    const total = group.length
+    const overdue = group.filter(isOverdue).length
+    const visited = total - overdue
+    const pct = total > 0 ? Math.round((visited / total) * 100) : 0
+    return { cls, total, visited, overdue, pct }
+  })
+
+  return (
+    <CardShell>
+      <CardTitle icon={Stethoscope} label="Visit Coverage by Class" />
+      {stats.map(({ cls, pct, total, overdue }) => (
+        <button
+          key={cls}
+          onClick={() => onNav?.('Clients', { filter: `Class ${cls}` })}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>Class {cls}</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
+                {overdue > 0 ? `${overdue} overdue` : 'All visited'}
+              </span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: pct >= 80 ? 'var(--green-text, #16a34a)' : pct >= 60 ? '#d97706' : 'var(--rose-text)' }}>
+                {pct}%
+              </span>
+            </div>
+          </div>
+          <div style={{ height: '8px', borderRadius: '99px', background: 'var(--surface-raised, var(--border-soft))', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: '99px',
+              width: `${pct}%`,
+              background: pct >= 80 ? '#16a34a' : pct >= 60 ? '#d97706' : '#ef4444',
+              transition: 'width 0.4s',
+            }} />
+          </div>
+          <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
+            Target: every {VISIT_INTERVAL_DAYS[cls]} days · {total} total
+          </span>
+        </button>
+      ))}
+    </CardShell>
+  )
+}
+
+// ── 3. Samples This Month ───────────────────────────────────────────────────
+export function SamplesPanel({ repId, onNav }: { repId?: string; onNav?: (page: string) => void }) {
+  const entries = repId ? homeSamples.filter(s => s.rep_id === repId) : homeSamples
+
+  const totalUnits = entries.reduce((s, e) => s + e.samples_this_month, 0)
+
+  // top 5 products
+  const byProduct: Record<string, number> = {}
+  entries.forEach(e => { byProduct[e.product_name] = (byProduct[e.product_name] ?? 0) + e.samples_this_month })
+  const topProducts = Object.entries(byProduct).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const maxProd = topProducts[0]?.[1] ?? 1
+
+  // top 3 reps
+  const byRep: Record<string, number> = {}
+  entries.forEach(e => { byRep[e.rep_name] = (byRep[e.rep_name] ?? 0) + e.samples_this_month })
+  const topReps = Object.entries(byRep).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+  return (
+    <CardShell onClick={() => onNav?.('Visits')}>
+      <CardTitle icon={Package} label="Samples This Month" />
+      <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--heading-text)', lineHeight: 1 }}>
+        {totalUnits.toLocaleString()}
+        <span style={{ fontSize: '14px', fontWeight: 400, color: 'var(--muted-text)', marginLeft: '6px' }}>units distributed</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {topProducts.map(([name, qty]) => (
+          <div key={name}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--heading-text)', fontWeight: 500 }}>{name}</span>
+              <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{qty}</span>
+            </div>
+            <div style={{ height: '5px', borderRadius: '99px', background: 'var(--surface-raised, var(--border-soft))' }}>
+              <div style={{ height: '100%', borderRadius: '99px', width: `${Math.round((qty / maxProd) * 100)}%`, background: 'var(--ocean)' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      {!repId && (
+        <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '10px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Top Reps</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px' }}>
+            {topReps.map(([name, qty], i) => (
+              <div key={name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', color: 'var(--heading-text)' }}>{i + 1}. {name}</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ocean)' }}>{qty} units</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </CardShell>
+  )
+}
+
+// ── 4. Expiring Soon ────────────────────────────────────────────────────────
+function expiryTone(isoDate: string): { label: string; bg: string } {
+  const days = Math.floor((new Date(isoDate).getTime() - Date.now()) / 86_400_000)
+  if (days < 90) return { label: `${days}d`, bg: '#ef4444' }
+  if (days < 180) return { label: `${days}d`, bg: '#d97706' }
+  return { label: `${days}d`, bg: '#16a34a' }
+}
+
+export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId: string) => void }) {
+  const batches = homeExpiringBatches.slice(0, 4)
+
+  return (
+    <CardShell>
+      <CardTitle icon={AlertTriangle} label="Expiring Soon" />
+      {batches.map((b) => {
+        const tone = expiryTone(b.expiry_date)
+        return (
+          <button
+            key={b.batch_id}
+            onClick={() => onOpenDetail?.(b.batch_id)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '8px 0', borderBottom: '1px solid var(--border-soft)' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>{b.product_name}</div>
+                <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{b.batch_no} · {b.qty}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {pill(tone.label, tone.bg)}
+                <ChevronRight style={{ width: '14px', height: '14px', color: 'var(--muted-text)' }} />
+              </div>
+            </div>
+          </button>
+        )
+      })}
+    </CardShell>
+  )
+}
+
+// ── 5. Regions Panel (Admin only) ───────────────────────────────────────────
+export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter?: string }) => void }) {
+  const sorted = [...homeRegions].sort((a, b) => (b.sales_amount / b.target_amount) - (a.sales_amount / a.target_amount))
+  const maxTarget = Math.max(...sorted.map(r => r.target_amount))
+
+  return (
+    <CardShell>
+      <CardTitle icon={TrendingUp} label="Sales vs Target by Region" />
+      {sorted.map((r) => {
+        const pct = Math.round((r.sales_amount / r.target_amount) * 100)
+        return (
+          <button
+            key={r.region}
+            onClick={() => onNav?.('Reports', { filter: r.region })}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)' }}>{r.region}</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: pct >= 90 ? 'var(--green-text,#16a34a)' : pct >= 75 ? '#d97706' : 'var(--rose-text)' }}>
+                {pct}%
+              </span>
+            </div>
+            <div style={{ position: 'relative', height: '7px', borderRadius: '99px', background: 'var(--surface-raised, var(--border-soft))', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: '99px', width: `${Math.round((r.target_amount / maxTarget) * 100)}%`, background: 'var(--border-soft)', position: 'absolute' }} />
+              <div style={{ height: '100%', borderRadius: '99px', width: `${Math.round((r.sales_amount / maxTarget) * 100)}%`, background: pct >= 90 ? '#16a34a' : pct >= 75 ? '#d97706' : '#ef4444', position: 'absolute' }} />
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
+              EGP {(r.sales_amount / 1000).toFixed(0)}K of {(r.target_amount / 1000).toFixed(0)}K · {r.lead_rep}
+            </span>
+          </button>
+        )
+      })}
+    </CardShell>
+  )
+}
+
+// ── 6. Receivables Panel (Admin only) ───────────────────────────────────────
+export function ReceivablesPanel() {
+  const [open, setOpen] = useState(false)
+  const totalOutstanding = homeReceivables.reduce((s, r) => s + r.outstanding_amount, 0)
+  const totalOverdue = homeReceivables.reduce((s, r) => s + r.overdue_amount, 0)
+  const top3 = [...homeReceivables].filter(r => r.days_overdue > 0).sort((a, b) => b.days_overdue - a.days_overdue).slice(0, 3)
+
+  return (
+    <>
+      <CardShell onClick={() => setOpen(true)}>
+        <CardTitle icon={FileText} label="Receivables" />
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--heading-text)' }}>
+              EGP {(totalOutstanding / 1000).toFixed(0)}K
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>outstanding</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--rose-text)' }}>
+              EGP {(totalOverdue / 1000).toFixed(0)}K
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>overdue</div>
+          </div>
+        </div>
+        <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '10px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', marginBottom: '6px', letterSpacing: '0.05em' }}>
+            Top Late Customers
+          </div>
+          {top3.map(r => (
+            <div key={r.customer_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+              <span style={{ fontSize: '12px', color: 'var(--heading-text)', fontWeight: 500 }}>{r.customer_name}</span>
+              <span style={{ fontSize: '12px', color: 'var(--rose-text)', fontWeight: 700 }}>{r.days_overdue}d late</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: '12px', color: 'var(--ocean)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          View full list <ChevronRight style={{ width: '13px', height: '13px' }} />
+        </div>
+      </CardShell>
+
+      {/* Receivables Drawer */}
+      {open && (
+        <div className="modal-backdrop" onClick={() => setOpen(false)}>
+          <aside className="side-sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-head">
+              <div>
+                <span className="eyebrow">FINANCE</span>
+                <h2>Outstanding Receivables</h2>
+              </div>
+              <button className="icon-button" onClick={() => setOpen(false)} aria-label="Close">
+                <X />
+              </button>
+            </div>
+            <div style={{ padding: '0 24px 24px' }}>
+              {homeReceivables.map(r => (
+                <div key={r.customer_id} style={{ padding: '14px 0', borderBottom: '1px solid var(--border-soft)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--heading-text)' }}>{r.customer_name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{r.rep_name}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--heading-text)' }}>EGP {r.outstanding_amount.toLocaleString()}</div>
+                      {r.overdue_amount > 0 && (
+                        <div style={{ fontSize: '12px', color: 'var(--rose-text)', fontWeight: 600 }}>
+                          EGP {r.overdue_amount.toLocaleString()} overdue · {r.days_overdue}d
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ── 7. Returns Panel ────────────────────────────────────────────────────────
+export function ReturnsPanel({ repId }: { repId?: string }) {
+  const entries = repId ? homeReturns.filter(r => r.rep_id === repId) : homeReturns
+  const totalUnits = entries.reduce((s, r) => s + r.units_returned, 0)
+  const totalSold = 12840 + 8620 + 7290 + 5410 + 4110
+  const returnRate = ((totalUnits / totalSold) * 100).toFixed(1)
+
+  const reasonCounts: Record<string, number> = {}
+  entries.forEach(r => { reasonCounts[r.reason] = (reasonCounts[r.reason] ?? 0) + r.units_returned })
+  const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
+
+  return (
+    <CardShell style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+      <div style={{ flex: '1 1 80px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Returns</div>
+        <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--heading-text)', lineHeight: 1.1 }}>{totalUnits}</div>
+        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>units this month</div>
+      </div>
+      <div style={{ flex: '1 1 80px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Return Rate</div>
+        <div style={{ fontSize: '28px', fontWeight: 800, color: parseFloat(returnRate) > 2 ? 'var(--rose-text)' : '#16a34a', lineHeight: 1.1 }}>{returnRate}%</div>
+        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>of total distributed</div>
+      </div>
+      <div style={{ flex: '2 1 160px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Top Reason</div>
+        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--heading-text)', marginTop: '4px' }}>{topReason}</div>
+      </div>
+    </CardShell>
+  )
+}

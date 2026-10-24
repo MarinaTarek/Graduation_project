@@ -9,6 +9,15 @@ import { TargetPanel } from './components/TargetPanel'
 import { ProductsPanel } from './components/ProductsPanel'
 import { TopRepsPanel } from './components/TopRepsPanel'
 import { QuoteCard } from './components/QuoteCard'
+import {
+  KpiStrip,
+  VisitCoverageByClass,
+  SamplesPanel,
+  ExpiringBatchesPanel,
+  RegionsPanel,
+  ReceivablesPanel,
+  ReturnsPanel,
+} from './components/PharmaSections'
 import { homeAttentionItems, homeProducts, homeReps } from './mock-data'
 
 const REP_METRICS: Record<string, { amount: string; percent: string }> = {
@@ -47,6 +56,9 @@ export default function HomePage({
     const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
     setDaysRemaining(Math.max(1, totalDays - now.getDate()))
   }, [])
+
+  // Rep ID for role-scoped pharma data
+  const repId = role === 'rep' ? (user?.id ?? undefined) : undefined
 
   const [filters, setFilters] = useState<HomeFiltersState>({
     month: 'October 2026',
@@ -179,6 +191,34 @@ export default function HomePage({
       </div>
 
       <QuoteCard />
+
+      {/* KPI Strip */}
+      <div style={{ marginTop: '18px' }}>
+        <KpiStrip repId={repId} onNav={onNavigateWithFilter} />
+      </div>
+
+      {/* Pharma bento grid */}
+      <div className="pharma-bento">
+        {/* Visit Coverage by Class */}
+        <VisitCoverageByClass repId={repId} onNav={onNavigateWithFilter} />
+
+        {/* Samples */}
+        <SamplesPanel repId={repId} onNav={(p) => onNavigateWithFilter?.(p)} />
+
+        {/* Expiring Batches */}
+        <ExpiringBatchesPanel onOpenDetail={() => onOpen('stock detail')} />
+
+        {/* Returns tile — full width on mobile, 1 col here */}
+        <ReturnsPanel repId={repId} />
+
+        {/* Admin-only: Regions and Receivables */}
+        {role === 'admin' && (
+          <>
+            <RegionsPanel onNav={onNavigateWithFilter} />
+            <ReceivablesPanel />
+          </>
+        )}
+      </div>
     </section>
   )
 }
