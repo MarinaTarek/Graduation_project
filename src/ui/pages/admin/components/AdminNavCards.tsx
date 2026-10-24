@@ -7,21 +7,23 @@ export interface AdminNavCardsProps {
 
 export function AdminNavCards({ onSelect }: AdminNavCardsProps) {
   return (
-    <div className="more-grid">
+    <div className="admin-hub-grid">
       {adminSections.map((sec) => {
         const Icon = sec.icon
         return (
-          <button key={sec.key} onClick={() => onSelect(sec.key)}>
-            <div>
-              <Icon />
+          <button
+            key={sec.key}
+            onClick={() => onSelect(sec.key)}
+            className="admin-hub-card"
+          >
+            <div className="admin-hub-icon">
+              <Icon style={{ width: '22px', height: '22px' }} />
             </div>
-            <div>
+            <div className="admin-hub-text">
               <strong>{sec.label}</strong>
-              <small style={{ color: 'var(--muted-text)', fontSize: '11px', display: 'block' }}>
-                {sec.description}
-              </small>
+              <small>{sec.description}</small>
             </div>
-            <ChevronRight />
+            <ChevronRight className="admin-hub-arrow" />
           </button>
         )
       })}

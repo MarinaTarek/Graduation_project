@@ -5,8 +5,9 @@ import type { ElementType } from 'react'
 import {
   Activity, ArrowUpRight, BarChart2, CalendarDays, ChevronLeft, ChevronRight,
   ClipboardCheck, FileText, LayoutGrid, MapPin, Package,
-  Power, Settings2, Stethoscope, Target, User, Users,
+  Power, Settings2, Shield, Stethoscope, Target, User, Users,
 } from 'lucide-react'
+import { canAccessPage } from '@/lib/auth'
 
 export interface SidebarProps {
   active: string
@@ -54,6 +55,7 @@ export function Sidebar({
   // Admin-only items
   const adminNav: NavItem[] = [
     { label: 'Reports', activeKey: 'Reports', icon: BarChart2 },
+    { label: 'Admin', activeKey: 'Admin', icon: Shield },
     { label: 'Users', activeKey: 'Users', icon: Users },
     { label: 'Products & Batches', activeKey: 'Products & Batches', icon: Package },
     { label: 'Territories', activeKey: 'Territories', icon: MapPin },
@@ -67,7 +69,7 @@ export function Sidebar({
     { label: 'My profile', activeKey: 'Profile', icon: User },
   ]
 
-  const navItems: NavItem[] = role === 'admin'
+  const navItems: NavItem[] = canAccessPage('Admin', role)
     ? [...baseNav, ...adminNav]
     : [...baseNav, ...repNav]
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { CalendarDays, Check, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { Button } from '@/ui/design-system/components/Button'
 import { Avatar } from '@/ui/design-system/components/Avatar'
@@ -155,25 +155,26 @@ export function ReportFilters({
   return (
     <div
       ref={dropdownRef}
+      className="home-filters-row"
       style={{
         display: 'flex',
-        flexWrap: 'wrap',
         alignItems: 'center',
-        gap: '8px',
+        gap: '12px',
         position: 'relative',
         marginBottom: '20px',
+        overflowX: 'auto',
       }}
     >
       {/* 1. Month Dropdown */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', display: 'inline-block' }}>
         <Chip
           active={filters.month !== 'October 2026' || openDropdown === 'month'}
           onClick={() => openFilter('month')}
           aria-expanded={openDropdown === 'month'}
+          className="home-filter-chip"
         >
-          <CalendarDays style={{ width: '14px', height: '14px', marginRight: '6px' }} />
-          {monthLabel}
-          <ChevronDown style={{ width: '14px', height: '14px', marginLeft: '6px' }} />
+          <span>{monthLabel}</span>
+          <ChevronDown />
         </Chip>
         {openDropdown === 'month' && (
           <div
@@ -185,8 +186,8 @@ export function ReportFilters({
               zIndex: 35,
               minWidth: '220px',
               padding: '12px',
-              boxShadow: 'var(--shadow)',
-              borderRadius: '16px',
+              boxShadow: 'var(--shadow-raised)',
+              borderRadius: '20px',
             }}
           >
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
@@ -231,14 +232,15 @@ export function ReportFilters({
       </div>
 
       {/* 2. Regions Dropdown */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', display: 'inline-block' }}>
         <Chip
           active={filters.regions.length > 0 || openDropdown === 'region'}
           onClick={() => openFilter('region')}
           aria-expanded={openDropdown === 'region'}
+          className="home-filter-chip"
         >
-          {regionsLabel}
-          <ChevronDown style={{ width: '14px', height: '14px', marginLeft: '6px' }} />
+          <span>{regionsLabel}</span>
+          <ChevronDown />
         </Chip>
         {openDropdown === 'region' && (
           <div
@@ -250,8 +252,8 @@ export function ReportFilters({
               zIndex: 35,
               minWidth: '240px',
               padding: '12px',
-              boxShadow: 'var(--shadow)',
-              borderRadius: '16px',
+              boxShadow: 'var(--shadow-raised)',
+              borderRadius: '20px',
             }}
           >
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
@@ -304,9 +306,10 @@ export function ReportFilters({
             active={filters.reps.length > 0 || openDropdown === 'rep'}
             onClick={() => openFilter('rep')}
             aria-expanded={openDropdown === 'rep'}
+            className="home-filter-chip"
           >
-            {repsLabel}
-            <ChevronDown style={{ width: '14px', height: '14px', marginLeft: '6px' }} />
+            <span>{repsLabel}</span>
+            <ChevronDown />
           </Chip>
           {openDropdown === 'rep' && (
             <div
@@ -318,8 +321,8 @@ export function ReportFilters({
                 zIndex: 35,
                 minWidth: '250px',
                 padding: '12px',
-                boxShadow: 'var(--shadow)',
-                borderRadius: '16px',
+                boxShadow: 'var(--shadow-raised)',
+                borderRadius: '20px',
               }}
             >
               <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
@@ -374,9 +377,10 @@ export function ReportFilters({
           active={filters.products.length > 0 || openDropdown === 'product'}
           onClick={() => openFilter('product')}
           aria-expanded={openDropdown === 'product'}
+          className="home-filter-chip"
         >
-          {productsLabel}
-          <ChevronDown style={{ width: '14px', height: '14px', marginLeft: '6px' }} />
+          <span>{productsLabel}</span>
+          <ChevronDown />
         </Chip>
         {openDropdown === 'product' && (
           <div
@@ -388,8 +392,8 @@ export function ReportFilters({
               zIndex: 35,
               minWidth: '260px',
               padding: '12px',
-              boxShadow: 'var(--shadow)',
-              borderRadius: '16px',
+              boxShadow: 'var(--shadow-raised)',
+              borderRadius: '20px',
             }}
           >
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>

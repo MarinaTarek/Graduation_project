@@ -82,14 +82,14 @@ export default function AdminPage({ initialSubpage }: AdminPageProps) {
 
   return (
     <section className="content">
-      <div className="page-intro">
+      <div className="page-intro" style={{ marginBottom: '20px' }}>
         <div>
-          <span className="eyebrow">
-            <Settings2 /> CONTROL CENTER
+          <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Settings2 style={{ width: '13px', height: '13px' }} /> CONTROL CENTER
           </span>
-          <h1>Admin</h1>
-          <p className="story">
-            Administrative consoles for managing users, drug formulations, territories, audit logs, and settings.
+          <h1 style={{ fontSize: '36px', margin: '6px 0 4px', lineHeight: 1.1 }}>Admin</h1>
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)', lineHeight: 1.4 }}>
+            Administrative consoles for managing users, products, territories, audit logs, and settings.
           </p>
         </div>
       </div>
