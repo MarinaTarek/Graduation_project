@@ -574,9 +574,17 @@ button { cursor: pointer; }
 
 .home-filters-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 32px; position: relative; }
 .home-filters-scroll { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; min-width: 0; }
-.home-filter-chip { height: 40px !important; min-height: 40px !important; padding: 0 16px !important; border-radius: 99px !important; border: 1px solid var(--border-input) !important; background: var(--input-bg) !important; color: var(--heading-text) !important; font-size: 13px !important; font-weight: 500 !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; transition: all 0.18s ease !important; white-space: nowrap !important; }
+.home-filter-chip { height: 40px !important; min-height: 40px !important; padding: 0 16px !important; border-radius: 99px !important; border: 1px solid var(--border-input) !important; background: var(--input-bg) !important; color: var(--heading-text) !important; font-size: 13px !important; font-weight: 500 !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; transition: all 0.18s ease !important; white-space: nowrap !important; outline: none !important; -webkit-tap-highlight-color: transparent; }
+.home-filter-chip:focus { outline: none !important; }
+.home-filter-chip:focus-visible { outline: 2px solid var(--ocean) !important; outline-offset: 2px !important; }
 .home-filter-chip:hover, .home-filter-chip.filter-active { border-color: var(--ocean) !important; color: var(--ocean) !important; background: var(--card-bg) !important; box-shadow: var(--card-shadow) !important; }
 .home-filter-chip svg { width: 14px !important; height: 14px !important; color: var(--text-secondary) !important; }
+
+.reports-filters-row { display: flex; align-items: center; justify-content: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; position: relative; }
+@media (max-width: 768px) {
+  .reports-filters-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .reports-filters-row::-webkit-scrollbar { display: none; }
+}
 
 .home-range-segmented { display: inline-flex; align-items: center; height: 40px; min-height: 40px; padding: 3px; border-radius: 99px; background: var(--input-bg); border: 1px solid var(--border-input); flex-shrink: 0; margin-left: auto; }
 .home-range-segmented button { height: 34px; padding: 0 14px; border-radius: 99px; border: none; font-size: 12px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.18s ease; white-space: nowrap; }
