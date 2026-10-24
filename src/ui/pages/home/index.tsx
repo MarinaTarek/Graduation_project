@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Plus, Sparkles } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { useAuth } from '@/lib/auth'
 import { HomeFilters, type HomeFiltersState } from './components/HomeFilters'
 import { AttentionSection } from './components/AttentionSection'
 import { SellInChartPanel } from './components/SellInChartPanel'
@@ -9,6 +10,15 @@ import { ProductsPanel } from './components/ProductsPanel'
 import { TopRepsPanel } from './components/TopRepsPanel'
 import { QuoteCard } from './components/QuoteCard'
 import { homeAttentionItems, homeProducts, homeReps } from './mock-data'
+
+const REP_METRICS: Record<string, { amount: string; percent: string }> = {
+  'Ahmed Samir': { amount: '$42.8K', percent: '94%' },
+  'Sara Ali': { amount: '$38.2K', percent: '88%' },
+  'Olivia Martin': { amount: '$42.8K', percent: '98%' },
+  'Maya Patel': { amount: '$39.4K', percent: '91%' },
+  'James Wilson': { amount: '$35.9K', percent: '84%' },
+  'Sofia Chen': { amount: '$32.6K', percent: '79%' },
+}
 
 export interface HomePageProps {
   onAction: (s: string) => void
@@ -29,6 +39,15 @@ export default function HomePage({
   onNavigateWithFilter,
   onSelectRep,
 }: HomePageProps) {
+  const { user, role } = useAuth()
+  const [daysRemaining, setDaysRemaining] = useState(12)
+
+  useEffect(() => {
+    const now = new Date()
+    const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    setDaysRemaining(Math.max(1, totalDays - now.getDate()))
+  }, [])
+
   const [filters, setFilters] = useState<HomeFiltersState>({
     month: 'October 2026',
     regions: [],
@@ -51,7 +70,7 @@ export default function HomePage({
   // Headline metrics reacting to filters
   let headlineSales = '$240K'
   let headlineGrowth = '8%'
-  let headlineDays = range === 'Week' ? '4 days' : '12 days'
+  let headlineDays = range === 'Week' ? '4 days' : `${daysRemaining} days`
 
   if (filters.reps.length === 1) {
     headlineSales = filters.reps[0] === 'Olivia Martin' ? '$42.8K' : '$39.4K'
@@ -64,22 +83,53 @@ export default function HomePage({
     headlineDays = 'Completed period'
   }
 
+  const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: '$42.8K', percent: '94%' }
+
   return (
-    <section className="content">
-      <div className="page-intro">
+    <section className="content" style={{ paddingTop: '8px' }}>
+      <div className="page-intro" style={{ alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <span className="eyebrow">
-            <Sparkles /> Tuesday, October 24, 2026
-          </span>
-          <h1>Good morning, Alex.</h1>
-          <p className="story">
-            In {filters.month.split(' ')[0]} we sold{' '}
-            <button onClick={() => onOpen('invoice detail')}>
-              <b>{headlineSales}</b>
-            </button>
-            , up <em>{headlineGrowth}</em> from previous benchmark, with{' '}
-            <strong>{headlineDays}</strong> to target.
-          </p>
+          {role === 'rep' ? (
+            <h1
+              className="story"
+              style={{
+                fontSize: 'clamp(28px, 3.2vw, 44px)',
+                fontWeight: 300,
+                letterSpacing: '-0.035em',
+                lineHeight: 1.25,
+                color: 'var(--heading-text)',
+                maxWidth: '920px',
+                margin: 0,
+              }}
+            >
+              This month you sold{' '}
+              <button onClick={() => onOpen('invoice detail')}>
+                <b>{repMetric.amount}</b>
+              </button>
+              , <em>{repMetric.percent}</em> of your target, with{' '}
+              <strong>{headlineDays}</strong> left.
+            </h1>
+          ) : (
+            <h1
+              className="story"
+              style={{
+                fontSize: 'clamp(28px, 3.2vw, 44px)',
+                fontWeight: 300,
+                letterSpacing: '-0.035em',
+                lineHeight: 1.25,
+                color: 'var(--heading-text)',
+                maxWidth: '920px',
+                margin: 0,
+              }}
+            >
+              In {filters.month.split(' ')[0]} we sold{' '}
+              <button onClick={() => onOpen('invoice detail')}>
+                <b>{headlineSales}</b>
+              </button>
+              , up <em>{headlineGrowth}</em> from previous benchmark, with{' '}
+              <strong>{headlineDays}</strong> to target.
+            </h1>
+          )}
         </div>
         <Button variant="primary" onClick={() => onOpen('new visit')}>
           <Plus data-icon="inline-start" /> New visit
