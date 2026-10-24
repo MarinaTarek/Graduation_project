@@ -1,4 +1,5 @@
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
+import { formatDate } from '@/lib/format'
 import { sellInMockOrders } from '../mock-data'
 
 export function SellInTable() {
@@ -9,7 +10,7 @@ export function SellInTable() {
           <div key={order.orderId} className="collection-item">
             <div>
               <strong>{order.orderId} · {order.distributor}</strong>
-              <span>{order.volume} · {order.date}</span>
+              <span>{order.volume} · {formatDate(order.date)}</span>
             </div>
             <b style={{ color: 'var(--heading-text)', marginRight: '16px' }}>{order.amount}</b>
             <StatusPill status={order.status === 'Delivered' ? 'Healthy' : 'Pending'} />

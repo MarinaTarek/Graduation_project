@@ -62,6 +62,7 @@ export function Header({
         <button
           className="header-bell-btn"
           aria-label="Notifications"
+          title="Notifications"
           onClick={onOpenNotifications}
         >
           <Bell />

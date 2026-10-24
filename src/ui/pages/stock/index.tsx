@@ -69,6 +69,13 @@ export default function StockPage({
     return true
   })
 
+  // Default sorting: Stock by expiry urgency (Expiring / Low stock first)
+  const sortedStock = [...displayedStock].sort((a, b) => {
+    const scoreA = a.status === 'Expiring batch' ? 0 : a.status === 'Low stock' ? 1 : 2
+    const scoreB = b.status === 'Expiring batch' ? 0 : b.status === 'Low stock' ? 1 : 2
+    return scoreA - scoreB
+  })
+
   const removeProduct = () => setActiveFilters((prev) => ({ ...prev, product: 'All products' }))
   const removeExpiry = () => setActiveFilters((prev) => ({ ...prev, expiryStatus: 'All expiry statuses' }))
   const removeLocation = () => setActiveFilters((prev) => ({ ...prev, location: 'All locations' }))
@@ -144,8 +151,8 @@ export default function StockPage({
             : undefined
         }
       >
-        {displayedStock.length > 0 ? (
-          displayedStock.map((item) => (
+        {sortedStock.length > 0 ? (
+          sortedStock.map((item) => (
             <StockListItem key={item.name} item={item} onClick={onItem} />
           ))
         ) : (

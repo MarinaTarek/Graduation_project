@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { useAuth } from '@/lib/auth'
+import { FieldError } from '@/ui/design-system/components/FieldError'
 
 export interface LoginFormProps {
   onLogin: () => void
@@ -57,16 +58,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           />
         </label>
 
-        {error && (
-          <div style={{ color: 'var(--rose-text)', fontSize: '13px', textAlign: 'left', fontWeight: 500 }}>
-            {error}
-          </div>
-        )}
+        <FieldError message={error} />
 
         <div style={{ marginTop: '16px' }}>
-          <Button variant="primary" className="full-button" type="submit" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Check data-icon="inline-start" />}
-            {loading ? 'Signing in...' : 'Sign in'}
+          <Button variant="primary" className="full-button" type="submit" loading={loading}>
+            <Check data-icon="inline-start" /> {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </div>
       </form>

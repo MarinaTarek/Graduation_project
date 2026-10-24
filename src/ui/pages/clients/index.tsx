@@ -71,6 +71,15 @@ export default function ClientsPage({
     return true
   })
 
+  // Default sorting: clients by priority (Overdue first, then Class A)
+  const sortedClients = [...displayedClients].sort((a, b) => {
+    if (a.status === 'Overdue' && b.status !== 'Overdue') return -1
+    if (b.status === 'Overdue' && a.status !== 'Overdue') return 1
+    if (a.classification === 'Class A' && b.classification !== 'Class A') return -1
+    if (b.classification === 'Class A' && a.classification !== 'Class A') return 1
+    return 0
+  })
+
   const removeSpecialty = () => setActiveFilters((prev) => ({ ...prev, specialty: 'All specialties' }))
   const removeClassification = () => setActiveFilters((prev) => ({ ...prev, classification: 'All classes' }))
   const removeRegion = () => setActiveFilters((prev) => ({ ...prev, region: 'All regions' }))
@@ -155,8 +164,8 @@ export default function ClientsPage({
             : undefined
         }
       >
-        {displayedClients.length > 0 ? (
-          displayedClients.map((client) => (
+        {sortedClients.length > 0 ? (
+          sortedClients.map((client) => (
             <ClientListItem key={client.name} item={client} onClick={onItem} />
           ))
         ) : (

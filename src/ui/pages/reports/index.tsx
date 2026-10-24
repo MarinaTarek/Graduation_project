@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import {
-  AlertCircle,
   ArrowLeft,
   BarChart2,
   CalendarDays,
@@ -10,11 +9,11 @@ import {
   FileSpreadsheet,
   FileText,
   Printer,
-  RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Skeleton } from '@/ui/design-system/components/Skeleton'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { ErrorState } from '@/ui/design-system/components/ErrorState'
 import { ReportHubGrid } from './components/ReportHubGrid'
 import { ReportFilters, type ReportFiltersState } from './components/ReportFilters'
 import { SalesPerformanceReport } from './components/SalesPerformanceReport'
@@ -167,40 +166,12 @@ export default function ReportsPage({
 
       {/* Error State Banner */}
       {hasError && (
-        <div
-          className="panel"
-          style={{
-            padding: '24px',
-            borderRadius: '20px',
-            marginBottom: '24px',
-            background: 'var(--rose-bg)',
-            border: '1px solid var(--rose)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <AlertCircle style={{ width: '24px', height: '24px', color: 'var(--rose-text)' }} />
-            <div>
-              <strong style={{ color: 'var(--rose-text)', fontSize: '15px', display: 'block' }}>
-                Unable to compile analytics dataset
-              </strong>
-              <span style={{ color: 'var(--muted-text)', fontSize: '13px' }}>
-                A temporary connection timeout occurred while retrieving monthly ledger metrics.
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={handleRetry}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            <RefreshCw style={{ width: '14px', height: '14px' }} />
-            Retry
-          </Button>
-        </div>
+        <ErrorState
+          title="Unable to compile analytics dataset"
+          message="A temporary connection timeout occurred while retrieving monthly ledger metrics."
+          onRetry={handleRetry}
+          className="mb-6"
+        />
       )}
 
       {/* HUB VIEW: Grid of 6 Report Cards (Admin) or 1 Card (Rep) */}

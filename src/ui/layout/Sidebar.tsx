@@ -114,7 +114,8 @@ export function Sidebar({
                 key={item.label}
                 className={`sidebar-nav-item ${isItemActive ? 'active' : ''}`}
                 onClick={() => onSelect(item.activeKey)}
-                title={collapsed ? item.label : undefined}
+                title={item.label}
+                aria-label={item.label}
               >
                 <div className="sidebar-item-icon">
                   <Icon />
@@ -136,7 +137,8 @@ export function Sidebar({
         <button
           className="sidebar-logout-btn"
           onClick={onOpenLogout}
-          title={collapsed ? 'Log out' : undefined}
+          title="Log out"
+          aria-label="Log out"
         >
           <div className="sidebar-item-icon">
             <Power />

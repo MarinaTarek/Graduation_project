@@ -65,6 +65,29 @@ export default function InvoicesPage({
     return true
   })
 
+  const [sortField, setSortField] = useState<'id' | 'status'>('id')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+  const toggleSort = (field: 'id' | 'status') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('desc')
+    }
+  }
+
+  // Sorted list: default newest first
+  const sortedInvoices = [...displayedInvoices].sort((a, b) => {
+    if (sortField === 'id') {
+      const cmp = a.name.localeCompare(b.name)
+      return sortOrder === 'desc' ? -cmp : cmp
+    } else {
+      const cmp = a.status.localeCompare(b.status)
+      return sortOrder === 'desc' ? -cmp : cmp
+    }
+  })
+
   const removeStatus = () => {
     setActiveFilters((prev) => ({ ...prev, status: 'All statuses' }))
     if (onClearFilter) onClearFilter()
@@ -138,6 +161,24 @@ export default function InvoicesPage({
         </div>
       )}
 
+      {/* Sortable Column Headers */}
+      {viewMode === 'list' && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 16px', fontSize: '11px', color: 'var(--muted-text)', fontWeight: 600 }}>
+          <button
+            onClick={() => toggleSort('id')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontWeight: 600, padding: 0 }}
+          >
+            Invoice {sortField === 'id' ? (sortOrder === 'desc' ? '▼' : '▲') : ''}
+          </button>
+          <button
+            onClick={() => toggleSort('status')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontWeight: 600, padding: 0 }}
+          >
+            Status {sortField === 'status' ? (sortOrder === 'desc' ? '▼' : '▲') : ''}
+          </button>
+        </div>
+      )}
+
       {/* Collection items in List or Cards layout */}
       <div
         className="collection-list"
@@ -147,8 +188,8 @@ export default function InvoicesPage({
             : undefined
         }
       >
-        {displayedInvoices.length > 0 ? (
-          displayedInvoices.map((invoice) => (
+        {sortedInvoices.length > 0 ? (
+          sortedInvoices.map((invoice) => (
             <InvoiceListItem key={invoice.name} item={invoice} onClick={onItem} />
           ))
         ) : (
