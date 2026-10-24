@@ -104,8 +104,16 @@ export function Sidebar({
       aria-label="Main Navigation"
     >
       {/* Brand Logo & Name */}
-      <div style={{ padding: collapsed ? '14px 16px 8px' : '16px 20px 8px', display: 'flex', alignItems: 'center' }}>
-        <Logo size={28} showText={!collapsed} />
+      <div
+        style={{
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          flexShrink: 0,
+          overflow: 'visible',
+        }}
+      >
+        <Logo showText={!collapsed} textColor="#FFFFFF" />
       </div>
 
       {/* Top Profile Zone (Fixed) */}

@@ -1,5 +1,6 @@
 import { Target } from 'lucide-react'
 import { ProgressRing } from '@/ui/design-system/components/ProgressRing'
+import { formatCurrencyCompact } from '@/lib/format'
 
 export function TargetPanel() {
   return (
@@ -14,7 +15,7 @@ export function TargetPanel() {
       <ProgressRing percent={78} label="of target" />
       <div className="target-foot">
         <span>
-          $240k <small>of $310k</small>
+          {formatCurrencyCompact(240000)} <small>of {formatCurrencyCompact(310000)}</small>
         </span>
         <span className="green-text">+8.4%</span>
       </div>

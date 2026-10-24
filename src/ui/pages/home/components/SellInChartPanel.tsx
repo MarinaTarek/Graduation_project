@@ -1,4 +1,5 @@
 import { Activity, ArrowUpRight } from 'lucide-react'
+import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 
 export interface SellInChartPanelProps {
   onClick?: () => void
@@ -15,17 +16,17 @@ export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
         <Activity />
       </div>
       <div className="chart-total">
-        <strong>$240,820</strong>
+        <strong>{formatCurrency(240820)}</strong>
         <span>
           <ArrowUpRight /> 8.4% <small>vs last month</small>
         </span>
       </div>
       <div className="chart-wrap">
         <div className="chart-labels">
-          <span>$300k</span>
-          <span>$200k</span>
-          <span>$100k</span>
-          <span>$0</span>
+          <span>{formatCurrencyCompact(300000)}</span>
+          <span>{formatCurrencyCompact(200000)}</span>
+          <span>{formatCurrencyCompact(100000)}</span>
+          <span>{formatCurrencyCompact(0)}</span>
         </div>
         <svg
           viewBox="0 0 660 190"

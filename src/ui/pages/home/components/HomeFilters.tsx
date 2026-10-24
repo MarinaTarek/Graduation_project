@@ -3,6 +3,7 @@ import { Check, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { Button } from '@/ui/design-system/components/Button'
 import { Avatar } from '@/ui/design-system/components/Avatar'
+import { DropdownPortal } from '@/ui/design-system/components/DropdownPortal'
 
 export interface HomeFiltersState {
   month: string
@@ -37,21 +38,10 @@ export function HomeFilters({
   const [draftReps, setDraftReps] = useState<string[]>(filters.reps)
   const [draftProducts, setDraftProducts] = useState<string[]>(filters.products)
 
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null)
-      }
-    }
-    if (openDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [openDropdown])
+  const monthRef = useRef<HTMLDivElement>(null)
+  const regionRef = useRef<HTMLDivElement>(null)
+  const repRef = useRef<HTMLDivElement>(null)
+  const productRef = useRef<HTMLDivElement>(null)
 
   const openFilter = (type: 'month' | 'region' | 'rep' | 'product') => {
     if (openDropdown === type) {
@@ -140,10 +130,10 @@ export function HomeFilters({
     : `${filters.products.length} products`
 
   return (
-    <div className="home-filters-row" ref={dropdownRef}>
+    <div className="home-filters-row">
       <div className="home-filters-scroll">
         {/* 1. Month Filter */}
-        <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div ref={monthRef} style={{ display: 'inline-block' }}>
           <Chip
             active={filters.month !== 'October 2026'}
             onClick={() => openFilter('month')}
@@ -153,19 +143,11 @@ export function HomeFilters({
             {monthLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
           </Chip>
 
-        {openDropdown === 'month' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: '8px',
-              minWidth: '220px',
-              zIndex: 30,
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-            }}
+          <DropdownPortal
+            isOpen={openDropdown === 'month'}
+            anchorEl={monthRef.current}
+            onClose={() => setOpenDropdown(null)}
+            width={220}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
               SELECT MONTH
@@ -203,34 +185,25 @@ export function HomeFilters({
                 Apply
               </Button>
             </div>
-          </div>
-        )}
-      </div>
+          </DropdownPortal>
+        </div>
 
-      {/* 2. Region Multi-select Filter */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <Chip
-          active={filters.regions.length > 0}
-          onClick={() => openFilter('region')}
-          aria-expanded={openDropdown === 'region'}
-          className="home-filter-chip"
-        >
-          {regionLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
-        </Chip>
+        {/* 2. Region Multi-select Filter */}
+        <div ref={regionRef} style={{ display: 'inline-block' }}>
+          <Chip
+            active={filters.regions.length > 0}
+            onClick={() => openFilter('region')}
+            aria-expanded={openDropdown === 'region'}
+            className="home-filter-chip"
+          >
+            {regionLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
+          </Chip>
 
-        {openDropdown === 'region' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: '8px',
-              minWidth: '230px',
-              zIndex: 30,
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-            }}
+          <DropdownPortal
+            isOpen={openDropdown === 'region'}
+            anchorEl={regionRef.current}
+            onClose={() => setOpenDropdown(null)}
+            width={230}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
               FILTER REGIONS
@@ -272,34 +245,25 @@ export function HomeFilters({
                 Apply
               </Button>
             </div>
-          </div>
-        )}
-      </div>
+          </DropdownPortal>
+        </div>
 
-      {/* 3. Rep Multi-select Filter (with avatars) */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <Chip
-          active={filters.reps.length > 0}
-          onClick={() => openFilter('rep')}
-          aria-expanded={openDropdown === 'rep'}
-          className="home-filter-chip"
-        >
-          {repLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
-        </Chip>
+        {/* 3. Rep Multi-select Filter (with avatars) */}
+        <div ref={repRef} style={{ display: 'inline-block' }}>
+          <Chip
+            active={filters.reps.length > 0}
+            onClick={() => openFilter('rep')}
+            aria-expanded={openDropdown === 'rep'}
+            className="home-filter-chip"
+          >
+            {repLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
+          </Chip>
 
-        {openDropdown === 'rep' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: '8px',
-              minWidth: '250px',
-              zIndex: 30,
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-            }}
+          <DropdownPortal
+            isOpen={openDropdown === 'rep'}
+            anchorEl={repRef.current}
+            onClose={() => setOpenDropdown(null)}
+            width={250}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
               FIELD REPRESENTATIVES
@@ -343,34 +307,25 @@ export function HomeFilters({
                 Apply
               </Button>
             </div>
-          </div>
-        )}
-      </div>
+          </DropdownPortal>
+        </div>
 
-      {/* 4. Product Multi-select Filter */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <Chip
-          active={filters.products.length > 0}
-          onClick={() => openFilter('product')}
-          aria-expanded={openDropdown === 'product'}
-          className="home-filter-chip"
-        >
-          {productLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
-        </Chip>
+        {/* 4. Product Multi-select Filter */}
+        <div ref={productRef} style={{ display: 'inline-block' }}>
+          <Chip
+            active={filters.products.length > 0}
+            onClick={() => openFilter('product')}
+            aria-expanded={openDropdown === 'product'}
+            className="home-filter-chip"
+          >
+            {productLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
+          </Chip>
 
-        {openDropdown === 'product' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: '8px',
-              minWidth: '240px',
-              zIndex: 30,
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-            }}
+          <DropdownPortal
+            isOpen={openDropdown === 'product'}
+            anchorEl={productRef.current}
+            onClose={() => setOpenDropdown(null)}
+            width={240}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
               PRODUCT PORTFOLIO
@@ -412,9 +367,8 @@ export function HomeFilters({
                 Apply
               </Button>
             </div>
-          </div>
-        )}
-      </div>
+          </DropdownPortal>
+        </div>
       </div>
 
       {/* Segmented Range Toggle */}

@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { Button } from '@/ui/design-system/components/Button'
 import { Avatar } from '@/ui/design-system/components/Avatar'
+import { DropdownPortal } from '@/ui/design-system/components/DropdownPortal'
 
 export interface ReportFiltersState {
   month: string
@@ -46,21 +47,10 @@ export function ReportFilters({
   const [draftReps, setDraftReps] = useState<string[]>(filters.reps)
   const [draftProducts, setDraftProducts] = useState<string[]>(filters.products)
 
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null)
-      }
-    }
-    if (openDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [openDropdown])
+  const monthRef = useRef<HTMLDivElement>(null)
+  const regionRef = useRef<HTMLDivElement>(null)
+  const repRef = useRef<HTMLDivElement>(null)
+  const productRef = useRef<HTMLDivElement>(null)
 
   const openFilter = (type: 'month' | 'region' | 'rep' | 'product') => {
     if (openDropdown === type) {
@@ -154,19 +144,19 @@ export function ReportFilters({
 
   return (
     <div
-      ref={dropdownRef}
       className="home-filters-row"
       style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'flex-start',
         gap: '12px',
         position: 'relative',
         marginBottom: '20px',
-        overflowX: 'auto',
+        flexWrap: 'wrap',
       }}
     >
       {/* 1. Month Dropdown */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
+      <div ref={monthRef} style={{ display: 'inline-block' }}>
         <Chip
           active={filters.month !== 'October 2026' || openDropdown === 'month'}
           onClick={() => openFilter('month')}
@@ -176,63 +166,54 @@ export function ReportFilters({
           <span>{monthLabel}</span>
           <ChevronDown />
         </Chip>
-        {openDropdown === 'month' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              left: 0,
-              zIndex: 35,
-              minWidth: '220px',
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-              borderRadius: '20px',
-            }}
-          >
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
-              Select Time Range
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
-              {ALL_MONTHS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setDraftMonth(m)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    background: draftMonth === m ? 'var(--mist)' : 'transparent',
-                    color: draftMonth === m ? 'var(--navy)' : 'var(--heading-text)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: draftMonth === m ? 600 : 400,
-                    textAlign: 'left',
-                  }}
-                >
-                  <span>{m}</span>
-                  {draftMonth === m && <Check style={{ width: '15px', height: '15px' }} />}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
-              <Button variant="secondary" onClick={handleClearMonth} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
-                Reset
-              </Button>
-              <Button variant="primary" onClick={handleApplyMonth} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
-                Apply
-              </Button>
-            </div>
+        <DropdownPortal
+          isOpen={openDropdown === 'month'}
+          anchorEl={monthRef.current}
+          onClose={() => setOpenDropdown(null)}
+          width={240}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
+            Select Time Range
           </div>
-        )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+            {ALL_MONTHS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setDraftMonth(m)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  background: draftMonth === m ? 'var(--mist)' : 'transparent',
+                  color: draftMonth === m ? 'var(--navy)' : 'var(--heading-text)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: draftMonth === m ? 600 : 400,
+                  textAlign: 'left',
+                }}
+              >
+                <span>{m}</span>
+                {draftMonth === m && <Check style={{ width: '15px', height: '15px' }} />}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
+            <Button variant="secondary" onClick={handleClearMonth} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              Reset
+            </Button>
+            <Button variant="primary" onClick={handleApplyMonth} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              Apply
+            </Button>
+          </div>
+        </DropdownPortal>
       </div>
 
       {/* 2. Regions Dropdown */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
+      <div ref={regionRef} style={{ display: 'inline-block' }}>
         <Chip
           active={filters.regions.length > 0 || openDropdown === 'region'}
           onClick={() => openFilter('region')}
@@ -242,66 +223,57 @@ export function ReportFilters({
           <span>{regionsLabel}</span>
           <ChevronDown />
         </Chip>
-        {openDropdown === 'region' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              left: 0,
-              zIndex: 35,
-              minWidth: '240px',
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-              borderRadius: '20px',
-            }}
-          >
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
-              Filter by Region
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
-              {ALL_REGIONS.map((reg) => {
-                const checked = draftRegions.includes(reg)
-                return (
-                  <label
-                    key={reg}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '6px 8px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      color: 'var(--heading-text)',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleMultiSelect(reg, draftRegions, setDraftRegions)}
-                      style={{ accentColor: 'var(--ocean)' }}
-                    />
-                    <span>{reg}</span>
-                  </label>
-                )
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
-              <Button variant="secondary" onClick={handleClearRegions} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
-                Clear
-              </Button>
-              <Button variant="primary" onClick={handleApplyRegions} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
-                Apply
-              </Button>
-            </div>
+        <DropdownPortal
+          isOpen={openDropdown === 'region'}
+          anchorEl={regionRef.current}
+          onClose={() => setOpenDropdown(null)}
+          width={260}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
+            Filter by Region
           </div>
-        )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+            {ALL_REGIONS.map((reg) => {
+              const checked = draftRegions.includes(reg)
+              return (
+                <label
+                  key={reg}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 8px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: 'var(--heading-text)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleMultiSelect(reg, draftRegions, setDraftRegions)}
+                    style={{ accentColor: 'var(--ocean)' }}
+                  />
+                  <span>{reg}</span>
+                </label>
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
+            <Button variant="secondary" onClick={handleClearRegions} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              Clear
+            </Button>
+            <Button variant="primary" onClick={handleApplyRegions} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              Apply
+            </Button>
+          </div>
+        </DropdownPortal>
       </div>
 
       {/* 3. Reps Dropdown (Disabled/Locked if role === 'rep') */}
       {role === 'admin' && (
-        <div style={{ position: 'relative' }}>
+        <div ref={repRef} style={{ display: 'inline-block' }}>
           <Chip
             active={filters.reps.length > 0 || openDropdown === 'rep'}
             onClick={() => openFilter('rep')}
@@ -311,100 +283,22 @@ export function ReportFilters({
             <span>{repsLabel}</span>
             <ChevronDown />
           </Chip>
-          {openDropdown === 'rep' && (
-            <div
-              className="panel"
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                zIndex: 35,
-                minWidth: '250px',
-                padding: '12px',
-                boxShadow: 'var(--shadow-raised)',
-                borderRadius: '20px',
-              }}
-            >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
-                Filter by Representative
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
-                {ALL_REPS.map((r) => {
-                  const checked = draftReps.includes(r)
-                  const initials = r.split(' ').map((n) => n[0]).join('')
-                  return (
-                    <label
-                      key={r}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '6px 8px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        color: 'var(--heading-text)',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleMultiSelect(r, draftReps, setDraftReps)}
-                        style={{ accentColor: 'var(--ocean)' }}
-                      />
-                      <Avatar initials={initials} size="sm" />
-                      <span>{r}</span>
-                    </label>
-                  )
-                })}
-              </div>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
-                <Button variant="secondary" onClick={handleClearReps} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
-                  Clear
-                </Button>
-                <Button variant="primary" onClick={handleApplyReps} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
-                  Apply
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 4. Products Dropdown */}
-      <div style={{ position: 'relative' }}>
-        <Chip
-          active={filters.products.length > 0 || openDropdown === 'product'}
-          onClick={() => openFilter('product')}
-          aria-expanded={openDropdown === 'product'}
-          className="home-filter-chip"
-        >
-          <span>{productsLabel}</span>
-          <ChevronDown />
-        </Chip>
-        {openDropdown === 'product' && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              left: 0,
-              zIndex: 35,
-              minWidth: '260px',
-              padding: '12px',
-              boxShadow: 'var(--shadow-raised)',
-              borderRadius: '20px',
-            }}
+          <DropdownPortal
+            isOpen={openDropdown === 'rep'}
+            anchorEl={repRef.current}
+            onClose={() => setOpenDropdown(null)}
+            width={260}
           >
             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
-              Filter by Product
+              Filter by Representative
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
-              {ALL_PRODUCTS.map((prod) => {
-                const checked = draftProducts.includes(prod)
+              {ALL_REPS.map((r) => {
+                const checked = draftReps.includes(r)
+                const initials = r.split(' ').map((n) => n[0]).join('')
                 return (
                   <label
-                    key={prod}
+                    key={r}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -419,24 +313,84 @@ export function ReportFilters({
                     <input
                       type="checkbox"
                       checked={checked}
-                      onChange={() => toggleMultiSelect(prod, draftProducts, setDraftProducts)}
+                      onChange={() => toggleMultiSelect(r, draftReps, setDraftReps)}
                       style={{ accentColor: 'var(--ocean)' }}
                     />
-                    <span>{prod}</span>
+                    <Avatar initials={initials} size="sm" />
+                    <span>{r}</span>
                   </label>
                 )
               })}
             </div>
             <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
-              <Button variant="secondary" onClick={handleClearProducts} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              <Button variant="secondary" onClick={handleClearReps} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
                 Clear
               </Button>
-              <Button variant="primary" onClick={handleApplyProducts} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              <Button variant="primary" onClick={handleApplyReps} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
                 Apply
               </Button>
             </div>
+          </DropdownPortal>
+        </div>
+      )}
+
+      {/* 4. Products Dropdown */}
+      <div ref={productRef} style={{ display: 'inline-block' }}>
+        <Chip
+          active={filters.products.length > 0 || openDropdown === 'product'}
+          onClick={() => openFilter('product')}
+          aria-expanded={openDropdown === 'product'}
+          className="home-filter-chip"
+        >
+          <span>{productsLabel}</span>
+          <ChevronDown />
+        </Chip>
+        <DropdownPortal
+          isOpen={openDropdown === 'product'}
+          anchorEl={productRef.current}
+          onClose={() => setOpenDropdown(null)}
+          width={280}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '8px', textTransform: 'uppercase' }}>
+            Filter by Product
           </div>
-        )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+            {ALL_PRODUCTS.map((prod) => {
+              const checked = draftProducts.includes(prod)
+              return (
+                <label
+                  key={prod}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 8px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: 'var(--heading-text)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleMultiSelect(prod, draftProducts, setDraftProducts)}
+                    style={{ accentColor: 'var(--ocean)' }}
+                  />
+                  <span>{prod}</span>
+                </label>
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
+            <Button variant="secondary" onClick={handleClearProducts} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              Clear
+            </Button>
+            <Button variant="primary" onClick={handleApplyProducts} style={{ flex: 1, padding: '4px 8px', fontSize: '12px' }}>
+              Apply
+            </Button>
+          </div>
+        </DropdownPortal>
       </div>
 
       {/* Active Filter Removable Tags */}

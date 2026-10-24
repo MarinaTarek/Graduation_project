@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Filter, LayoutGrid, List, Search, X } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { DropdownPortal } from '@/ui/design-system/components/DropdownPortal'
 
 export interface InvoiceFiltersState {
   status: string
@@ -33,25 +34,11 @@ export function InvoiceToolbar({
 }: InvoiceToolbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [draft, setDraft] = useState<InvoiceFiltersState>(activeFilters)
-  const popoverRef = useRef<HTMLDivElement>(null)
+  const filterBtnRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setDraft(activeFilters)
   }, [activeFilters])
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen])
 
   const handleApply = () => {
     onApplyFilters(draft)
@@ -75,7 +62,7 @@ export function InvoiceToolbar({
     (activeFilters.source !== 'All sources' ? 1 : 0)
 
   return (
-    <div className="collection-toolbar" style={{ position: 'relative' }} ref={popoverRef}>
+    <div className="collection-toolbar" style={{ position: 'relative' }}>
       <div className="search-inline">
         <Search />
         <input
@@ -85,7 +72,7 @@ export function InvoiceToolbar({
         />
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div ref={filterBtnRef} style={{ position: 'relative' }}>
         <Button
           variant={activeCount > 0 ? 'primary' : 'secondary'}
           onClick={() => setIsOpen(!isOpen)}
@@ -94,20 +81,13 @@ export function InvoiceToolbar({
           {activeCount > 0 && ` (${activeCount})`}
         </Button>
 
-        {isOpen && (
-          <div
-            className="panel"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: '8px',
-              minWidth: '280px',
-              zIndex: 30,
-              padding: '16px',
-              boxShadow: 'var(--shadow)',
-            }}
-          >
+        <DropdownPortal
+          isOpen={isOpen}
+          anchorEl={filterBtnRef.current}
+          onClose={() => setIsOpen(false)}
+          width={300}
+          align="right"
+        >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <span className="eyebrow">INVOICE FILTERS</span>
               <button
@@ -188,8 +168,7 @@ export function InvoiceToolbar({
                 Apply
               </Button>
             </div>
-          </div>
-        )}
+        </DropdownPortal>
       </div>
 
       <Button variant="secondary" onClick={onToggleView} title={`Switch to ${viewMode === 'list' ? 'Cards' : 'List'} view`}>
