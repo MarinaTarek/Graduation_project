@@ -8,6 +8,7 @@ import {
   Power, Settings2, Shield, Stethoscope, Target, User, Users,
 } from 'lucide-react'
 import { canAccessPage, type User as AuthUser } from '@/lib/auth'
+import { Logo } from './Logo'
 
 export interface SidebarProps {
   active: string
@@ -84,6 +85,11 @@ export function Sidebar({
       className={`app-sidebar ${collapsed ? 'is-collapsed' : ''}`}
       aria-label="Main Navigation"
     >
+      {/* Brand Logo & Name */}
+      <div style={{ padding: collapsed ? '14px 16px 8px' : '16px 20px 8px', display: 'flex', alignItems: 'center' }}>
+        <Logo size={28} showText={!collapsed} />
+      </div>
+
       {/* Top Profile Zone (Fixed) */}
       <div className="sidebar-top">
         <div className="sidebar-avatar-wrap">

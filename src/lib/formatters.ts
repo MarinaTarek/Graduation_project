@@ -1,7 +1,10 @@
-export function formatCurrency(amount: number, currency = 'EGP'): string {
+export function formatCurrency(amount?: number | null, currency = 'EGP'): string {
+  if (amount === undefined || amount === null || amount === 0 || (typeof amount === 'number' && isNaN(amount))) {
+    return 'Price not set'
+  }
+  const hasDecimals = typeof amount === 'number' && amount % 1 !== 0
   const formatted = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: hasDecimals ? 2 : 0,
   }).format(amount)
   return `${currency} ${formatted}`
 }

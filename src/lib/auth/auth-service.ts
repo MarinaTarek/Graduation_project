@@ -1,7 +1,7 @@
 import { MOCK_USERS } from './mock-users'
 import type { User, AuthSession } from './types'
 
-const STORAGE_KEY = 'medora_session'
+const STORAGE_KEY = 'navigen_session'
 
 export async function signIn(email: string, password: string): Promise<User> {
   // Simulate network latency
@@ -68,7 +68,7 @@ export function updateMockUser(updatedUser: Partial<User> & { id?: string; email
     const newSessionUser = { ...session.user, ...updatedUser } as User
     setSessionUser(newSessionUser)
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('medora_user_updated', { detail: newSessionUser }))
+      window.dispatchEvent(new CustomEvent('navigen_user_updated', { detail: newSessionUser }))
     }
   }
 }

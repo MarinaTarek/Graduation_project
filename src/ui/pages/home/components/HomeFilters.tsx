@@ -21,7 +21,7 @@ export interface HomeFiltersProps {
 const ALL_MONTHS = ['October 2026', 'September 2026', 'August 2026', 'July 2026']
 const ALL_REGIONS = ['North region', 'West region', 'Central region', 'East region']
 const ALL_REPS = ['Olivia Martin', 'Maya Patel', 'James Wilson', 'Sofia Chen']
-const ALL_PRODUCTS = ['Cardiwell 20mg', 'Neurofen Plus', 'Immunex Kids', 'Gastrocalm', 'Respira 10mg']
+const ALL_PRODUCTS = ['Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
 
 export function HomeFilters({
   range,

@@ -39,8 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    window.addEventListener('medora_user_updated', handleLiveUpdate)
-    return () => window.removeEventListener('medora_user_updated', handleLiveUpdate)
+    window.addEventListener('navigen_user_updated', handleLiveUpdate)
+    return () => window.removeEventListener('navigen_user_updated', handleLiveUpdate)
   }, [])
 
   const handleSignIn = async (email: string, password: string): Promise<User> => {

@@ -10,6 +10,7 @@ export interface AttentionItem {
 
 export interface Product {
   name: string
+  name_ar?: string
   sold: string
   qty: string
   left: string
@@ -22,6 +23,7 @@ export interface Product {
 
 export interface Rep {
   name: string
+  name_ar?: string
   region: string
   sales: string
   goal: string
@@ -29,6 +31,7 @@ export interface Rep {
 
 export interface Client {
   name: string
+  name_ar?: string
   meta: string
   status: 'Active' | 'Overdue' | 'Healthy' | 'Pending' | string
   region?: string

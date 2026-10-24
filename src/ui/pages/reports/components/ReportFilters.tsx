@@ -31,7 +31,7 @@ const ALL_MONTHS = [
 ]
 const ALL_REGIONS = ['Central District', 'North District', 'West District', 'East District', 'South District']
 const ALL_REPS = ['Alex Morgan', 'Maya Patel', 'Olivia Martin', 'James Wilson', 'Sofia Chen']
-const ALL_PRODUCTS = ['Cardiwell 20mg', 'Neurofen Plus', 'Immunex Kids', 'Gastrocalm chewable', 'Respira 10mg inhaler']
+const ALL_PRODUCTS = ['Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
 
 export function ReportFilters({
   filters,

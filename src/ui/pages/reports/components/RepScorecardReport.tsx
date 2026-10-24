@@ -124,10 +124,10 @@ export function RepScorecardReport({
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            ${currentRep.sales.toLocaleString()}
+            EGP {currentRep.sales.toLocaleString()}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--story-em, #3e9a78)' }}>
-            Quota: ${currentRep.salesTarget.toLocaleString()} ({currentRep.targetPct}%)
+            Quota: EGP {currentRep.salesTarget.toLocaleString()} ({currentRep.targetPct}%)
           </div>
         </div>
 
@@ -326,7 +326,7 @@ export function RepScorecardReport({
             <thead>
               <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ padding: '8px 12px' }}>Representative</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Revenue ($)</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Revenue (EGP)</th>
                 <th style={{ padding: '8px 12px', textAlign: 'right' }}>Visits</th>
                 <th style={{ padding: '8px 12px', textAlign: 'right' }}>Samples Delivered</th>
                 <th style={{ padding: '8px 12px', textAlign: 'right' }}>Target %</th>
@@ -356,7 +356,7 @@ export function RepScorecardReport({
                     </div>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    ${r.sales.toLocaleString()}
+                    EGP {r.sales.toLocaleString()}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {r.visitsLogged} / {r.visitsTarget}

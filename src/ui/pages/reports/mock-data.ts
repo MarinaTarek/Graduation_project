@@ -73,9 +73,9 @@ export interface SalesRepBreakdown {
 
 export const SALES_PERFORMANCE_MOCK = {
   summary: [
-    { label: 'Total Revenue', value: '$842,500', change: '+14.2% vs target', isPositive: true },
-    { label: 'Quota Achievement', value: '104.8%', change: 'Goal: $804,000', isPositive: true },
-    { label: 'Average Rep Velocity', value: '$168,500', change: '5 active field reps', isPositive: true },
+    { label: 'Total Revenue', value: 'EGP 842,500', change: '+14.2% vs target', isPositive: true },
+    { label: 'Quota Achievement', value: '104.8%', change: 'Goal: EGP 804,000', isPositive: true },
+    { label: 'Average Rep Velocity', value: 'EGP 168,500', change: '5 active field reps', isPositive: true },
   ],
   byRep: [
     {
@@ -85,12 +85,12 @@ export const SALES_PERFORMANCE_MOCK = {
       target: 200000,
       actual: 216400,
       achievementRate: 108.2,
-      topProduct: 'Cardiwell 20mg',
+      topProduct: 'Bevato',
       growthPct: 12.5,
       productBars: [
-        { product: 'Cardiwell 20mg', amount: 96400, color: '#3F6593' },
-        { product: 'Neurofen Plus', amount: 62000, color: '#80AAD3' },
-        { product: 'Immunex Kids', amount: 58000, color: '#7FC8A9' },
+        { product: 'Bevato', amount: 96400, color: '#3F6593' },
+        { product: 'Naviro D3 50,000 IU', amount: 62000, color: '#80AAD3' },
+        { product: 'Naviro D3 10,000 IU', amount: 58000, color: '#7FC8A9' },
       ],
     },
     {
@@ -100,12 +100,12 @@ export const SALES_PERFORMANCE_MOCK = {
       target: 180000,
       actual: 192600,
       achievementRate: 107.0,
-      topProduct: 'Immunex Kids',
+      topProduct: 'Naviro D3 10,000 IU',
       growthPct: 15.2,
       productBars: [
-        { product: 'Cardiwell 20mg', amount: 72000, color: '#3F6593' },
-        { product: 'Neurofen Plus', amount: 48600, color: '#80AAD3' },
-        { product: 'Immunex Kids', amount: 72000, color: '#7FC8A9' },
+        { product: 'Bevato', amount: 72000, color: '#3F6593' },
+        { product: 'Naviro D3 50,000 IU', amount: 48600, color: '#80AAD3' },
+        { product: 'Naviro D3 10,000 IU', amount: 72000, color: '#7FC8A9' },
       ],
     },
     {
@@ -115,12 +115,12 @@ export const SALES_PERFORMANCE_MOCK = {
       target: 170000,
       actual: 174500,
       achievementRate: 102.6,
-      topProduct: 'Neurofen Plus',
+      topProduct: 'Naviro D3 50,000 IU',
       growthPct: 8.4,
       productBars: [
-        { product: 'Cardiwell 20mg', amount: 65000, color: '#3F6593' },
-        { product: 'Neurofen Plus', amount: 74500, color: '#80AAD3' },
-        { product: 'Respira 10mg', amount: 35000, color: '#E8B86D' },
+        { product: 'Bevato', amount: 65000, color: '#3F6593' },
+        { product: 'Naviro D3 50,000 IU', amount: 74500, color: '#80AAD3' },
+        { product: 'Navigen Product 5', amount: 35000, color: '#E8B86D' },
       ],
     },
     {
@@ -130,12 +130,12 @@ export const SALES_PERFORMANCE_MOCK = {
       target: 150000,
       actual: 148200,
       achievementRate: 98.8,
-      topProduct: 'Cardiwell 20mg',
+      topProduct: 'Bevato',
       growthPct: 3.1,
       productBars: [
-        { product: 'Cardiwell 20mg', amount: 68200, color: '#3F6593' },
-        { product: 'Gastrocalm', amount: 52000, color: '#80AAD3' },
-        { product: 'Respira 10mg', amount: 28000, color: '#E8B86D' },
+        { product: 'Bevato', amount: 68200, color: '#3F6593' },
+        { product: 'Naviro D3 Drops', amount: 52000, color: '#80AAD3' },
+        { product: 'Navigen Product 5', amount: 28000, color: '#E8B86D' },
       ],
     },
     {
@@ -145,12 +145,12 @@ export const SALES_PERFORMANCE_MOCK = {
       target: 104000,
       actual: 110800,
       achievementRate: 106.5,
-      topProduct: 'Respira 10mg',
+      topProduct: 'Navigen Product 5',
       growthPct: 9.8,
       productBars: [
-        { product: 'Cardiwell 20mg', amount: 42000, color: '#3F6593' },
-        { product: 'Respira 10mg', amount: 48800, color: '#E8B86D' },
-        { product: 'Gastrocalm', amount: 20000, color: '#80AAD3' },
+        { product: 'Bevato', amount: 42000, color: '#3F6593' },
+        { product: 'Navigen Product 5', amount: 48800, color: '#E8B86D' },
+        { product: 'Naviro D3 Drops', amount: 20000, color: '#80AAD3' },
       ],
     },
   ] as SalesRepBreakdown[],
@@ -170,8 +170,8 @@ export interface ProductSellThrough {
 
 export const SELL_IN_OUT_MOCK = {
   summary: [
-    { label: 'Total Sell-In', value: '$940,200', change: '8,420 packs ordered', isPositive: true },
-    { label: 'Total Sell-Out', value: '$785,600', change: '7,150 packs dispensed', isPositive: true },
+    { label: 'Total Sell-In', value: 'EGP 940,200', change: '8,420 packs ordered', isPositive: true },
+    { label: 'Total Sell-Out', value: 'EGP 785,600', change: '7,150 packs dispensed', isPositive: true },
     { label: 'Sell-Through Ratio', value: '83.5%', change: 'Optimal threshold: 75%+', isPositive: true },
   ],
   monthlyTrend: [
@@ -185,7 +185,7 @@ export const SELL_IN_OUT_MOCK = {
   products: [
     {
       id: 'p1',
-      product: 'Cardiwell 20mg',
+      product: 'Bevato',
       sellInUnits: 3200,
       sellOutUnits: 2940,
       sellThroughRate: 91.8,
@@ -194,7 +194,7 @@ export const SELL_IN_OUT_MOCK = {
     },
     {
       id: 'p2',
-      product: 'Neurofen Plus',
+      product: 'Naviro D3 50,000 IU',
       sellInUnits: 2100,
       sellOutUnits: 1890,
       sellThroughRate: 90.0,
@@ -203,7 +203,7 @@ export const SELL_IN_OUT_MOCK = {
     },
     {
       id: 'p3',
-      product: 'Immunex Kids',
+      product: 'Naviro D3 10,000 IU',
       sellInUnits: 1650,
       sellOutUnits: 1380,
       sellThroughRate: 83.6,
@@ -212,7 +212,7 @@ export const SELL_IN_OUT_MOCK = {
     },
     {
       id: 'p4',
-      product: 'Gastrocalm chewable',
+      product: 'Naviro D3 Drops',
       sellInUnits: 1400,
       sellOutUnits: 680,
       sellThroughRate: 48.5,
@@ -222,7 +222,7 @@ export const SELL_IN_OUT_MOCK = {
     },
     {
       id: 'p5',
-      product: 'Respira 10mg inhaler',
+      product: 'Navigen Product 5',
       sellInUnits: 980,
       sellOutUnits: 460,
       sellThroughRate: 46.9,
@@ -321,22 +321,22 @@ export interface StockBatchRecord {
 
 export const STOCK_EXPIRY_MOCK = {
   summary: [
-    { label: 'Total Stock Value', value: '$1,428,500', change: '18,400 units in custody', isPositive: true },
+    { label: 'Total Stock Value', value: 'EGP 1,428,500', change: '18,400 units in custody', isPositive: true },
     { label: 'Expiring < 90 Days', value: '4 batches', change: 'Action required immediately', isPositive: false },
     { label: 'Avg Inventory Turnover', value: '42 days', change: 'Benchmark: 45 days', isPositive: true },
   ],
   productShare: [
-    { product: 'Cardiwell 20mg', units: 8200, pct: 44.5, color: '#3F6593' },
-    { product: 'Neurofen Plus', units: 4100, pct: 22.3, color: '#80AAD3' },
-    { product: 'Immunex Kids', units: 3100, pct: 16.8, color: '#7FC8A9' },
-    { product: 'Gastrocalm', units: 1800, pct: 9.8, color: '#E8B86D' },
-    { product: 'Respira 10mg', units: 1200, pct: 6.6, color: '#D9798B' },
+    { product: 'Bevato', units: 8200, pct: 44.5, color: '#3F6593' },
+    { product: 'Naviro D3 50,000 IU', units: 4100, pct: 22.3, color: '#80AAD3' },
+    { product: 'Naviro D3 10,000 IU', units: 3100, pct: 16.8, color: '#7FC8A9' },
+    { product: 'Naviro D3 Drops', units: 1800, pct: 9.8, color: '#E8B86D' },
+    { product: 'Navigen Product 5', units: 1200, pct: 6.6, color: '#D9798B' },
   ],
   batches: [
     {
       id: 'b-1',
       batchNo: 'BAT-2024-001',
-      product: 'Cardiwell 20mg',
+      product: 'Bevato',
       location: 'Central Depot - Bay 4',
       quantity: 420,
       expiryDate: 'Nov 2026',
@@ -346,7 +346,7 @@ export const STOCK_EXPIRY_MOCK = {
     {
       id: 'b-2',
       batchNo: 'BAT-2024-089',
-      product: 'Respira 10mg',
+      product: 'Navigen Product 5',
       location: 'Regional Hub East',
       quantity: 310,
       expiryDate: 'Dec 2026',
@@ -356,7 +356,7 @@ export const STOCK_EXPIRY_MOCK = {
     {
       id: 'b-3',
       batchNo: 'BAT-2024-114',
-      product: 'Gastrocalm chewable',
+      product: 'Naviro D3 Drops',
       location: 'Central Depot - Bay 12',
       quantity: 680,
       expiryDate: 'Feb 2027',
@@ -366,7 +366,7 @@ export const STOCK_EXPIRY_MOCK = {
     {
       id: 'b-4',
       batchNo: 'BAT-2024-156',
-      product: 'Immunex Kids',
+      product: 'Naviro D3 10,000 IU',
       location: 'North Warehouse',
       quantity: 540,
       expiryDate: 'Mar 2027',
@@ -376,7 +376,7 @@ export const STOCK_EXPIRY_MOCK = {
     {
       id: 'b-5',
       batchNo: 'BAT-2025-002',
-      product: 'Cardiwell 20mg',
+      product: 'Bevato',
       location: 'Central Depot - Bay 2',
       quantity: 3800,
       expiryDate: 'Sep 2027',
@@ -386,7 +386,7 @@ export const STOCK_EXPIRY_MOCK = {
     {
       id: 'b-6',
       batchNo: 'BAT-2025-045',
-      product: 'Neurofen Plus',
+      product: 'Naviro D3 50,000 IU',
       location: 'Central Depot - Bay 6',
       quantity: 2400,
       expiryDate: 'Dec 2027',
@@ -408,7 +408,7 @@ export interface RejectionReasonStat {
 
 export const INVOICES_APPROVALS_MOCK = {
   summary: [
-    { label: 'Invoices Processed', value: '328 claims', change: '$312,400 validated', isPositive: true },
+    { label: 'Invoices Processed', value: '328 claims', change: 'EGP 312,400 validated', isPositive: true },
     { label: 'Avg Approval Time', value: '3.4 hours', change: 'Reduced from 6.8h', isPositive: true },
     { label: 'Rejection Rate', value: '4.2%', change: '14 total rejected', isPositive: false },
   ],
@@ -472,7 +472,7 @@ export const REP_SCORECARD_MOCK: Record<string, RepScorecardProfile> = {
     id: 'rep-alex',
     name: 'Alex Morgan',
     role: 'Senior Medical Representative',
-    email: 'alex.morgan@medora.health',
+    email: 'alex.morgan@navigenpharma.net',
     avatarInitials: 'AM',
     territory: 'Central District (Cardio & Neuro Focus)',
     sales: 216400,
@@ -491,7 +491,7 @@ export const REP_SCORECARD_MOCK: Record<string, RepScorecardProfile> = {
     id: 'rep-maya',
     name: 'Maya Patel',
     role: 'Medical Representative',
-    email: 'maya.patel@medora.health',
+    email: 'maya.patel@navigenpharma.net',
     avatarInitials: 'MP',
     territory: 'North District (Pediatrics Focus)',
     sales: 192600,
@@ -510,7 +510,7 @@ export const REP_SCORECARD_MOCK: Record<string, RepScorecardProfile> = {
     id: 'rep-olivia',
     name: 'Olivia Martin',
     role: 'Medical Representative',
-    email: 'olivia.martin@medora.health',
+    email: 'olivia.martin@navigenpharma.net',
     avatarInitials: 'OM',
     territory: 'West District',
     sales: 174500,
@@ -529,7 +529,7 @@ export const REP_SCORECARD_MOCK: Record<string, RepScorecardProfile> = {
     id: 'rep-james',
     name: 'James Wilson',
     role: 'Junior Medical Representative',
-    email: 'james.wilson@medora.health',
+    email: 'james.wilson@navigenpharma.net',
     avatarInitials: 'JW',
     territory: 'East District',
     sales: 148200,
@@ -548,7 +548,7 @@ export const REP_SCORECARD_MOCK: Record<string, RepScorecardProfile> = {
     id: 'rep-sofia',
     name: 'Sofia Chen',
     role: 'Medical Representative',
-    email: 'sofia.chen@medora.health',
+    email: 'sofia.chen@navigenpharma.net',
     avatarInitials: 'SC',
     territory: 'South District',
     sales: 110800,

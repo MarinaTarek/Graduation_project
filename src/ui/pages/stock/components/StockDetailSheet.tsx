@@ -16,7 +16,7 @@ export function StockDetailSheet({
   isOpen = true,
   onClose,
   onOpenStockCount,
-  productName = 'Cardiwell 20mg',
+  productName = 'Bevato',
 }: StockDetailSheetProps) {
   const [tab, setTab] = useState<'warehouse' | 'reps' | 'pharmacies'>('warehouse')
 

@@ -10,7 +10,7 @@ export interface LoginFormProps {
 
 export function LoginForm({ onLogin }: LoginFormProps) {
   const { signIn } = useAuth()
-  const [email, setEmail] = useState('admin@medora.com')
+  const [email, setEmail] = useState('admin@navigenpharma.net')
   const [password, setPassword] = useState('Admin123!')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +35,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
   return (
     <div className="panel" style={{ maxWidth: '420px', margin: '40px auto 0' }}>
-      <h2 style={{ fontSize: '22px', color: 'var(--heading-text)', margin: '0 0 16px' }}>Sign in to Medora</h2>
+      <h2 style={{ fontSize: '22px', color: 'var(--heading-text)', margin: '0 0 16px' }}>Sign in to Navigen</h2>
       <form onSubmit={handleSubmit} className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
         <label>
           Work Email
@@ -81,9 +81,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         }}
       >
         <strong style={{ color: 'var(--heading-text)', display: 'block', marginBottom: '4px' }}>Demo accounts:</strong>
-        <div>• <b>Admin:</b> admin@medora.com / Admin123! (Alex Morgan)</div>
-        <div>• <b>Rep 1:</b> ahmed@medora.com / Rep123! (Ahmed Samir)</div>
-        <div>• <b>Rep 2:</b> sara@medora.com / Rep123! (Sara Ali)</div>
+        <div>• <b>Admin:</b> admin@navigenpharma.net / Admin123! (Alex Morgan)</div>
+        <div>• <b>Rep 1:</b> ahmed@navigenpharma.net / Rep123! (Ahmed Samir)</div>
+        <div>• <b>Rep 2:</b> sara@navigenpharma.net / Rep123! (Sara Ali)</div>
       </div>
     </div>
   )

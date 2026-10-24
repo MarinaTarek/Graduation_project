@@ -17,7 +17,7 @@ export function CommandPalette({
   const quickActions = ['Doctors', 'Pharmacies', 'Invoices', 'Products']
 
   return (
-    <Drawer title="Search Medora" kicker="COMMAND PALETTE" onClose={onClose}>
+    <Drawer title="Search Navigen" kicker="COMMAND PALETTE" onClose={onClose}>
       <div className="command-search">
         <Search />
         <input autoFocus placeholder="Search doctors, invoices, products..." />

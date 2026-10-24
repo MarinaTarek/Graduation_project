@@ -94,15 +94,15 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: 'var(--muted-text)' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--ocean)' }} />
-              Cardiwell
+              Bevato
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--sky)' }} />
-              Neurofen
+              Naviro D3
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--green)' }} />
-              Immunex / Others
+              Others
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '2px', background: 'var(--rose)' }} />
@@ -122,7 +122,7 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
                   <g key={val}>
                     <line x1="50" y1={y} x2="630" y2={y} stroke="var(--border-subtle)" strokeDasharray="3 3" />
                     <text x="42" y={y + 4} textAnchor="end" fontSize="10" fill="var(--muted-text)">
-                      ${val / 1000}k
+                      EGP {val / 1000}k
                     </text>
                   </g>
                 )
@@ -240,10 +240,10 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
                   </td>
                   <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{r.territory}</td>
                   <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    ${r.target.toLocaleString()}
+                    EGP {r.target.toLocaleString()}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
-                    ${r.actual.toLocaleString()}
+                    EGP {r.actual.toLocaleString()}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                     <span style={{ color: r.achievementRate >= 100 ? 'var(--story-em)' : 'var(--amber-text)' }}>

@@ -4,6 +4,7 @@ import { getDefaultPermissions } from '@/lib/auth/permissions'
 export interface AdminUserRecord {
   id: string
   name: string
+  name_ar?: string
   email: string
   role: string
   roleType: UserRole
@@ -16,7 +17,8 @@ export const adminUsersMockData: AdminUserRecord[] = [
   {
     id: 'u-admin-1',
     name: 'Alex Morgan',
-    email: 'admin@medora.com',
+    name_ar: 'أليكس مورجان',
+    email: 'admin@navigenpharma.net',
     role: 'Admin',
     roleType: 'admin',
     region: 'HQ - Global',
@@ -26,7 +28,8 @@ export const adminUsersMockData: AdminUserRecord[] = [
   {
     id: 'u-rep-olivia',
     name: 'Olivia Martin',
-    email: 'olivia.martin@medora.com',
+    name_ar: 'أوليفيا مارتن',
+    email: 'olivia.martin@navigenpharma.net',
     role: 'Medical Representative',
     roleType: 'rep',
     region: 'North region',
@@ -36,7 +39,8 @@ export const adminUsersMockData: AdminUserRecord[] = [
   {
     id: 'u-rep-maya',
     name: 'Maya Patel',
-    email: 'maya.patel@medora.com',
+    name_ar: 'مايا باتيل',
+    email: 'maya.patel@navigenpharma.net',
     role: 'Medical Representative',
     roleType: 'rep',
     region: 'West region',
@@ -46,7 +50,8 @@ export const adminUsersMockData: AdminUserRecord[] = [
   {
     id: 'u-rep-james',
     name: 'James Wilson',
-    email: 'james.wilson@medora.com',
+    name_ar: 'جيمس ويلسون',
+    email: 'james.wilson@navigenpharma.net',
     role: 'Medical Representative',
     roleType: 'rep',
     region: 'Central region',
@@ -56,7 +61,8 @@ export const adminUsersMockData: AdminUserRecord[] = [
   {
     id: 'u-rep-sofia',
     name: 'Sofia Chen',
-    email: 'sofia.chen@medora.com',
+    name_ar: 'صوفيا تشين',
+    email: 'sofia.chen@navigenpharma.net',
     role: 'Medical Representative',
     roleType: 'rep',
     region: 'East region',

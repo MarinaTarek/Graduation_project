@@ -16,7 +16,7 @@ export function NotificationsDrawer({
 
   const todayNotices = [
     'Invoice approval requested',
-    'Cardiwell 20mg is low in North warehouse',
+    'Bevato is low in North warehouse',
     'Batch CW-2401 expires in 12 days',
   ]
 

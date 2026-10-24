@@ -152,7 +152,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                   <g key={val}>
                     <line x1={padLeft} y1={y} x2={width - padRight} y2={y} stroke="var(--border-subtle)" strokeDasharray="3 3" />
                     <text x={padLeft - 10} y={y + 4} textAnchor="end" fontSize="10" fill="var(--muted-text)">
-                      ${val / 1000}k
+                      EGP {val / 1000}k
                     </text>
                   </g>
                 )

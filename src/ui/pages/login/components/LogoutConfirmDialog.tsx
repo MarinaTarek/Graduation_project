@@ -17,7 +17,7 @@ export function LogoutConfirmDialog({
   if (!isOpen) return null
 
   return (
-    <Drawer title="Log out of Medora?" kicker="CONFIRMATION" onClose={onClose}>
+    <Drawer title="Log out of Navigen?" kicker="CONFIRMATION" onClose={onClose}>
       <p className="sheet-copy">{loginMockData.sessionNotice}</p>
       <div className="sheet-actions">
         <Button variant="secondary" onClick={onClose}>

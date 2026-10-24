@@ -433,7 +433,7 @@ export function UserListTable() {
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  placeholder="alex.morgan@medora.com"
+                  placeholder="alex.morgan@navigenpharma.net"
                 />
               </label>
 
@@ -723,7 +723,7 @@ export function UserListTable() {
                 type="email"
                 value={addEmail}
                 onChange={(e) => setAddEmail(e.target.value)}
-                placeholder="john.doe@medora.com"
+                placeholder="john.doe@navigenpharma.net"
               />
               <FieldError message={addEmailError} />
             </label>

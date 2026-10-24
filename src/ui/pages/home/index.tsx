@@ -21,12 +21,12 @@ import {
 import { homeAttentionItems, homeProducts, homeReps } from './mock-data'
 
 const REP_METRICS: Record<string, { amount: string; percent: string }> = {
-  'Ahmed Samir': { amount: '$42.8K', percent: '94%' },
-  'Sara Ali': { amount: '$38.2K', percent: '88%' },
-  'Olivia Martin': { amount: '$42.8K', percent: '98%' },
-  'Maya Patel': { amount: '$39.4K', percent: '91%' },
-  'James Wilson': { amount: '$35.9K', percent: '84%' },
-  'Sofia Chen': { amount: '$32.6K', percent: '79%' },
+  'Ahmed Samir': { amount: 'EGP 42.8K', percent: '94%' },
+  'Sara Ali': { amount: 'EGP 38.2K', percent: '88%' },
+  'Olivia Martin': { amount: 'EGP 42.8K', percent: '98%' },
+  'Maya Patel': { amount: 'EGP 39.4K', percent: '91%' },
+  'James Wilson': { amount: 'EGP 35.9K', percent: '84%' },
+  'Sofia Chen': { amount: 'EGP 32.6K', percent: '79%' },
 }
 
 export interface HomePageProps {
@@ -80,22 +80,22 @@ export default function HomePage({
   })
 
   // Headline metrics reacting to filters
-  let headlineSales = '$240K'
+  let headlineSales = 'EGP 240K'
   let headlineGrowth = '8%'
   let headlineDays = range === 'Week' ? '4 days' : `${daysRemaining} days`
 
   if (filters.reps.length === 1) {
-    headlineSales = filters.reps[0] === 'Olivia Martin' ? '$42.8K' : '$39.4K'
+    headlineSales = filters.reps[0] === 'Olivia Martin' ? 'EGP 42.8K' : 'EGP 39.4K'
     headlineGrowth = '12%'
   } else if (filters.reps.length > 1) {
-    headlineSales = `$${filters.reps.length * 38}K`
+    headlineSales = `EGP ${filters.reps.length * 38}K`
   } else if (filters.month !== 'October 2026') {
-    headlineSales = '$224K'
+    headlineSales = 'EGP 224K'
     headlineGrowth = '6.4%'
     headlineDays = 'Completed period'
   }
 
-  const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: '$42.8K', percent: '94%' }
+  const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: 'EGP 42.8K', percent: '94%' }
 
   return (
     <section className="content">

@@ -434,7 +434,7 @@ export function RecordFormDrawer({
             <label className="full">
               Product name *
               <input
-                placeholder="e.g. Cardiwell 20mg"
+                placeholder="e.g. Bevato"
                 value={prodName}
                 onChange={(e) => setProdName(e.target.value)}
                 autoFocus

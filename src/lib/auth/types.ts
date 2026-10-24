@@ -11,6 +11,7 @@ export interface UserPermissions {
 export interface User {
   id: string
   name: string
+  name_ar?: string
   email: string
   role: UserRole
   region?: string

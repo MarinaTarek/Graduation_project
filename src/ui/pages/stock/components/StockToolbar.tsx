@@ -18,7 +18,7 @@ export interface StockToolbarProps {
   onClearFilters: () => void
 }
 
-const PRODUCTS = ['All products', 'Cardiwell 20mg', 'Neurofen Plus', 'Immunex Kids', 'Gastrocalm', 'Respira 10mg']
+const PRODUCTS = ['All products', 'Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
 const EXPIRY_STATUSES = ['All expiry statuses', 'Low stock / Expiring soon', 'Healthy']
 const LOCATIONS = ['All locations', 'Warehouse', 'With reps', 'Consigned pharmacies']
 

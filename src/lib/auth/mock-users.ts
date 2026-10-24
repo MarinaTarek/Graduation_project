@@ -9,7 +9,8 @@ export const MOCK_USERS: MockUserRecord[] = [
   {
     id: 'u-admin-1',
     name: 'Alex Morgan',
-    email: 'admin@medora.com',
+    name_ar: 'أليكس مورجان',
+    email: 'admin@navigenpharma.net',
     role: 'admin',
     region: 'HQ - Global',
     status: 'Active',
@@ -19,7 +20,8 @@ export const MOCK_USERS: MockUserRecord[] = [
   {
     id: 'u-rep-1',
     name: 'Ahmed Samir',
-    email: 'ahmed@medora.com',
+    name_ar: 'أحمد سمير',
+    email: 'ahmed@navigenpharma.net',
     role: 'rep',
     region: 'North region',
     status: 'Active',
@@ -29,7 +31,8 @@ export const MOCK_USERS: MockUserRecord[] = [
   {
     id: 'u-rep-2',
     name: 'Sara Ali',
-    email: 'sara@medora.com',
+    name_ar: 'سارة علي',
+    email: 'sara@navigenpharma.net',
     role: 'rep',
     region: 'West region',
     status: 'Active',
