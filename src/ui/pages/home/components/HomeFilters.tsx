@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { FilterDropdown } from '@/ui/design-system/components/FilterDropdown'
+import { useT } from '@/lib/i18n'
 
 export interface HomeFiltersState {
   month: string
@@ -28,6 +29,7 @@ export function HomeFilters({
   filters,
   onChangeFilters,
 }: HomeFiltersProps) {
+  const { t } = useT()
   const [openDropdown, setOpenDropdown] = useState<'month' | 'region' | 'rep' | 'product' | null>(null)
 
   // Local draft states before clicking "Apply"
@@ -105,22 +107,22 @@ export function HomeFilters({
   // Chip label formatters
   const monthLabel = filters.month.split(' ')[0]
   const regionLabel = filters.regions.length === 0
-    ? 'All regions'
+    ? t('home.filters.allRegions')
     : filters.regions.length === 1
     ? filters.regions[0].replace(' region', '')
-    : `${filters.regions.length} regions`
+    : t('home.filters.regionsCount', { count: filters.regions.length })
 
   const repLabel = filters.reps.length === 0
-    ? 'All reps'
+    ? t('home.filters.allReps')
     : filters.reps.length === 1
     ? filters.reps[0].split(' ')[0]
-    : `${filters.reps.length} reps`
+    : t('home.filters.repsCount', { count: filters.reps.length })
 
   const productLabel = filters.products.length === 0
-    ? 'All products'
+    ? t('home.filters.allProducts')
     : filters.products.length === 1
     ? filters.products[0].split(' ')[0]
-    : `${filters.products.length} products`
+    : t('home.filters.productsCount', { count: filters.products.length })
 
   return (
     <div className="home-filters-row">
@@ -132,10 +134,10 @@ export function HomeFilters({
           isOpen={openDropdown === 'month'}
           onToggle={() => openFilter('month')}
           onClose={() => setOpenDropdown(null)}
-          title="SELECT MONTH"
+          title={t('home.filters.selectMonth')}
           width={220}
           onReset={handleClearMonth}
-          resetLabel="Reset"
+          resetLabel={t('home.filters.reset')}
           onApply={handleApplyMonth}
         >
           {ALL_MONTHS.map((m) => (
@@ -171,10 +173,10 @@ export function HomeFilters({
           isOpen={openDropdown === 'region'}
           onToggle={() => openFilter('region')}
           onClose={() => setOpenDropdown(null)}
-          title="FILTER REGIONS"
+          title={t('home.filters.filterRegions')}
           width={230}
           onReset={handleClearRegions}
-          resetLabel="Clear"
+          resetLabel={t('home.filters.clear')}
           onApply={handleApplyRegions}
         >
           {ALL_REGIONS.map((reg) => {
@@ -213,10 +215,10 @@ export function HomeFilters({
           isOpen={openDropdown === 'rep'}
           onToggle={() => openFilter('rep')}
           onClose={() => setOpenDropdown(null)}
-          title="FIELD REPRESENTATIVES"
+          title={t('home.filters.fieldReps')}
           width={250}
           onReset={handleClearReps}
-          resetLabel="Clear"
+          resetLabel={t('home.filters.clear')}
           onApply={handleApplyReps}
         >
           {ALL_REPS.map((rep, idx) => {
@@ -257,10 +259,10 @@ export function HomeFilters({
           isOpen={openDropdown === 'product'}
           onToggle={() => openFilter('product')}
           onClose={() => setOpenDropdown(null)}
-          title="PRODUCT PORTFOLIO"
+          title={t('home.filters.productPortfolio')}
           width={240}
           onReset={handleClearProducts}
-          resetLabel="Clear"
+          resetLabel={t('home.filters.clear')}
           onApply={handleApplyProducts}
         >
           {ALL_PRODUCTS.map((prod) => {
@@ -297,21 +299,21 @@ export function HomeFilters({
       <div
         className="home-range-segmented"
         role="group"
-        aria-label="Time range toggle"
+        aria-label={t('home.filters.rangeToggleAria')}
       >
         <button
           type="button"
           className={range === 'Month' ? 'active' : ''}
           onClick={() => setRange('Month')}
         >
-          Month
+          {t('home.filters.month')}
         </button>
         <button
           type="button"
           className={range === 'Week' ? 'active' : ''}
           onClick={() => setRange('Week')}
         >
-          Week
+          {t('home.filters.week')}
         </button>
       </div>
     </div>

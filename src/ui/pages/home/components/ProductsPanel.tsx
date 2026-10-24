@@ -1,6 +1,7 @@
 import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { CapsuleProgress } from '@/ui/design-system/components/CapsuleProgress'
+import { useT } from '@/lib/i18n'
 import { homeProducts } from '../mock-data'
 import { useStore } from '@/data/mock/store'
 import {
@@ -18,6 +19,7 @@ export function ProductsPanel({
   onNavigateStock,
   onOpenStockDetail,
 }: ProductsPanelProps) {
+  const { t } = useT()
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
 
@@ -25,8 +27,8 @@ export function ProductsPanel({
     <section className="panel products-panel">
       <div className="panel-head">
         <div>
-          <span className="eyebrow">DISTRIBUTION & STOCK</span>
-          <h3>Products as capsules</h3>
+          <span className="eyebrow">{t('home.products.eyebrow')}</span>
+          <h3>{t('home.products.title')}</h3>
         </div>
         <Button variant="round-arrow" onClick={onNavigateStock}>
           <ArrowUpRight />

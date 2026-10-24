@@ -1,6 +1,6 @@
 import type { TranslationKey } from './en'
 
-export const ar: Record<TranslationKey, string> = {
+export const ar: Partial<Record<TranslationKey, string>> = {
   // Navigation / Sidebar
   'nav.dashboard': 'لوحة التحكم',
   'nav.clients': 'العملاء',

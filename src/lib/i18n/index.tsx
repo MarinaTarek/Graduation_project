@@ -7,10 +7,12 @@ import { ar } from './ar'
 export type Language = 'en' | 'ar'
 export type { TranslationKey } from './en'
 
+export type InterpolationParams = Record<string, string | number>
+
 export interface LanguageContextType {
   lang: Language
   setLang: (lang: Language) => void
-  t: (key: TranslationKey, fallback?: string) => string
+  t: (key: TranslationKey, paramsOrFallback?: InterpolationParams | string) => string
   dir: 'ltr' | 'rtl'
 }
 
@@ -53,12 +55,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const t = (key: TranslationKey, fallback?: string): string => {
+  const t = (key: TranslationKey, paramsOrFallback?: InterpolationParams | string): string => {
     const dict = lang === 'ar' ? ar : en
-    if (dict && dict[key]) {
-      return dict[key]
+    let str = (dict && (dict as any)[key]) || (en as any)[key] || (typeof paramsOrFallback === 'string' ? paramsOrFallback : key)
+    if (paramsOrFallback && typeof paramsOrFallback === 'object') {
+      for (const [k, v] of Object.entries(paramsOrFallback)) {
+        str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+      }
     }
-    return en[key] || fallback || key
+    return str
   }
 
   const dir: 'ltr' | 'rtl' = lang === 'ar' ? 'rtl' : 'ltr'
@@ -74,19 +79,29 @@ export function useT() {
   const context = useContext(LanguageContext)
 
   // Allow both `const { t, lang, setLang } = useT()` AND `const t = useT(); t('...')`
-  const callable = ((key: TranslationKey, fallback?: string) => context.t(key, fallback)) as any
+  const callable = ((key: TranslationKey, paramsOrFallback?: InterpolationParams | string) => context.t(key, paramsOrFallback)) as any
   callable.t = context.t
   callable.lang = context.lang
   callable.setLang = context.setLang
   callable.dir = context.dir
 
   return callable as {
-    (key: TranslationKey, fallback?: string): string
-    t: (key: TranslationKey, fallback?: string) => string
+    (key: TranslationKey, paramsOrFallback?: InterpolationParams | string): string
+    t: (key: TranslationKey, paramsOrFallback?: InterpolationParams | string) => string
     lang: Language
     setLang: (lang: Language) => void
     dir: 'ltr' | 'rtl'
   }
+}
+
+export function interpolate(text: string, values: Record<string, React.ReactNode>): React.ReactNode[] {
+  return text.split(/(\{.*?\})/g).map((part, i) => {
+    const match = part.match(/^\{(.*)\}$/)
+    if (match && match[1] in values) {
+      return <React.Fragment key={i}>{values[match[1]]}</React.Fragment>
+    }
+    return part
+  })
 }
 
 export { localizedName } from './names'

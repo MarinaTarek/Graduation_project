@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth'
 import { storedUsersStore } from '@/lib/auth/mock-users'
 import { useStore } from '@/data/mock/store'
 import { batchesStore, stockMovementsStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
+import { useT, interpolate } from '@/lib/i18n'
 import { HomeFilters, type HomeFiltersState } from './components/HomeFilters'
 import { AttentionSection } from './components/AttentionSection'
 import { SellInChartPanel } from './components/SellInChartPanel'
@@ -52,6 +53,7 @@ export default function HomePage({
   onSelectRep,
 }: HomePageProps) {
   const { user, role } = useAuth()
+  const { t } = useT()
   const [daysRemaining, setDaysRemaining] = useState(12)
   const pendingCount = useStore(storedUsersStore).filter((u) => u.status === 'pending').length
 
@@ -86,7 +88,7 @@ export default function HomePage({
   // Headline metrics reacting to filters
   let headlineSales = 'EGP 240K'
   let headlineGrowth = '8%'
-  let headlineDays = range === 'Week' ? '4 days' : `${daysRemaining} days`
+  let headlineDays = range === 'Week' ? t('home.hero.days', { count: 4 }) : t('home.hero.days', { count: daysRemaining })
 
   if (filters.reps.length === 1) {
     headlineSales = filters.reps[0] === 'Olivia Martin' ? 'EGP 42.8K' : 'EGP 39.4K'
@@ -96,7 +98,7 @@ export default function HomePage({
   } else if (filters.month !== 'October 2026') {
     headlineSales = 'EGP 224K'
     headlineGrowth = '6.4%'
-    headlineDays = 'Completed period'
+    headlineDays = t('home.hero.completedPeriod')
   }
 
   const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: 'EGP 42.8K', percent: '94%' }
@@ -107,16 +109,16 @@ export default function HomePage({
   const firstExpiringBatch = expiringBatchesList[0]
 
   const dynamicAttentionItems = [
-    { icon: FileText, label: 'Invoices to review', count: '5', tone: 'amber' as const, detail: 'A few are waiting on you' },
-    { icon: Stethoscope, label: 'Doctors to reconnect', count: '3', tone: 'rose' as const, detail: 'No visit in 30+ days' },
+    { icon: FileText, label: t('home.attention.invoices'), count: '5', tone: 'amber' as const, detail: t('home.attention.invoicesDetail') },
+    { icon: Stethoscope, label: t('home.attention.doctors'), count: '3', tone: 'rose' as const, detail: t('home.attention.doctorsDetail') },
     {
       icon: Clock3,
-      label: 'Batch nearing expiry',
+      label: t('home.attention.batchExpiring'),
       count: String(expiringBatchesList.length),
       tone: 'blue' as const,
       detail: firstExpiringBatch
-        ? `${firstExpiringBatch.productName} · ${firstExpiringBatch.days_to_expiry} days`
-        : 'All batches healthy',
+        ? t('home.attention.batchExpiringDetail', { product: firstExpiringBatch.productName, days: firstExpiringBatch.days_to_expiry })
+        : t('home.attention.allBatchesHealthy'),
     },
   ]
 
@@ -136,12 +138,15 @@ export default function HomePage({
                 margin: 0,
               }}
             >
-              This month you sold{' '}
-              <button onClick={() => onOpen('invoice detail')}>
-                <b>{repMetric.amount}</b>
-              </button>
-              , <em>{repMetric.percent}</em> of your target, with{' '}
-              <strong>{headlineDays}</strong> left.
+              {interpolate(t('home.hero.storyRep'), {
+                amount: (
+                  <button onClick={() => onOpen('invoice detail')}>
+                    <b>{repMetric.amount}</b>
+                  </button>
+                ),
+                percent: <em>{repMetric.percent}</em>,
+                days: <strong>{headlineDays}</strong>,
+              })}
             </h1>
           ) : (
             <h1
@@ -155,12 +160,16 @@ export default function HomePage({
                 margin: 0,
               }}
             >
-              In {filters.month.split(' ')[0]} we sold{' '}
-              <button onClick={() => onOpen('invoice detail')}>
-                <b>{headlineSales}</b>
-              </button>
-              , up <em>{headlineGrowth}</em> from previous benchmark, with{' '}
-              <strong>{headlineDays}</strong> to target.
+              {interpolate(t('home.hero.storyManager'), {
+                month: filters.month.split(' ')[0],
+                amount: (
+                  <button onClick={() => onOpen('invoice detail')}>
+                    <b>{headlineSales}</b>
+                  </button>
+                ),
+                growth: <em>{headlineGrowth}</em>,
+                days: <strong>{headlineDays}</strong>,
+              })}
             </h1>
           )}
         </div>
@@ -180,7 +189,7 @@ export default function HomePage({
               gap: '8px',
             }}
           >
-            <Plus style={{ width: '18px', height: '18px' }} /> New visit
+            <Plus style={{ width: '18px', height: '18px' }} /> {t('home.hero.newVisit')}
           </Button>
         </div>
       </div>
@@ -198,10 +207,10 @@ export default function HomePage({
             ? [
                 {
                   icon: Users,
-                  label: 'Account requests',
+                  label: t('home.attention.accountRequests'),
                   count: String(pendingCount),
                   tone: 'amber' as const,
-                  detail: `${pendingCount} pending review`,
+                  detail: t('home.attention.pendingReview', { count: pendingCount }),
                 },
                 ...dynamicAttentionItems,
               ]

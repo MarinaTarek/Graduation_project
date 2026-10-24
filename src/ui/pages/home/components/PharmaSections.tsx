@@ -7,6 +7,7 @@ import { Skeleton } from '@/ui/design-system/components/Skeleton'
 import { customersStore, type Customer } from '@/data/mock/customers'
 import { stockMovementsStore, batchesStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
 import { useStore } from '@/data/mock/store'
+import { useT } from '@/lib/i18n'
 import {
   VISIT_INTERVAL_DAYS,
   homeCustomers,
@@ -99,6 +100,7 @@ export function KpiStrip({
   repId?: string
   onNav?: (page: string, opts?: { filter?: string }) => void
 }) {
+  const { t } = useT()
   const stored = useStore(customersStore).filter((c) => !c.deleted_at && c.active !== false)
   const allList = stored.length > 0 ? stored.map(adaptCustomer) : homeCustomers
   const customers = repId ? allList.filter(c => c.rep_id === repId) : allList
@@ -112,30 +114,30 @@ export function KpiStrip({
 
   const tiles = [
     {
-      label: 'Visit Coverage',
+      label: t('home.kpi.visitCoverage'),
       value: `${coveragePct}%`,
-      sub: `${visited}/${total} doctors`,
+      sub: t('home.kpi.visitedDoctors', { visited, total }),
       color: coveragePct >= 80 ? 'var(--green-text, #16a34a)' : coveragePct >= 60 ? '#d97706' : 'var(--rose-text)',
       onClick: () => onNav?.('Clients', { filter: 'Overdue only' }),
     },
     {
-      label: 'Sell-through',
+      label: t('home.kpi.sellThrough'),
       value: `${homeKpiStrip.sell_through_pct}%`,
-      sub: 'vs 68% last month',
+      sub: t('home.kpi.vsLastMonth'),
       color: 'var(--ocean)',
       onClick: () => onNav?.('Reports'),
     },
     {
-      label: 'Invoices Pending',
+      label: t('home.kpi.invoicesPending'),
       value: String(homeKpiStrip.invoices_pending),
-      sub: `avg ${homeKpiStrip.avg_approval_hours}h approval`,
+      sub: t('home.kpi.avgApproval', { hours: homeKpiStrip.avg_approval_hours }),
       color: '#d97706',
       onClick: () => onNav?.('Invoices', { filter: 'Pending' }),
     },
     {
-      label: 'Batches Expiring',
+      label: t('home.kpi.batchesExpiring'),
       value: String(batchesNearExpiryCount),
-      sub: 'next 90 days',
+      sub: t('home.kpi.next90Days'),
       color: 'var(--rose-text)',
       onClick: () => onNav?.('Stock', { filter: 'Expiring' }),
     },
@@ -184,6 +186,7 @@ export function VisitCoverageByClass({
   repId?: string
   onNav?: (page: string, opts?: { filter?: string }) => void
 }) {
+  const { t } = useT()
   const stored = useStore(customersStore).filter((c) => !c.deleted_at && c.active !== false)
   const allList = stored.length > 0 ? stored.map(adaptCustomer) : homeCustomers
   const customers = repId ? allList.filter(c => c.rep_id === repId) : allList
@@ -200,7 +203,7 @@ export function VisitCoverageByClass({
 
   return (
     <CardShell>
-      <CardTitle icon={Stethoscope} label="Visit Coverage by Class" />
+      <CardTitle icon={Stethoscope} label={t('home.pharma.visitCoverageTitle')} />
       {stats.map(({ cls, pct, total, overdue }) => (
         <button
           key={cls}
@@ -208,10 +211,10 @@ export function VisitCoverageByClass({
           style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>Class {cls}</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>{t('home.pharma.class', { cls })}</span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
-                {overdue > 0 ? `${overdue} overdue` : 'All visited'}
+                {overdue > 0 ? t('home.pharma.overdueCount', { count: overdue }) : t('home.pharma.allVisited')}
               </span>
               <span style={{ fontSize: '13px', fontWeight: 700, color: pct >= 80 ? 'var(--green-text, #16a34a)' : pct >= 60 ? '#d97706' : 'var(--rose-text)' }}>
                 {pct}%
@@ -227,7 +230,7 @@ export function VisitCoverageByClass({
             }} />
           </div>
           <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
-            Target: every {VISIT_INTERVAL_DAYS[cls]} days · {total} total
+            {t('home.pharma.targetInterval', { days: VISIT_INTERVAL_DAYS[cls], total })}
           </span>
         </button>
       ))}
@@ -237,6 +240,7 @@ export function VisitCoverageByClass({
 
 // ── 3. Samples This Month ───────────────────────────────────────────────────
 export function SamplesPanel({ repId, onNav }: { repId?: string; onNav?: (page: string) => void }) {
+  const { t } = useT()
   const movements = useStore(stockMovementsStore).filter((m) => m.type === 'sample')
   const baseEntries = repId ? homeSamples.filter(s => s.rep_id === repId) : homeSamples
   const movementUnits = movements.reduce((acc, m) => acc + m.quantity, 0)
@@ -256,10 +260,10 @@ export function SamplesPanel({ repId, onNav }: { repId?: string; onNav?: (page: 
 
   return (
     <CardShell onClick={() => onNav?.('Visits')}>
-      <CardTitle icon={Package} label="Samples This Month" />
+      <CardTitle icon={Package} label={t('home.samples.title')} />
       <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--heading-text)', lineHeight: 1 }}>
         {totalUnits.toLocaleString()}
-        <span style={{ fontSize: '14px', fontWeight: 400, color: 'var(--muted-text)', marginLeft: '6px' }}>units distributed</span>
+        <span style={{ fontSize: '14px', fontWeight: 400, color: 'var(--muted-text)', marginLeft: '6px' }}>{t('home.samples.unitsDistributed')}</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {topProducts.map(([name, qty]) => (
@@ -276,12 +280,12 @@ export function SamplesPanel({ repId, onNav }: { repId?: string; onNav?: (page: 
       </div>
       {!repId && (
         <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '10px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Top Reps</span>
+          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.samples.topReps')}</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px' }}>
             {topReps.map(([name, qty], i) => (
               <div key={name} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', color: 'var(--heading-text)' }}>{i + 1}. {name}</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ocean)' }}>{qty} units</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ocean)' }}>{t('home.samples.units', { qty })}</span>
               </div>
             ))}
           </div>
@@ -300,13 +304,14 @@ function expiryTone(isoDate: string): { label: string; bg: string } {
 }
 
 export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId: string) => void }) {
+  const { t } = useT()
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
   const expiring = getBatchesNearExpiry(movements, batches, 90)
 
   return (
     <CardShell>
-      <CardTitle icon={AlertTriangle} label="Expiring Soon" />
+      <CardTitle icon={AlertTriangle} label={t('home.batches.title')} />
       {expiring.length > 0 ? (
         expiring.slice(0, 4).map((b) => {
           return (
@@ -318,7 +323,7 @@ export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>{b.productName}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{b.batch_no} · {b.qty_remaining.toLocaleString()} units remaining</div>
+                  <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.batches.remaining', { batchNo: b.batch_no, qty: b.qty_remaining.toLocaleString() })}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {pill(b.status_label, b.status_color === 'rose' ? '#ef4444' : '#d97706')}
@@ -330,7 +335,7 @@ export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId
         })
       ) : (
         <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--muted-text)', fontSize: '12px' }}>
-          No batches expiring within 90 days.
+          {t('home.batches.empty')}
         </div>
       )}
     </CardShell>
@@ -339,12 +344,13 @@ export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId
 
 // ── 5. Regions Panel (Admin only) ───────────────────────────────────────────
 export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter?: string }) => void }) {
+  const { t } = useT()
   const sorted = [...homeRegions].sort((a, b) => (b.sales_amount / b.target_amount) - (a.sales_amount / a.target_amount))
   const maxTarget = Math.max(...sorted.map(r => r.target_amount))
 
   return (
     <CardShell>
-      <CardTitle icon={TrendingUp} label="Sales vs Target by Region" />
+      <CardTitle icon={TrendingUp} label={t('home.regions.title')} />
       {sorted.map((r) => {
         const pct = Math.round((r.sales_amount / r.target_amount) * 100)
         return (
@@ -364,7 +370,7 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
               <div style={{ height: '100%', borderRadius: '99px', width: `${Math.round((r.sales_amount / maxTarget) * 100)}%`, background: pct >= 90 ? '#16a34a' : pct >= 75 ? '#d97706' : '#ef4444', position: 'absolute' }} />
             </div>
             <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
-              EGP {(r.sales_amount / 1000).toFixed(0)}K of {(r.target_amount / 1000).toFixed(0)}K · {r.lead_rep}
+              {t('home.regions.salesOfTarget', { sales: (r.sales_amount / 1000).toFixed(0), target: (r.target_amount / 1000).toFixed(0), rep: r.lead_rep })}
             </span>
           </button>
         )
@@ -375,6 +381,7 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
 
 // ── 6. Receivables Panel (Admin only) ───────────────────────────────────────
 export function ReceivablesPanel() {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const totalOutstanding = homeReceivables.reduce((s, r) => s + r.outstanding_amount, 0)
   const totalOverdue = homeReceivables.reduce((s, r) => s + r.overdue_amount, 0)
@@ -383,34 +390,34 @@ export function ReceivablesPanel() {
   return (
     <>
       <CardShell onClick={() => setOpen(true)}>
-        <CardTitle icon={FileText} label="Receivables" />
+        <CardTitle icon={FileText} label={t('home.receivables.title')} />
         <div style={{ display: 'flex', gap: '24px' }}>
           <div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--heading-text)' }}>
               EGP {(totalOutstanding / 1000).toFixed(0)}K
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>outstanding</div>
+            <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.receivables.outstanding')}</div>
           </div>
           <div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--rose-text)' }}>
               EGP {(totalOverdue / 1000).toFixed(0)}K
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>overdue</div>
+            <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.receivables.overdue')}</div>
           </div>
         </div>
         <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '10px' }}>
           <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', marginBottom: '6px', letterSpacing: '0.05em' }}>
-            Top Late Customers
+            {t('home.receivables.topLate')}
           </div>
           {top3.map(r => (
             <div key={r.customer_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
               <span style={{ fontSize: '12px', color: 'var(--heading-text)', fontWeight: 500 }}>{r.customer_name}</span>
-              <span style={{ fontSize: '12px', color: 'var(--rose-text)', fontWeight: 700 }}>{r.days_overdue}d late</span>
+              <span style={{ fontSize: '12px', color: 'var(--rose-text)', fontWeight: 700 }}>{t('home.receivables.daysLate', { days: r.days_overdue })}</span>
             </div>
           ))}
         </div>
         <div style={{ fontSize: '12px', color: 'var(--ocean)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          View full list <ChevronRight style={{ width: '13px', height: '13px' }} />
+          {t('home.receivables.viewFullList')} <ChevronRight style={{ width: '13px', height: '13px' }} />
         </div>
       </CardShell>
 
@@ -420,10 +427,10 @@ export function ReceivablesPanel() {
           <aside className="side-sheet" onClick={e => e.stopPropagation()}>
             <div className="sheet-head">
               <div>
-                <span className="eyebrow">FINANCE</span>
-                <h2>Outstanding Receivables</h2>
+                <span className="eyebrow">{t('home.receivables.eyebrow')}</span>
+                <h2>{t('home.receivables.drawerTitle')}</h2>
               </div>
-              <button className="icon-button" onClick={() => setOpen(false)} aria-label="Close">
+              <button className="icon-button" onClick={() => setOpen(false)} aria-label={t('common.close')}>
                 <X />
               </button>
             </div>
@@ -439,7 +446,7 @@ export function ReceivablesPanel() {
                       <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--heading-text)' }}>EGP {r.outstanding_amount.toLocaleString()}</div>
                       {r.overdue_amount > 0 && (
                         <div style={{ fontSize: '12px', color: 'var(--rose-text)', fontWeight: 600 }}>
-                          EGP {r.overdue_amount.toLocaleString()} overdue · {r.days_overdue}d
+                          {t('home.receivables.overdueDetail', { amount: r.overdue_amount.toLocaleString(), days: r.days_overdue })}
                         </div>
                       )}
                     </div>
@@ -456,6 +463,7 @@ export function ReceivablesPanel() {
 
 // ── 7. Returns Panel ────────────────────────────────────────────────────────
 export function ReturnsPanel({ repId }: { repId?: string }) {
+  const { t } = useT()
   const entries = repId ? homeReturns.filter(r => r.rep_id === repId) : homeReturns
   const totalUnits = entries.reduce((s, r) => s + r.units_returned, 0)
   const totalSold = 12840 + 8620 + 7290 + 5410 + 4110
@@ -468,17 +476,17 @@ export function ReturnsPanel({ repId }: { repId?: string }) {
   return (
     <CardShell style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
       <div style={{ flex: '1 1 80px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Returns</div>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.title')}</div>
         <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--heading-text)', lineHeight: 1.1 }}>{totalUnits}</div>
-        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>units this month</div>
+        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.returns.unitsThisMonth')}</div>
       </div>
       <div style={{ flex: '1 1 80px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Return Rate</div>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.rateTitle')}</div>
         <div style={{ fontSize: '28px', fontWeight: 800, color: parseFloat(returnRate) > 2 ? 'var(--rose-text)' : '#16a34a', lineHeight: 1.1 }}>{returnRate}%</div>
-        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>of total distributed</div>
+        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.returns.ofTotal')}</div>
       </div>
       <div style={{ flex: '2 1 160px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>Top Reason</div>
+        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.topReason')}</div>
         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--heading-text)', marginTop: '4px' }}>{topReason}</div>
       </div>
     </CardShell>

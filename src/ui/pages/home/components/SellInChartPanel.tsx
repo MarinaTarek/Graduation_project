@@ -1,24 +1,27 @@
 import { Activity, ArrowUpRight } from 'lucide-react'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
+import { useT } from '@/lib/i18n'
 
 export interface SellInChartPanelProps {
   onClick?: () => void
 }
 
 export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
+  const { t } = useT()
+
   return (
     <section className="panel chart-panel" onClick={onClick}>
       <div className="panel-head">
         <div>
-          <span className="eyebrow">MOMENTUM</span>
-          <h3>Sell-in vs sell-out</h3>
+          <span className="eyebrow">{t('home.chart.eyebrow')}</span>
+          <h3>{t('home.chart.title')}</h3>
         </div>
         <Activity />
       </div>
       <div className="chart-total">
         <strong>{formatCurrency(240820)}</strong>
         <span>
-          <ArrowUpRight /> 8.4% <small>vs last month</small>
+          <ArrowUpRight /> 8.4% <small>{t('home.chart.vsLastMonth')}</small>
         </span>
       </div>
       <div className="chart-wrap">
@@ -32,7 +35,7 @@ export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
           viewBox="0 0 660 190"
           preserveAspectRatio="none"
           role="img"
-          aria-label="Sell-in versus sell-out"
+          aria-label={t('home.chart.ariaLabel')}
         >
           <defs>
             <linearGradient id="areaBlue" x1="0" x2="0" y1="0" y2="1">
@@ -56,12 +59,12 @@ export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
           />
         </svg>
         <div className="chart-months">
-          <span>Jan</span>
-          <span>Feb</span>
-          <span>Mar</span>
-          <span>Apr</span>
-          <span>May</span>
-          <span>Jun</span>
+          <span>{t('home.chart.months.jan')}</span>
+          <span>{t('home.chart.months.feb')}</span>
+          <span>{t('home.chart.months.mar')}</span>
+          <span>{t('home.chart.months.apr')}</span>
+          <span>{t('home.chart.months.may')}</span>
+          <span>{t('home.chart.months.jun')}</span>
         </div>
       </div>
     </section>

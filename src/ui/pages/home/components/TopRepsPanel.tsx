@@ -1,6 +1,7 @@
 import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Avatar } from '@/ui/design-system/components/Avatar'
+import { useT } from '@/lib/i18n'
 import { homeReps } from '../mock-data'
 
 export interface TopRepsPanelProps {
@@ -14,12 +15,14 @@ export function TopRepsPanel({
   onAction,
   onSelectRep,
 }: TopRepsPanelProps) {
+  const { t } = useT()
+
   return (
     <section className="panel reps-panel">
       <div className="panel-head">
         <div>
-          <span className="eyebrow">FIELD TEAM</span>
-          <h3>Top reps this month</h3>
+          <span className="eyebrow">{t('home.reps.eyebrow')}</span>
+          <h3>{t('home.reps.title')}</h3>
         </div>
         <Button variant="round-arrow" onClick={onNavigateMore}>
           <ArrowUpRight />
@@ -34,7 +37,7 @@ export function TopRepsPanel({
               if (onSelectRep) {
                 onSelectRep(name)
               } else {
-                onAction(`${name}'s profile opened`)
+                onAction(t('home.reps.profileOpened', { name }))
               }
             }}
           >
