@@ -188,7 +188,7 @@ export function UserListTable() {
       email: updatedUser.email,
       role: updatedUser.roleType,
       region: updatedUser.region,
-      status: updatedUser.status,
+      status: updatedUser.status as 'pending' | 'active' | 'rejected' | 'disabled' | undefined,
       permissions: updatedUser.permissions,
     })
 
@@ -276,7 +276,7 @@ export function UserListTable() {
         email: newUser.email,
         role: newUser.roleType,
         region: newUser.region,
-        status: newUser.status,
+        status: newUser.status as 'pending' | 'active' | 'rejected' | 'disabled' | undefined,
         permissions: newUser.permissions,
       })
 

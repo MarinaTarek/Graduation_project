@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'rep'
+export type UserStatus = 'pending' | 'active' | 'rejected' | 'disabled'
 
 export interface UserPermissions {
   pages: string[]
@@ -13,9 +14,11 @@ export interface User {
   name: string
   name_ar?: string
   email: string
+  phone?: string
   role: UserRole
   region?: string
-  status?: string
+  status?: UserStatus
+  emailVerified?: boolean
   permissions?: UserPermissions
 }
 
