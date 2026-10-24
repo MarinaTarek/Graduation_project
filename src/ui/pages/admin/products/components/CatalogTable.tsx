@@ -5,6 +5,7 @@ import { Button } from '@/ui/design-system/components/Button'
 import { Toast } from '@/ui/design-system/components/Toast'
 import { FieldError } from '@/ui/design-system/components/FieldError'
 import { useAuth } from '@/lib/auth'
+import { useT } from '@/lib/i18n'
 import { formatCurrency } from '@/lib/format'
 import { updateProductPrice } from '@/lib/productService'
 import { productsStore } from '@/data/mock/products'
@@ -12,6 +13,7 @@ import { useStore } from '@/data/mock/store'
 import { type CatalogProduct } from '../mock-data'
 
 export function CatalogTable() {
+  const { t } = useT()
   const { role, user } = useAuth()
   const products = useStore(productsStore)
   const [editingCode, setEditingCode] = useState<string | null>(null)
@@ -148,7 +150,7 @@ export function CatalogTable() {
                   <span>{item.category} · {item.standardPack}</span>
                   {item.updated_at && (
                     <span style={{ opacity: 0.8 }}>
-                      Updated {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {t('admin.catalog.updatedTime', { time: new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
                     </span>
                   )}
                 </div>
@@ -186,7 +188,7 @@ export function CatalogTable() {
                       <button
                         type="button"
                         onClick={() => handleSaveInlineEdit(item)}
-                        title="Save price"
+                        title={t('admin.catalog.savePrice')}
                         style={{
                           background: 'var(--ocean)',
                           color: '#fff',
@@ -204,7 +206,7 @@ export function CatalogTable() {
                       <button
                         type="button"
                         onClick={handleCancelInlineEdit}
-                        title="Cancel"
+                        title={t('common.cancel')}
                         style={{
                           background: 'var(--surface-raised)',
                           color: 'var(--muted-text)',
@@ -244,8 +246,8 @@ export function CatalogTable() {
                           type="button"
                           className="icon-button"
                           onClick={() => handleStartInlineEdit(item)}
-                          title="Inline edit price"
-                          aria-label="Inline edit price"
+                          title={t('admin.catalog.inlineEditPrice')}
+                          aria-label={t('admin.catalog.inlineEditPrice')}
                           style={{
                             width: '32px',
                             height: '32px',
@@ -265,8 +267,8 @@ export function CatalogTable() {
                           type="button"
                           className="icon-button"
                           onClick={() => handleOpenEditModal(item)}
-                          title="Edit product formulation and price"
-                          aria-label="Edit product formulation and price"
+                          title={t('admin.catalog.editProductFormulation')}
+                          aria-label={t('admin.catalog.editProductFormulation')}
                           style={{
                             width: '32px',
                             height: '32px',
@@ -290,7 +292,7 @@ export function CatalogTable() {
                           type="text"
                           disabled
                           value={formatCurrency(item.price)}
-                          title="Only admins can change prices"
+                          title={t('admin.catalog.onlyAdminsChangePrices')}
                           style={{
                             width: '110px',
                             padding: '6px 10px',
@@ -331,7 +333,7 @@ export function CatalogTable() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
               <div>
-                <span className="eyebrow">EDIT PRODUCT</span>
+                <span className="eyebrow">{t('admin.catalog.editProductEyebrow')}</span>
                 <h3 style={{ margin: '4px 0 0', fontSize: '18px', color: 'var(--heading-text)' }}>
                   {modalProduct.name}
                 </h3>
@@ -339,7 +341,7 @@ export function CatalogTable() {
               <button
                 className="icon-button"
                 onClick={handleCloseEditModal}
-                aria-label="Close"
+                aria-label={t('common.close')}
                 style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
               >
                 <X style={{ width: '18px', height: '18px', color: 'var(--muted-text)' }} />
@@ -349,7 +351,7 @@ export function CatalogTable() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '4px' }}>
-                  Product Code & Category
+                  {t('admin.catalog.productCodeCategory')}
                 </label>
                 <input
                   type="text"
@@ -369,7 +371,7 @@ export function CatalogTable() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)', marginBottom: '4px' }}>
-                  Standard Pack
+                  {t('admin.catalog.standardPack')}
                 </label>
                 <input
                   type="text"
@@ -389,7 +391,7 @@ export function CatalogTable() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)', marginBottom: '4px' }}>
-                  Price (EGP) *
+                  {t('admin.catalog.priceEgp')}
                 </label>
                 <div
                   style={{
@@ -438,10 +440,10 @@ export function CatalogTable() {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
               <Button variant="secondary" onClick={handleCloseEditModal}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button variant="primary" onClick={handleSaveEditModal}>
-                <Check data-icon="inline-start" /> Save changes
+                <Check data-icon="inline-start" /> {t('admin.catalog.saveChanges')}
               </Button>
             </div>
           </div>

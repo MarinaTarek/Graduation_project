@@ -20,12 +20,14 @@ import { useStore } from '@/data/mock/store'
 import { addMockNotification } from '@/ui/layout/notifications-mock'
 import { type AdminUserRecord } from '../mock-data'
 import { useUndo } from '@/lib/useUndo'
+import { useT } from '@/lib/i18n'
 
 export interface UserListTableProps {
   initialTab?: 'all' | 'pending'
 }
 
 export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
+  const { t } = useT()
   const { user: currentUser } = useAuth()
   const [activeTab, setActiveTab] = useState<'all' | 'pending'>(initialTab)
 
@@ -491,7 +493,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               transition: 'all 0.15s ease',
             }}
           >
-            All users
+            {t('admin.users.allUsers')}
           </button>
           <button
             type="button"
@@ -512,7 +514,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               transition: 'all 0.15s ease',
             }}
           >
-            Pending requests
+            {t('admin.users.pendingRequests')}
             {pendingRequests.length > 0 && (
               <span
                 style={{
@@ -533,7 +535,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
         {activeTab === 'all' && (
           <Button variant="primary" onClick={() => setIsAddOpen(true)}>
-            <Plus data-icon="inline-start" /> Add user
+            <Plus data-icon="inline-start" /> {t('admin.users.addUser')}
           </Button>
         )}
       </div>
@@ -552,10 +554,10 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
             >
               <UsersIcon style={{ width: '32px', height: '32px', margin: '0 auto 12px', opacity: 0.5 }} />
               <div style={{ fontWeight: 600, color: 'var(--heading-text)', marginBottom: '4px' }}>
-                No pending requests
+                {t('admin.users.noPending')}
               </div>
               <p style={{ margin: 0, fontSize: '13px' }}>
-                New sign-up requests from the login page will appear here for administrator review.
+                {t('admin.users.noPendingDesc')}
               </p>
             </div>
           ) : (
@@ -579,7 +581,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                             fontWeight: 600,
                           }}
                         >
-                          <Check size={12} /> Email verified
+                          <Check size={12} /> {t('admin.users.emailVerified')}
                         </span>
                       ) : (
                         <span
@@ -595,12 +597,12 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                             fontWeight: 600,
                           }}
                         >
-                          <AlertTriangle size={12} /> Unverified email
+                          <AlertTriangle size={12} /> {t('admin.users.unverifiedEmail')}
                         </span>
                       )}
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--muted-text)', display: 'block', marginTop: '4px' }}>
-                      {req.email} · {req.phone || 'No phone'} · Requested {req.requestedDate || 'Recent'}
+                      {req.email} · {req.phone || t('admin.users.noPhone')} · {t('admin.users.requestedDate', { date: req.requestedDate || t('admin.users.recent') })}
                     </span>
                   </div>
 
@@ -610,7 +612,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                       onClick={() => handleOpenApprove(req)}
                       style={{ padding: '6px 14px', fontSize: '13px' }}
                     >
-                      <UserCheck data-icon="inline-start" size={14} /> Approve
+                      <UserCheck data-icon="inline-start" size={14} /> {t('common.approve')}
                     </Button>
                     <Button
                       variant="text"
@@ -621,7 +623,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                         color: 'var(--rose, #d9798b)',
                       }}
                     >
-                      <UserX data-icon="inline-start" size={14} /> Reject
+                      <UserX data-icon="inline-start" size={14} /> {t('common.reject')}
                     </Button>
                   </div>
                 </div>
@@ -646,8 +648,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
               <button
                 onClick={() => handleOpenEdit(user)}
-                title={`Edit permissions for ${user.name}`}
-                aria-label={`Edit permissions for ${user.name}`}
+                title={t('admin.users.editTitle', { name: user.name })}
+                aria-label={t('admin.users.editTitle', { name: user.name })}
                 style={{
                   background: 'var(--surface-raised)',
                   border: '1px solid var(--border-soft)',
@@ -663,13 +665,13 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                 }}
               >
                 <Pencil style={{ width: '13px', height: '13px', color: 'var(--ocean)' }} />
-                <span>Edit</span>
+                <span>{t('admin.users.edit')}</span>
               </button>
 
               <button
                 onClick={() => handleDelete(user)}
-                title={`Delete user ${user.name}`}
-                aria-label={`Delete user ${user.name}`}
+                title={t('admin.users.deleteTitle', { name: user.name })}
+                aria-label={t('admin.users.deleteTitle', { name: user.name })}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -721,7 +723,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                 cursor: 'pointer',
               }}
             >
-              Undo
+              {t('admin.users.undo')}
             </button>
           )}
         </div>
@@ -730,8 +732,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       {/* Edit User & Permissions Drawer */}
       {editingUser && (
         <Drawer
-          title={`Edit permissions: ${editingUser.name}`}
-          kicker="USER MANAGEMENT"
+          title={t('admin.users.editDrawerTitle', { name: editingUser.name })}
+          kicker={t('admin.users.drawerKicker')}
           isOpen={Boolean(editingUser)}
           onClose={() => setEditingUser(null)}
         >
@@ -754,7 +756,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
             <div className="form-grid" style={{ gridTemplateColumns: '1fr', gap: '16px', flex: 1 }}>
               <label>
-                Full Name *
+                {t('admin.users.fullNameLabel')}
                 <input
                   required
                   value={editName}
@@ -764,7 +766,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               </label>
 
               <label>
-                Work Email *
+                {t('admin.users.workEmailLabel')}
                 <input
                   required
                   type="email"
@@ -776,7 +778,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <label>
-                  Role
+                  {t('admin.users.roleLabel')}
                   <select
                     value={editRoleType}
                     onChange={(e) => handleEditRoleChange(e.target.value as UserRole)}
@@ -787,7 +789,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                 </label>
 
                 <label>
-                  Region
+                  {t('admin.users.regionLabel')}
                   <select value={editRegion} onChange={(e) => setEditRegion(e.target.value)}>
                     <option value="HQ - Global">HQ - Global</option>
                     <option value="North region">North region</option>
@@ -807,11 +809,11 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                     style={{ accentColor: 'var(--ocean)', width: '16px', height: '16px' }}
                   />
                   <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>
-                    Active Account
+                    {t('admin.users.activeAccount')}
                   </span>
                 </label>
                 <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted-text)', marginLeft: '26px' }}>
-                  Deactivated users cannot log in to the CRM.
+                  {t('admin.users.deactivatedDesc')}
                 </span>
               </div>
 
@@ -1025,10 +1027,10 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               }}
             >
               <Button variant="secondary" type="button" onClick={() => setEditingUser(null)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button variant="primary" type="submit" loading={isSavingEdit}>
-                <Check data-icon="inline-start" /> Save changes
+                <Check data-icon="inline-start" /> {t('admin.users.saveChanges')}
               </Button>
             </div>
           </form>
@@ -1037,15 +1039,15 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
       {/* Add User Drawer */}
       <Drawer
-        title="Add user"
-        kicker="TEAM DIRECTORY"
+        title={t('admin.users.addUser')}
+        kicker={t('admin.users.teamDirectory')}
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
       >
         <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div className="form-grid" style={{ gridTemplateColumns: '1fr', gap: '16px' }}>
             <label>
-              Full Name *
+              {t('admin.users.fullNameLabel')}
               <input
                 required
                 value={addName}
@@ -1054,7 +1056,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               />
             </label>
             <label>
-              Work Email *
+              {t('admin.users.workEmailLabel')}
               <input
                 required
                 type="email"
@@ -1066,14 +1068,14 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <label>
-                Role
+                {t('admin.users.roleLabel')}
                 <select value={addRole} onChange={(e) => setAddRole(e.target.value as UserRole)}>
                   <option value="rep">Medical Representative</option>
                   <option value="admin">Admin</option>
                 </select>
               </label>
               <label>
-                Region
+                {t('admin.users.regionLabel')}
                 <select value={addRegion} onChange={(e) => setAddRegion(e.target.value)}>
                   <option value="North region">North region</option>
                   <option value="West region">West region</option>
@@ -1087,10 +1089,10 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
           <div className="sheet-actions">
             <Button variant="secondary" type="button" onClick={() => setIsAddOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" type="submit" loading={isSavingAdd}>
-              Save user
+              {t('admin.users.saveUser')}
             </Button>
           </div>
         </form>
@@ -1099,8 +1101,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       {/* Approve Sign-up Request Drawer */}
       {approvingUser && (
         <Drawer
-          title={`Approve: ${approvingUser.name}`}
-          kicker="ACCOUNT APPROVAL"
+          title={t('admin.users.approveTitle', { name: approvingUser.name })}
+          kicker={t('admin.users.accountApproval')}
           isOpen={Boolean(approvingUser)}
           onClose={() => setApprovingUser(null)}
         >
@@ -1136,7 +1138,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               <div style={{ color: 'var(--heading-text)', fontWeight: 600, fontSize: '13px', marginBottom: '2px' }}>
                 {approvingUser.name}
               </div>
-              <div>{approvingUser.email} · {approvingUser.phone || 'No phone'} · Requested {approvingUser.requestedDate || 'Recent'}</div>
+              <div>{approvingUser.email} · {approvingUser.phone || t('admin.users.noPhone')} · {t('admin.users.requestedDate', { date: approvingUser.requestedDate || t('admin.users.recent') })}</div>
             </div>
 
             {/* Email Verification Warning if unverified */}
@@ -1165,7 +1167,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
             <div className="form-grid" style={{ gridTemplateColumns: '1fr', gap: '16px', flex: 1 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <label>
-                  Role Assignment *
+                  {t('admin.users.roleLabel')}
                   <select
                     value={approveRole}
                     onChange={(e) => handleApproveRoleChange(e.target.value as UserRole)}
@@ -1177,7 +1179,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                 </label>
 
                 <label>
-                  Assigned Region *
+                  {t('admin.users.regionLabel')}
                   <select
                     value={approveRegion}
                     onChange={(e) => setApproveRegion(e.target.value)}
@@ -1345,10 +1347,10 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
             <div className="sheet-actions" style={{ marginTop: '24px' }}>
               <Button variant="secondary" type="button" onClick={() => setApprovingUser(null)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button variant="primary" type="submit" loading={isSavingApprove}>
-                <Check data-icon="inline-start" /> Approve account
+                <Check data-icon="inline-start" /> {t('admin.users.approveAccount')}
               </Button>
             </div>
           </form>
@@ -1376,14 +1378,14 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontSize: '18px', margin: '0 0 8px', color: 'var(--heading-text)' }}>
-              Reject Sign-up Request
+              {t('admin.users.rejectModalTitle')}
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--muted-text)', margin: '0 0 16px', lineHeight: 1.5 }}>
-              Are you sure you want to reject the sign-up request for <strong>{rejectingUser.name}</strong> ({rejectingUser.email})?
+              {t('admin.users.rejectConfirmDesc', { name: rejectingUser.name, email: rejectingUser.email })}
             </p>
             <form onSubmit={handleConfirmReject}>
               <label style={{ display: 'block', fontSize: '13px', marginBottom: '16px' }}>
-                Reason <span style={{ color: 'var(--muted-text)' }}>(optional)</span>
+                {t('admin.users.rejectReasonLabel')} <span style={{ color: 'var(--muted-text)' }}>{t('admin.users.optional')}</span>
                 <input
                   type="text"
                   value={rejectReason}
@@ -1394,7 +1396,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
               </label>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <Button variant="secondary" type="button" onClick={() => setRejectingUser(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="primary"
@@ -1402,7 +1404,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                   loading={isSavingReject}
                   style={{ background: 'var(--rose, #d9798b)', borderColor: 'var(--rose, #d9798b)' }}
                 >
-                  Reject request
+                  {t('admin.users.rejectRequest')}
                 </Button>
               </div>
             </form>

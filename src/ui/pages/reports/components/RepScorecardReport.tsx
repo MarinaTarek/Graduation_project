@@ -16,6 +16,7 @@ import {
 import { REP_SCORECARD_MOCK, type RepScorecardProfile } from '../mock-data'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
+import { useT } from '@/lib/i18n'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface RepScorecardReportProps {
@@ -29,6 +30,7 @@ export function RepScorecardReport({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: RepScorecardReportProps) {
+  const { t } = useT()
   const [selectedRepName, setSelectedRepName] = useState<string>(
     role === 'rep' ? currentUserName : filters.reps[0] || 'Alex Morgan'
   )
@@ -56,7 +58,7 @@ export function RepScorecardReport({
           }}
         >
           <ArrowUpRight style={{ width: '15px', height: '15px' }} />
-          +{pct}% pacing
+          {t('reports.scorecard.pacingPositive', { pct })}
         </span>
       )
     }
@@ -73,7 +75,7 @@ export function RepScorecardReport({
           }}
         >
           <ArrowDownRight style={{ width: '15px', height: '15px' }} />
-          {pct}% pacing
+          {t('reports.scorecard.pacingNegative', { pct })}
         </span>
       )
     }
@@ -89,7 +91,7 @@ export function RepScorecardReport({
         }}
       >
         <Minus style={{ width: '15px', height: '15px' }} />
-        Steady ({pct}%)
+        {t('reports.scorecard.pacingSteady', { pct })}
       </span>
     )
   }
@@ -113,7 +115,7 @@ export function RepScorecardReport({
           }}
         >
           <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-            Total Sales Revenue
+            {t('reports.scorecard.totalSales')}
           </span>
           <div
             style={{
@@ -127,7 +129,7 @@ export function RepScorecardReport({
             EGP {currentRep.sales.toLocaleString()}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--story-em, #3e9a78)' }}>
-            Quota: EGP {currentRep.salesTarget.toLocaleString()} ({currentRep.targetPct}%)
+            {t('reports.scorecard.quotaTarget', { target: currentRep.salesTarget.toLocaleString(), pct: currentRep.targetPct })}
           </div>
         </div>
 
@@ -140,7 +142,7 @@ export function RepScorecardReport({
           }}
         >
           <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-            Physician Detailing Visits
+            {t('reports.scorecard.detailingVisits')}
           </span>
           <div
             style={{
@@ -151,10 +153,10 @@ export function RepScorecardReport({
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {currentRep.visitsLogged} calls
+            {t('reports.scorecard.callsUnit', { calls: currentRep.visitsLogged })}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ocean)' }}>
-            Cycle target: {currentRep.visitsTarget} visits
+            {t('reports.scorecard.cycleTarget', { target: currentRep.visitsTarget })}
           </div>
         </div>
 
@@ -167,7 +169,7 @@ export function RepScorecardReport({
           }}
         >
           <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-            Samples & Rx Conversion
+            {t('reports.scorecard.samplesConversion')}
           </span>
           <div
             style={{
@@ -178,10 +180,10 @@ export function RepScorecardReport({
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {currentRep.samplesDelivered} packs
+            {t('reports.scorecard.packsUnit', { packs: currentRep.samplesDelivered })}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--story-em, #3e9a78)' }}>
-            {currentRep.conversionRate}% doctor prescription rate
+            {t('reports.scorecard.rxRate', { rate: currentRep.conversionRate })}
           </div>
         </div>
       </div>
@@ -252,7 +254,7 @@ export function RepScorecardReport({
               {/* Target 100% line */}
               <line x1="50" y1="80" x2="620" y2="80" stroke="var(--rose)" strokeWidth="1.5" strokeDasharray="4 4" />
               <text x="44" y="84" textAnchor="end" fontSize="10" fill="var(--rose-text)">
-                100% Target
+                {t('reports.scorecard.target100')}
               </text>
 
               {/* 50% line */}
@@ -313,10 +315,10 @@ export function RepScorecardReport({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-              {role === 'rep' ? 'My Key Accounts & Target Detailing Pacing' : 'All Representatives KPI Scorecard'}
+              {role === 'rep' ? t('reports.scorecard.myTableTitle') : t('reports.scorecard.allTableTitle')}
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-              Attainment, physician engagements, medical samples dispensed, and performance trend.
+              {t('reports.scorecard.tableSubtitle')}
             </p>
           </div>
         </div>
@@ -325,13 +327,13 @@ export function RepScorecardReport({
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px', fontSize: '13px' }}>
             <thead>
               <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '8px 12px' }}>Representative</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Revenue (EGP)</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Visits</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Samples Delivered</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Target %</th>
-                <th style={{ padding: '8px 12px' }}>Momentum</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>Standing</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.scorecard.thRep')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.scorecard.thRevenue')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.scorecard.thVisits')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.scorecard.thSamples')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.scorecard.thTargetPct')}</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.scorecard.thMomentum')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>{t('reports.scorecard.thStanding')}</th>
               </tr>
             </thead>
             <tbody>

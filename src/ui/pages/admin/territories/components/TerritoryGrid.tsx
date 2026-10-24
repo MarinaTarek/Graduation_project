@@ -1,19 +1,22 @@
 import { MapPin } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 import { adminTerritoriesMockData } from '../mock-data'
 
 export function TerritoryGrid() {
+  const { t } = useT()
+
   return (
     <div className="collection-list">
-      {adminTerritoriesMockData.map((t) => (
-        <div key={t.name} className="collection-item">
+      {adminTerritoriesMockData.map((terr) => (
+        <div key={terr.name} className="collection-item">
           <div className="item-icon">
             <MapPin />
           </div>
           <div>
-            <strong>{t.name}</strong>
-            <span>Lead: {t.leadRep} · {t.accountsCount} assigned accounts</span>
+            <strong>{terr.name}</strong>
+            <span>{t('admin.territories.leadAccounts', { lead: terr.leadRep, count: terr.accountsCount })}</span>
           </div>
-          <b style={{ color: 'var(--ocean)' }}>{t.target} target</b>
+          <b style={{ color: 'var(--ocean)' }}>{t('admin.territories.targetAmount', { target: terr.target })}</b>
         </div>
       ))}
     </div>

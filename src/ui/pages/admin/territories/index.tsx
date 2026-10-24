@@ -1,23 +1,25 @@
 import { MapPin } from 'lucide-react'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { useT } from '@/lib/i18n'
 import { TerritoryGrid } from './components/TerritoryGrid'
 
 export default function AdminTerritoriesPage() {
+  const { t } = useT()
   return (
     <section className="content">
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <MapPin /> GEOGRAPHIC COVERAGE
+            <MapPin /> {t('admin.territories.eyebrow')}
           </span>
-          <h1>Territories</h1>
-          <p className="story">Regional zone partitions, postal zoning, and representative portfolio balance.</p>
+          <h1>{t('admin.territories.title')}</h1>
+          <p className="story">{t('admin.territories.story')}</p>
         </div>
       </div>
       <div style={{ marginTop: '36px' }}>
         <TerritoryGrid />
       </div>
-      <EmptyState message="All 4 territories balanced and assigned" />
+      <EmptyState message={t('admin.territories.emptyState')} />
     </section>
   )
 }

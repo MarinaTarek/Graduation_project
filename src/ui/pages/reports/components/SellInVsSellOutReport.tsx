@@ -3,6 +3,7 @@
 import { AlertTriangle } from 'lucide-react'
 import { SELL_IN_OUT_MOCK, type ProductSellThrough } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
+import { useT } from '@/lib/i18n'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface SellInVsSellOutReportProps {
@@ -10,6 +11,7 @@ export interface SellInVsSellOutReportProps {
 }
 
 export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
+  const { t } = useT()
   const products = SELL_IN_OUT_MOCK.products.filter((p) => {
     if (filters.products.length > 0 && !filters.products.includes(p.product)) return false
     return true
@@ -109,24 +111,24 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
         >
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-              Wholesale Sell-in vs Pharmacy Sell-out (Dispense Velocity)
+              {t('reports.sellinout.chartTitle')}
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-              Tracking distributor pipeline build up against direct patient dispense trends.
+              {t('reports.sellinout.chartSubtitle')}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: 'var(--muted-text)' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--ocean)' }} />
-              Sell-in (Distributor intake)
+              {t('reports.sellinout.sellInLegend')}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--story-em, #3e9a78)' }} />
-              Sell-out (Patient dispense)
+              {t('reports.sellinout.sellOutLegend')}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--rose-bg)', border: '1px solid var(--rose)' }} />
-              Low sell-through risk
+              {t('reports.sellinout.lowRiskLegend')}
             </span>
           </div>
         </div>
@@ -196,19 +198,19 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
         }}
       >
         <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-          Product Sell-Through Velocity & Stock-to-Dispensary Ratio
+          {t('reports.sellinout.tableTitle')}
         </h3>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px', fontSize: '13px' }}>
             <thead>
               <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '8px 12px' }}>Product</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Sell-In Units</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Sell-Out Units</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Sell-Through %</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Months on Hand</th>
-                <th style={{ padding: '8px 12px' }}>Inventory Assessment</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.sellinout.thProduct')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sellinout.thSellInUnits')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sellinout.thSellOutUnits')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sellinout.thSellThrough')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sellinout.thMonthsOnHand')}</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.sellinout.thAssessment')}</th>
               </tr>
             </thead>
             <tbody>
@@ -245,7 +247,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                     {p.sellThroughRate}%
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {p.monthsOnHand} mo
+                    {t('reports.sellinout.monthsUnit', { months: p.monthsOnHand })}
                   </td>
                   <td
                     style={{
@@ -265,7 +267,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                           color: 'var(--rose-text)',
                         }}
                       >
-                        Low Sell-Through Risk ({p.statusNotice})
+                        {t('reports.sellinout.lowRiskBadge', { notice: p.statusNotice || '' })}
                       </span>
                     ) : (
                       <span
@@ -278,7 +280,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                           color: 'var(--green-text)',
                         }}
                       >
-                        Healthy Flow ({p.monthsOnHand} mo supply)
+                        {t('reports.sellinout.healthyBadge', { months: p.monthsOnHand })}
                       </span>
                     )}
                   </td>

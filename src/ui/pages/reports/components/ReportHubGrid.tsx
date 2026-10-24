@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { useT } from '@/lib/i18n'
 import { REPORT_CARDS_META, type ReportCardMeta } from '../mock-data'
 
 export interface ReportHubGridProps {
@@ -21,13 +22,14 @@ export interface ReportHubGridProps {
 }
 
 export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridProps) {
+  const { t } = useT()
   // If rep, only show the scorecard card
   const cards =
     role === 'rep'
       ? REPORT_CARDS_META.filter((c) => c.id === 'rep-scorecard').map((c) => ({
           ...c,
-          title: 'My Scorecard',
-          description: 'Your personal KPI attainment, doctor coverage, and quarterly quota progression.',
+          title: t('reports.hub.myScorecardTitle'),
+          description: t('reports.hub.myScorecardDesc'),
         }))
       : REPORT_CARDS_META
 
@@ -182,7 +184,7 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
             }}
           >
             <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-              Monthly analytics rollup
+              {t('reports.hub.monthlyRollup')}
             </span>
             <Button
               variant="primary"
@@ -196,7 +198,7 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
                 borderRadius: '12px',
               }}
             >
-              Open <ArrowUpRight style={{ width: '15px', height: '15px' }} />
+              {t('reports.hub.open')} <ArrowUpRight style={{ width: '15px', height: '15px' }} />
             </Button>
           </div>
         </div>

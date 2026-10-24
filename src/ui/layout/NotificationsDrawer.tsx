@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 import { Drawer } from '@/ui/design-system/components/Drawer'
+import { useT } from '@/lib/i18n'
 import { mockNotificationsList, earlierNotificationsList } from './notifications-mock'
 
 export interface NotificationsDrawerProps {
@@ -13,20 +14,21 @@ export function NotificationsDrawer({
   onClose,
   onAction,
 }: NotificationsDrawerProps) {
+  const { t } = useT()
   if (!isOpen) return null
 
   return (
-    <Drawer title="Notifications" kicker="YOUR INBOX" onClose={onClose}>
+    <Drawer title={t('notifications.title')} kicker={t('notifications.kicker')} onClose={onClose}>
       <button
         className="text-button"
-        onClick={() => onAction('All notifications marked as read')}
+        onClick={() => onAction(t('notifications.markedAllReadToast'))}
       >
-        Mark all as read
+        {t('notifications.markAllRead')}
       </button>
       <div className="notice-list">
-        <span className="eyebrow">TODAY</span>
+        <span className="eyebrow">{t('notifications.today')}</span>
         {mockNotificationsList.map((item, i) => (
-          <button key={item.id} onClick={() => onAction('Notification opened')}>
+          <button key={item.id} onClick={() => onAction(t('notifications.openedToast'))}>
             <div className={`notice-dot ${item.dotClass || `n-${i % 3}`}`} />
             <div>
               <strong>{item.title}</strong>
@@ -35,9 +37,9 @@ export function NotificationsDrawer({
             <ChevronRight />
           </button>
         ))}
-        <span className="eyebrow">EARLIER</span>
+        <span className="eyebrow">{t('notifications.earlier')}</span>
         {earlierNotificationsList.map((item) => (
-          <button key={item.id} onClick={() => onAction('Notification opened')}>
+          <button key={item.id} onClick={() => onAction(t('notifications.openedToast'))}>
             <div className={`notice-dot ${item.dotClass || 'n-2'}`} />
             <div>
               <strong>{item.title}</strong>

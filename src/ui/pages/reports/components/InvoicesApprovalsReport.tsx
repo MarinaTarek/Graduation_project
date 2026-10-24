@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Clock, FileText, XCircle } from 'lucide-react'
 import { INVOICES_APPROVALS_MOCK, type RejectionReasonStat } from '../mock-data'
+import { useT } from '@/lib/i18n'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface InvoicesApprovalsReportProps {
@@ -9,6 +10,7 @@ export interface InvoicesApprovalsReportProps {
 }
 
 export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProps) {
+  const { t } = useT()
   const reasons = INVOICES_APPROVALS_MOCK.rejectionReasons
   const timeline = INVOICES_APPROVALS_MOCK.statusTimeline
 
@@ -80,24 +82,24 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
         >
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-              Weekly Claims Processed by Validation Status
+              {t('reports.invoices.chartTitle')}
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-              Breakdown of approved, pending review, and rejected pharmacy claims per cycle.
+              {t('reports.invoices.chartSubtitle')}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: 'var(--muted-text)' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--story-em, #3e9a78)' }} />
-              Approved claims
+              {t('reports.invoices.approvedLegend')}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--amber)' }} />
-              Pending review
+              {t('reports.invoices.pendingLegend')}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--rose)' }} />
-              Rejected
+              {t('reports.invoices.rejectedLegend')}
             </span>
           </div>
         </div>
@@ -169,7 +171,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
                       fontWeight="600"
                       fill="var(--heading-text)"
                     >
-                      Week {idx + 1} ({item.week})
+                      {t('reports.invoices.weekLabel', { num: idx + 1, week: item.week })}
                     </text>
                     <text
                       x={groupX + barW * 1.5 + 4}
@@ -178,7 +180,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
                       fontSize="9.5"
                       fill="var(--muted-text)"
                     >
-                      {item.approved + item.pending + item.rejected} total
+                      {t('reports.invoices.totalCount', { total: item.approved + item.pending + item.rejected })}
                     </text>
                   </g>
                 )
@@ -200,14 +202,14 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-              Top Rejection Reasons & Resolution Velocity
+              {t('reports.invoices.tableTitle')}
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-              Analysis of audit defects to guide representative training and photo intake guidelines.
+              {t('reports.invoices.tableSubtitle')}
             </p>
           </div>
           <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--rose-text)' }}>
-            4.2% overall rejection rate
+            {t('reports.invoices.rejectionRate')}
           </span>
         </div>
 
@@ -215,11 +217,11 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px', fontSize: '13px' }}>
             <thead>
               <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '8px 12px' }}>Audit Defect / Issue</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Occurrences</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Share of Rejections</th>
-                <th style={{ padding: '8px 12px' }}>Average Turnaround</th>
-                <th style={{ padding: '8px 12px' }}>Frequent Accounts / Reps</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.invoices.thDefect')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.invoices.thOccurrences')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.invoices.thShare')}</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.invoices.thTurnaround')}</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.invoices.thFrequent')}</th>
               </tr>
             </thead>
             <tbody>
@@ -238,7 +240,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
                     </div>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    {r.count} claims
+                    {t('reports.invoices.claimsUnit', { count: r.count })}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--rose-text)', fontVariantNumeric: 'tabular-nums' }}>
                     {r.pct}%

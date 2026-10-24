@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { FilterDropdown } from '@/ui/design-system/components/FilterDropdown'
+import { useT } from '@/lib/i18n'
 
 export interface ReportFiltersState {
   month: string
@@ -38,6 +39,7 @@ export function ReportFilters({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: ReportFiltersProps) {
+  const { t } = useT()
   const [openDropdown, setOpenDropdown] = useState<'month' | 'region' | 'rep' | 'product' | null>(null)
 
   const [draftMonth, setDraftMonth] = useState(filters.month)
@@ -114,26 +116,26 @@ export function ReportFilters({
   const monthLabel = filters.month
   const regionsLabel =
     filters.regions.length === 0
-      ? 'All regions'
+      ? t('reports.filters.allRegions')
       : filters.regions.length === 1
       ? filters.regions[0]
-      : `${filters.regions.length} regions`
+      : t('reports.filters.regionsCount', { count: filters.regions.length })
 
   const repsLabel =
     role === 'rep'
       ? currentUserName
       : filters.reps.length === 0
-      ? 'All reps'
+      ? t('reports.filters.allReps')
       : filters.reps.length === 1
       ? filters.reps[0]
-      : `${filters.reps.length} reps`
+      : t('reports.filters.repsCount', { count: filters.reps.length })
 
   const productsLabel =
     filters.products.length === 0
-      ? 'All products'
+      ? t('reports.filters.allProducts')
       : filters.products.length === 1
       ? filters.products[0]
-      : `${filters.products.length} products`
+      : t('reports.filters.productsCount', { count: filters.products.length })
 
   return (
     <div className="reports-filters-row">
@@ -144,10 +146,10 @@ export function ReportFilters({
         isOpen={openDropdown === 'month'}
         onToggle={() => openFilter('month')}
         onClose={() => setOpenDropdown(null)}
-        title="SELECT MONTH"
+        title={t('reports.filters.selectMonth')}
         width={240}
         onReset={handleClearMonth}
-        resetLabel="Reset"
+        resetLabel={t('common.reset')}
         onApply={handleApplyMonth}
       >
         {ALL_MONTHS.map((m) => (
@@ -183,10 +185,10 @@ export function ReportFilters({
         isOpen={openDropdown === 'region'}
         onToggle={() => openFilter('region')}
         onClose={() => setOpenDropdown(null)}
-        title="FILTER REGIONS"
+        title={t('reports.filters.filterRegions')}
         width={260}
         onReset={handleClearRegions}
-        resetLabel="Clear"
+        resetLabel={t('common.clear')}
         onApply={handleApplyRegions}
       >
         {ALL_REGIONS.map((reg) => {
@@ -226,10 +228,10 @@ export function ReportFilters({
           isOpen={openDropdown === 'rep'}
           onToggle={() => openFilter('rep')}
           onClose={() => setOpenDropdown(null)}
-          title="FIELD REPRESENTATIVES"
+          title={t('reports.filters.fieldReps')}
           width={260}
           onReset={handleClearReps}
-          resetLabel="Clear"
+          resetLabel={t('common.clear')}
           onApply={handleApplyReps}
         >
           {ALL_REPS.map((r, idx) => {
@@ -271,10 +273,10 @@ export function ReportFilters({
         isOpen={openDropdown === 'product'}
         onToggle={() => openFilter('product')}
         onClose={() => setOpenDropdown(null)}
-        title="PRODUCT PORTFOLIO"
+        title={t('reports.filters.productPortfolio')}
         width={260}
         onReset={handleClearProducts}
-        resetLabel="Clear"
+        resetLabel={t('common.clear')}
         onApply={handleApplyProducts}
       >
         {ALL_PRODUCTS.map((prod) => {
@@ -321,7 +323,7 @@ export function ReportFilters({
             whiteSpace: 'nowrap',
           }}
         >
-          Reset all filters
+          {t('reports.filters.resetAll')}
         </button>
       )}
     </div>

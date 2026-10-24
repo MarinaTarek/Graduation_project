@@ -3,6 +3,7 @@
 import { SALES_PERFORMANCE_MOCK, type SalesRepBreakdown } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Avatar } from '@/ui/design-system/components/Avatar'
+import { useT } from '@/lib/i18n'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface SalesPerformanceReportProps {
@@ -10,6 +11,7 @@ export interface SalesPerformanceReportProps {
 }
 
 export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps) {
+  const { t } = useT()
   // Filter by reps and regions if selected
   const reps = SALES_PERFORMANCE_MOCK.byRep.filter((r) => {
     if (filters.reps.length > 0 && !filters.reps.includes(r.rep)) return false
@@ -85,10 +87,10 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
         >
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-              Sales Revenue vs Target by Field Rep
+              {t('reports.sales.chartTitle')}
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-              Comparison of actual sales achieved against quota with product contribution breakdown.
+              {t('reports.sales.chartSubtitle')}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: 'var(--muted-text)' }}>
@@ -102,11 +104,11 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--green)' }} />
-              Others
+              {t('reports.sales.others')}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '2px', background: 'var(--rose)' }} />
-              Target line
+              {t('reports.sales.targetLine')}
             </span>
           </div>
         </div>
@@ -207,20 +209,20 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
         }}
       >
         <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
-          Territory Rep Performance Breakdown
+          {t('reports.sales.tableTitle')}
         </h3>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px', fontSize: '13px' }}>
             <thead>
               <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '8px 12px' }}>Representative</th>
-                <th style={{ padding: '8px 12px' }}>Territory</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Target Quota</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Actual Revenue</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>Attainment</th>
-                <th style={{ padding: '8px 12px' }}>Top Performing SKU</th>
-                <th style={{ padding: '8px 12px', textAlign: 'center' }}>Status</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.sales.thRep')}</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.sales.thTerritory')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sales.thTarget')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sales.thActual')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.sales.thAttainment')}</th>
+                <th style={{ padding: '8px 12px' }}>{t('reports.sales.thTopSku')}</th>
+                <th style={{ padding: '8px 12px', textAlign: 'center' }}>{t('reports.sales.thStatus')}</th>
               </tr>
             </thead>
             <tbody>

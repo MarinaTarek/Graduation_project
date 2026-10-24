@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { useT } from '@/lib/i18n'
 import { UserListTable } from './components/UserListTable'
 
 export interface AdminUsersPageProps {
@@ -7,22 +8,23 @@ export interface AdminUsersPageProps {
 }
 
 export default function AdminUsersPage({ initialTab }: AdminUsersPageProps) {
+  const { t } = useT()
   const activeTab = initialTab === 'pending' ? 'pending' : 'all'
   return (
     <section className="content">
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <Users /> ACCESS CONTROL
+            <Users /> {t('admin.users.eyebrow')}
           </span>
-          <h1>User Management</h1>
-          <p className="story">Manage field reps, supervisors, regional directors, and administrative accounts.</p>
+          <h1>{t('admin.users.title')}</h1>
+          <p className="story">{t('admin.users.story')}</p>
         </div>
       </div>
       <div style={{ marginTop: '36px' }}>
         <UserListTable initialTab={activeTab} />
       </div>
-      <EmptyState message="All team user accounts authenticated and active" />
+      <EmptyState message={t('admin.users.emptyState')} />
     </section>
   )
 }

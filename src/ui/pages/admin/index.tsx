@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Settings2 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { useT } from '@/lib/i18n'
 import { AdminNavCards } from './components/AdminNavCards'
 import AdminUsersPage from './users'
 import AdminProductsPage from './products'
@@ -14,6 +15,7 @@ export interface AdminPageProps {
 }
 
 export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
+  const { t } = useT()
   const [selected, setSelected] = useState<string | null>(initialSubpage || null)
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
       <div>
         <div style={{ padding: '24px 32px 0' }}>
           <Button variant="text" onClick={() => setSelected(null)}>
-            <ArrowLeft /> Back to Admin
+            <ArrowLeft /> {t('admin.backToAdmin')}
           </Button>
         </div>
         <AdminUsersPage initialTab={filter === 'pending' ? 'pending' : 'all'} />
@@ -38,7 +40,7 @@ export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
       <div>
         <div style={{ padding: '24px 32px 0' }}>
           <Button variant="text" onClick={() => setSelected(null)}>
-            <ArrowLeft /> Back to Admin
+            <ArrowLeft /> {t('admin.backToAdmin')}
           </Button>
         </div>
         <AdminProductsPage />
@@ -51,7 +53,7 @@ export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
       <div>
         <div style={{ padding: '24px 32px 0' }}>
           <Button variant="text" onClick={() => setSelected(null)}>
-            <ArrowLeft /> Back to Admin
+            <ArrowLeft /> {t('admin.backToAdmin')}
           </Button>
         </div>
         <AdminTerritoriesPage />
@@ -64,7 +66,7 @@ export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
       <div>
         <div style={{ padding: '24px 32px 0' }}>
           <Button variant="text" onClick={() => setSelected(null)}>
-            <ArrowLeft /> Back to Admin
+            <ArrowLeft /> {t('admin.backToAdmin')}
           </Button>
         </div>
         <AdminAuditLogPage />
@@ -77,7 +79,7 @@ export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
       <div>
         <div style={{ padding: '24px 32px 0' }}>
           <Button variant="text" onClick={() => setSelected(null)}>
-            <ArrowLeft /> Back to Admin
+            <ArrowLeft /> {t('admin.backToAdmin')}
           </Button>
         </div>
         <AdminSettingsPage />
@@ -90,11 +92,11 @@ export default function AdminPage({ initialSubpage, filter }: AdminPageProps) {
       <div className="page-intro" style={{ marginBottom: '20px' }}>
         <div>
           <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Settings2 style={{ width: '13px', height: '13px' }} /> CONTROL CENTER
+            <Settings2 style={{ width: '13px', height: '13px' }} /> {t('admin.eyebrow')}
           </span>
-          <h1 style={{ fontSize: '36px', margin: '6px 0 4px', lineHeight: 1.1 }}>Admin</h1>
+          <h1 style={{ fontSize: '36px', margin: '6px 0 4px', lineHeight: 1.1 }}>{t('admin.title')}</h1>
           <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)', lineHeight: 1.4 }}>
-            Administrative consoles for managing users, products, territories, audit logs, and settings.
+            {t('admin.story')}
           </p>
         </div>
       </div>

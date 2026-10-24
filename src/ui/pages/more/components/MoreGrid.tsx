@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 import { moreLinksMockData } from '../mock-data'
 
 export interface MoreGridProps {
@@ -7,6 +8,7 @@ export interface MoreGridProps {
 }
 
 export function MoreGrid({ onSelectPage, onAction }: MoreGridProps) {
+  const { t } = useT()
   return (
     <div className="more-grid">
       {moreLinksMockData.map((item) => {
@@ -18,7 +20,7 @@ export function MoreGrid({ onSelectPage, onAction }: MoreGridProps) {
               if (item.targetPage) {
                 onSelectPage(item.targetPage)
               } else {
-                onAction(`${item.name} opened`)
+                onAction(t('more.itemOpened', { name: item.name }))
               }
             }}
           >

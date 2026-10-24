@@ -21,6 +21,7 @@ import { StockExpiryReport } from './components/StockExpiryReport'
 import { InvoicesApprovalsReport } from './components/InvoicesApprovalsReport'
 import { RepScorecardReport } from './components/RepScorecardReport'
 import { useBackHandler } from '@/lib/useBackHandler'
+import { useT } from '@/lib/i18n'
 
 export interface ReportsPageProps {
   role?: 'admin' | 'rep'
@@ -33,6 +34,7 @@ export default function ReportsPage({
   currentUserName = 'Alex Morgan',
   onAction,
 }: ReportsPageProps) {
+  const { t } = useT()
   // If rep, default to 'rep-scorecard' directly or show only scorecard card
   const [selectedReportId, setSelectedReportId] = useState<string | null>(
     role === 'rep' ? 'rep-scorecard' : null
@@ -59,9 +61,9 @@ export default function ReportsPage({
 
   const handleExport = (type: 'Excel' | 'PDF') => {
     if (onAction) {
-      onAction('Export will be available when the backend is connected')
+      onAction(t('reports.exportUnavailableToast'))
     } else {
-      alert('Export will be available when the backend is connected')
+      alert(t('reports.exportUnavailableToast'))
     }
   }
 
@@ -92,19 +94,19 @@ export default function ReportsPage({
   const getReportTitle = (id: string | null) => {
     switch (id) {
       case 'sales-performance':
-        return 'Sales Performance Report'
+        return t('reports.titles.salesPerformance')
       case 'sell-in-vs-sell-out':
-        return 'Sell-in vs Sell-out Analytics'
+        return t('reports.titles.sellInSellOut')
       case 'visit-coverage':
-        return 'Doctor Detailing & Visit Coverage'
+        return t('reports.titles.visitCoverage')
       case 'stock-expiry':
-        return 'Stock Balance & Expiry Runway'
+        return t('reports.titles.stockExpiry')
       case 'invoices-approvals':
-        return 'Claims Audit & Invoice Approvals'
+        return t('reports.titles.invoicesApprovals')
       case 'rep-scorecard':
-        return role === 'rep' ? 'My Representative Scorecard' : 'Representative Performance Scorecard'
+        return role === 'rep' ? t('reports.titles.myScorecard') : t('reports.titles.repScorecard')
       default:
-        return 'Analytics Report'
+        return t('reports.titles.default')
     }
   }
 
@@ -114,15 +116,15 @@ export default function ReportsPage({
       <div className="page-intro" style={{ marginBottom: '24px' }}>
         <div>
           <span className="eyebrow">
-            <BarChart2 /> ANALYTICS & INSIGHTS
+            <BarChart2 /> {t('reports.eyebrow')}
           </span>
-          <h1>{selectedReportId ? getReportTitle(selectedReportId) : 'Reports'}</h1>
+          <h1>{selectedReportId ? getReportTitle(selectedReportId) : t('reports.title')}</h1>
           <p className="story">
             {role === 'rep'
-              ? 'Your personal KPI progress, physician visit frequency, and monthly sales quota attainment.'
+              ? t('reports.storyRep')
               : selectedReportId
-              ? 'Comprehensive performance metrics, historical distribution data, and field execution audit.'
-              : 'Enterprise analytics hub, field force activity, inventory turnover, and billing reconciliation.'}
+              ? t('reports.storyDetail')
+              : t('reports.storyHub')}
           </p>
         </div>
 
@@ -137,35 +139,35 @@ export default function ReportsPage({
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   <ArrowLeft style={{ width: '15px', height: '15px' }} />
-                  All reports
+                  {t('reports.allReports')}
                 </Button>
               )}
               <Button
                 variant="secondary"
                 onClick={() => handleExport('Excel')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title="Export as Excel spreadsheet"
+                title={t('reports.exportExcelTitle')}
               >
                 <FileSpreadsheet style={{ width: '15px', height: '15px' }} />
-                Export Excel
+                {t('reports.exportExcel')}
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => handleExport('PDF')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title="Export as PDF document"
+                title={t('reports.exportPdfTitle')}
               >
                 <Download style={{ width: '15px', height: '15px' }} />
-                Export PDF
+                {t('reports.exportPdf')}
               </Button>
               <Button
                 variant="secondary"
                 onClick={handlePrint}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title="Print report"
+                title={t('reports.printTitle')}
               >
                 <Printer style={{ width: '15px', height: '15px' }} />
-                Print
+                {t('reports.print')}
               </Button>
             </>
           )}
@@ -175,8 +177,8 @@ export default function ReportsPage({
       {/* Error State Banner */}
       {hasError && (
         <ErrorState
-          title="Unable to compile analytics dataset"
-          message="A temporary connection timeout occurred while retrieving monthly ledger metrics."
+          title={t('reports.errorTitle')}
+          message={t('reports.errorMessage')}
           onRetry={handleRetry}
           className="mb-6"
         />
@@ -263,12 +265,12 @@ export default function ReportsPage({
                 marginTop: '16px',
               }}
             >
-              <EmptyState message="No data for this period" />
+              <EmptyState message={t('reports.emptyStateMessage')} />
               <Button
                 variant="secondary"
                 onClick={() => setFilters({ month: 'October 2026', regions: [], reps: [], products: [] })}
               >
-                Reset active filters
+                {t('reports.resetFilters')}
               </Button>
             </div>
           )}

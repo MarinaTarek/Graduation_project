@@ -1,4 +1,5 @@
 import { Menu } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 import { MoreGrid } from './components/MoreGrid'
 
 export interface MorePageProps {
@@ -7,15 +8,16 @@ export interface MorePageProps {
 }
 
 export default function MorePage({ onSelectPage, onAction }: MorePageProps) {
+  const { t } = useT()
   return (
     <section className="content">
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <Menu /> WORKSPACE
+            <Menu /> {t('more.eyebrow')}
           </span>
-          <h1>More</h1>
-          <p className="story">The rest of your operating system, in one place.</p>
+          <h1>{t('more.title')}</h1>
+          <p className="story">{t('more.story')}</p>
         </div>
       </div>
       <MoreGrid onSelectPage={onSelectPage} onAction={onAction} />
