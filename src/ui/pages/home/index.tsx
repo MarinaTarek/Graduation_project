@@ -86,19 +86,18 @@ export default function HomePage({
   const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: '$42.8K', percent: '94%' }
 
   return (
-    <section className="content" style={{ paddingTop: '8px' }}>
-      <div className="page-intro" style={{ alignItems: 'flex-start', marginBottom: '20px' }}>
-        <div>
+    <section className="content">
+      <div className="home-hero-row">
+        <div style={{ flex: '1 1 auto', maxWidth: '760px' }}>
           {role === 'rep' ? (
             <h1
               className="story"
               style={{
-                fontSize: 'clamp(28px, 3.2vw, 44px)',
+                fontSize: 'clamp(28px, 2.6vw, 36px)',
                 fontWeight: 300,
-                letterSpacing: '-0.035em',
-                lineHeight: 1.25,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.3,
                 color: 'var(--heading-text)',
-                maxWidth: '920px',
                 margin: 0,
               }}
             >
@@ -113,12 +112,11 @@ export default function HomePage({
             <h1
               className="story"
               style={{
-                fontSize: 'clamp(28px, 3.2vw, 44px)',
+                fontSize: 'clamp(28px, 2.6vw, 36px)',
                 fontWeight: 300,
-                letterSpacing: '-0.035em',
-                lineHeight: 1.25,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.3,
                 color: 'var(--heading-text)',
-                maxWidth: '920px',
                 margin: 0,
               }}
             >
@@ -131,9 +129,25 @@ export default function HomePage({
             </h1>
           )}
         </div>
-        <Button variant="primary" onClick={() => onOpen('new visit')}>
-          <Plus data-icon="inline-start" /> New visit
-        </Button>
+        <div className="home-hero-action">
+          <Button
+            variant="primary"
+            onClick={() => onOpen('new visit')}
+            style={{
+              height: '48px',
+              minHeight: '48px',
+              padding: '0 24px',
+              fontSize: '14px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <Plus style={{ width: '18px', height: '18px' }} /> New visit
+          </Button>
+        </div>
       </div>
 
       <HomeFilters

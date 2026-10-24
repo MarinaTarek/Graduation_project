@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { CalendarDays, Check, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { Button } from '@/ui/design-system/components/Button'
 import { Avatar } from '@/ui/design-system/components/Avatar'
@@ -140,16 +140,18 @@ export function HomeFilters({
     : `${filters.products.length} products`
 
   return (
-    <div className="filters" ref={dropdownRef} style={{ position: 'relative' }}>
-      {/* 1. Month Filter */}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <Chip
-          active={filters.month !== 'October 2026'}
-          onClick={() => openFilter('month')}
-          aria-expanded={openDropdown === 'month'}
-        >
-          {monthLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
-        </Chip>
+    <div className="home-filters-row" ref={dropdownRef}>
+      <div className="home-filters-scroll">
+        {/* 1. Month Filter */}
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <Chip
+            active={filters.month !== 'October 2026'}
+            onClick={() => openFilter('month')}
+            aria-expanded={openDropdown === 'month'}
+            className="home-filter-chip"
+          >
+            {monthLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
+          </Chip>
 
         {openDropdown === 'month' && (
           <div
@@ -211,6 +213,7 @@ export function HomeFilters({
           active={filters.regions.length > 0}
           onClick={() => openFilter('region')}
           aria-expanded={openDropdown === 'region'}
+          className="home-filter-chip"
         >
           {regionLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
         </Chip>
@@ -279,6 +282,7 @@ export function HomeFilters({
           active={filters.reps.length > 0}
           onClick={() => openFilter('rep')}
           aria-expanded={openDropdown === 'rep'}
+          className="home-filter-chip"
         >
           {repLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
         </Chip>
@@ -349,6 +353,7 @@ export function HomeFilters({
           active={filters.products.length > 0}
           onClick={() => openFilter('product')}
           aria-expanded={openDropdown === 'product'}
+          className="home-filter-chip"
         >
           {productLabel} <ChevronDown style={{ width: '14px', height: '14px' }} />
         </Chip>
@@ -410,14 +415,29 @@ export function HomeFilters({
           </div>
         )}
       </div>
+      </div>
 
-      <span className="filter-spacer" />
-      <button
-        className="view-toggle"
-        onClick={() => setRange(range === 'Month' ? 'Week' : 'Month')}
+      {/* Segmented Range Toggle */}
+      <div
+        className="home-range-segmented"
+        role="group"
+        aria-label="Time range toggle"
       >
-        <CalendarDays /> {range}
-      </button>
+        <button
+          type="button"
+          className={range === 'Month' ? 'active' : ''}
+          onClick={() => setRange('Month')}
+        >
+          Month
+        </button>
+        <button
+          type="button"
+          className={range === 'Week' ? 'active' : ''}
+          onClick={() => setRange('Week')}
+        >
+          Week
+        </button>
+      </div>
     </div>
   )
 }
