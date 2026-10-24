@@ -7,11 +7,11 @@ export const sharedAttentionItems: AttentionItem[] = [
 ]
 
 export const sharedProducts: Product[] = [
-  { name: 'Cardiwell 20mg', sold: '86%', qty: '12,840', left: '1,920', color: 'ocean', height: '86%' },
-  { name: 'Neurofen Plus', sold: '72%', qty: '8,620', left: '2,140', color: 'sky', height: '72%' },
-  { name: 'Immunex Kids', sold: '64%', qty: '7,290', left: '2,840', color: 'sky', height: '64%' },
-  { name: 'Gastrocalm', sold: '48%', qty: '5,410', left: '4,980', color: 'rose', height: '48%' },
-  { name: 'Respira 10mg', sold: '39%', qty: '4,110', left: '5,920', color: 'rose', height: '39%' },
+  { name: 'Cardiwell 20mg', sold: '86%', qty: '12,840', left: '1,920', color: 'ocean', height: '86%', price: 240 },
+  { name: 'Neurofen Plus', sold: '72%', qty: '8,620', left: '2,140', color: 'sky', height: '72%', price: 185 },
+  { name: 'Immunex Kids', sold: '64%', qty: '7,290', left: '2,840', color: 'sky', height: '64%', price: 95 },
+  { name: 'Gastrocalm', sold: '48%', qty: '5,410', left: '4,980', color: 'rose', height: '48%', price: 120 },
+  { name: 'Respira 10mg', sold: '39%', qty: '4,110', left: '5,920', color: 'rose', height: '39%', price: 310 },
 ]
 
 export const sharedReps: Rep[] = [

@@ -50,9 +50,9 @@ function AppContent() {
 
   const open = (name: string) => setOverlay(name)
 
-  const save = () => {
+  const save = (msg?: string) => {
     setOverlay(null)
-    action('Saved successfully')
+    action(typeof msg === 'string' && msg ? msg : 'Saved successfully')
   }
 
   // Shared navigation state with optional page filter and overlay intent.
@@ -299,6 +299,8 @@ function AppContent() {
               ? 'Stock count'
               : 'Add pharmacy'
           }
+          role={role}
+          currentUser={user}
           onClose={() => setOverlay(null)}
           onSave={save}
         />

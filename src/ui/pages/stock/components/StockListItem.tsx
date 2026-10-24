@@ -1,5 +1,6 @@
 import { ChevronRight, Package } from 'lucide-react'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
+import { formatCurrency } from '@/lib/format'
 import type { StockProductRecord } from '../mock-data'
 
 export interface StockListItemProps {
@@ -15,7 +16,14 @@ export function StockListItem({ item, onClick }: StockListItemProps) {
       </div>
       <div>
         <strong>{item.name}</strong>
-        <span>{item.meta}</span>
+        <span>
+          {item.meta}
+          {item.price !== undefined && (
+            <span style={{ marginLeft: '6px', fontWeight: 600, color: 'var(--ocean)' }}>
+              · {formatCurrency(item.price)}
+            </span>
+          )}
+        </span>
       </div>
       <StatusPill status={item.status} />
       <ChevronRight />

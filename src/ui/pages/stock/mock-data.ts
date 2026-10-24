@@ -6,14 +6,16 @@ export interface StockProductRecord {
   qty: string
   category?: string
   location?: string
+  price?: number
+  updated_at?: string
 }
 
 export const stockProductsMockData: StockProductRecord[] = [
-  { name: 'Cardiwell 20mg', left: '1,920', qty: '12,840', meta: '1,920 units left', status: 'Low stock', category: 'Cardiovascular', location: 'Warehouse' },
-  { name: 'Neurofen Plus', left: '2,140', qty: '8,620', meta: '2,140 units left', status: 'Low stock', category: 'Neurology', location: 'Warehouse' },
-  { name: 'Immunex Kids', left: '2,840', qty: '7,290', meta: '2,840 units left', status: 'Healthy', category: 'Pediatrics', location: 'With reps' },
-  { name: 'Gastrocalm', left: '4,980', qty: '5,410', meta: '4,980 units left', status: 'Healthy', category: 'Gastroenterology', location: 'With reps' },
-  { name: 'Respira 10mg', left: '5,920', qty: '4,110', meta: '5,920 units left', status: 'Healthy', category: 'Respiratory', location: 'Consigned pharmacies' },
+  { name: 'Cardiwell 20mg', left: '1,920', qty: '12,840', meta: '1,920 units left', status: 'Low stock', category: 'Cardiovascular', location: 'Warehouse', price: 240, updated_at: '2026-10-24T12:00:00.000Z' },
+  { name: 'Neurofen Plus', left: '2,140', qty: '8,620', meta: '2,140 units left', status: 'Low stock', category: 'Neurology', location: 'Warehouse', price: 185, updated_at: '2026-10-24T12:00:00.000Z' },
+  { name: 'Immunex Kids', left: '2,840', qty: '7,290', meta: '2,840 units left', status: 'Healthy', category: 'Pediatrics', location: 'With reps', price: 95, updated_at: '2026-10-24T12:00:00.000Z' },
+  { name: 'Gastrocalm', left: '4,980', qty: '5,410', meta: '4,980 units left', status: 'Healthy', category: 'Gastroenterology', location: 'With reps', price: 120, updated_at: '2026-10-24T12:00:00.000Z' },
+  { name: 'Respira 10mg', left: '5,920', qty: '4,110', meta: '5,920 units left', status: 'Healthy', category: 'Respiratory', location: 'Consigned pharmacies', price: 310, updated_at: '2026-10-24T12:00:00.000Z' },
 ]
 
 export const cardiwellBatches = [

@@ -1,10 +1,9 @@
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+export function formatCurrency(amount: number, currency = 'EGP'): string {
+  const formatted = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
+  return `${currency} ${formatted}`
 }
 
 export function formatNumber(value: number | string): string {

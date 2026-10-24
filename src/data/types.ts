@@ -16,6 +16,8 @@ export interface Product {
   color: 'ocean' | 'sky' | 'rose'
   height: string
   status?: string
+  price?: number
+  updated_at?: string
 }
 
 export interface Rep {
@@ -32,6 +34,7 @@ export interface Client {
   region?: string
   phone?: string
   assignedRep?: string
+  rep_id?: string
   specialty?: string
 }
 

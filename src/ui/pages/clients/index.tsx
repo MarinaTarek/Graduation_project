@@ -35,7 +35,10 @@ export default function ClientsPage({
 
   // Role scoping: Reps only see their assigned clients
   const roleScopedClients = role === 'rep'
-    ? clientsMockData.filter((c) => c.repName.toLowerCase() === currentUserName.toLowerCase())
+    ? clientsMockData.filter((c) =>
+        (c.repName && c.repName.toLowerCase() === currentUserName.toLowerCase()) ||
+        (c.rep_id && currentUserName && c.rep_id.toLowerCase().includes(currentUserName.toLowerCase().split(' ')[0]))
+      )
     : clientsMockData
 
   // Apply search and popover filters

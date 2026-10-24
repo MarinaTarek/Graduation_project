@@ -2,25 +2,56 @@ import { useState } from 'react'
 import { ClipboardCheck } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Drawer } from '@/ui/design-system/components/Drawer'
-import { cardiwellBatches, cardiwellRepsStock, cardiwellPharmaciesStock } from '../mock-data'
+import { formatCurrency } from '@/lib/format'
+import { cardiwellBatches, cardiwellRepsStock, cardiwellPharmaciesStock, stockProductsMockData } from '../mock-data'
 
 export interface StockDetailSheetProps {
   isOpen?: boolean
   onClose: () => void
   onOpenStockCount: () => void
+  productName?: string
 }
 
 export function StockDetailSheet({
   isOpen = true,
   onClose,
   onOpenStockCount,
+  productName = 'Cardiwell 20mg',
 }: StockDetailSheetProps) {
   const [tab, setTab] = useState<'warehouse' | 'reps' | 'pharmacies'>('warehouse')
 
   if (!isOpen) return null
 
+  const product = stockProductsMockData.find((p) => p.name.toLowerCase() === productName.toLowerCase())
+  const price = product?.price ?? 240
+
   return (
-    <Drawer title="Cardiwell 20mg" kicker="PRODUCT DETAILS" onClose={onClose}>
+    <Drawer title={productName} kicker="PRODUCT DETAILS" onClose={onClose}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          background: 'var(--surface-raised)',
+          borderRadius: '12px',
+          marginBottom: '16px',
+          border: '1px solid var(--border-soft)',
+        }}
+      >
+        <div>
+          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', display: 'block' }}>
+            Unit Price
+          </span>
+          <strong style={{ fontSize: '18px', color: 'var(--heading-text)' }}>
+            {formatCurrency(price)}
+          </strong>
+        </div>
+        <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
+          Standard Pack: 30 tablets / box
+        </span>
+      </div>
+
       <div className="stock-tabs">
         <button
           className={tab === 'warehouse' ? 'active' : ''}
