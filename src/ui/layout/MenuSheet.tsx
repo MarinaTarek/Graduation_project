@@ -14,7 +14,7 @@ export function MenuSheet({
   dark,
   onToggleDark,
   onOpenLogout,
-  userName = 'Alex Morgan',
+  userName = 'User',
   accountType = 'Admin account',
 }: MenuSheetProps) {
   if (!isOpen) return null

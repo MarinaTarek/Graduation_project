@@ -10,6 +10,7 @@ export interface HeaderProps {
   role?: 'admin' | 'rep'
   onToggleRole?: () => void
   greetingName?: string
+  userInitials?: string
   onOpenProfile?: () => void
 }
 
@@ -19,10 +20,12 @@ export function Header({
   onToggleDark,
   dark,
   role = 'admin',
-  onToggleRole,
-  greetingName = 'Alex',
+  greetingName = 'User',
+  userInitials,
   onOpenProfile,
 }: HeaderProps) {
+  const displayInitials = userInitials || (greetingName ? greetingName.slice(0, 2).toUpperCase() : 'U')
+
   return (
     <header className="page-header">
       {/* Left: Greeting */}
@@ -42,19 +45,6 @@ export function Header({
           <span>Search anything...</span>
           <kbd>⌘ K</kbd>
         </button>
-
-        {/* Admin / Rep View Switcher */}
-        {onToggleRole && (
-          <button
-            className="role-switch-pill"
-            onClick={onToggleRole}
-            title={`Current view: ${role.toUpperCase()}. Click to switch to ${role === 'admin' ? 'Rep' : 'Admin'} view.`}
-            aria-label="Toggle user role view"
-          >
-            {role === 'admin' ? <Shield className="role-icon" /> : <UserCheck className="role-icon" />}
-            <span>{role === 'admin' ? 'Admin' : 'Rep'} view</span>
-          </button>
-        )}
 
         {/* Light / Dark Toggle Switch */}
         <button
@@ -101,7 +91,7 @@ export function Header({
               marginLeft: '4px',
             }}
           >
-            AM
+            {displayInitials}
           </button>
         )}
       </div>

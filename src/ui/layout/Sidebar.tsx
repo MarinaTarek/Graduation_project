@@ -26,8 +26,8 @@ export function Sidebar({
   collapsed = false,
   onToggleCollapse,
   onOpenLogout,
-  userName = 'Alex Morgan',
-  userEmail = 'alex.morgan@medora.health',
+  userName = 'User',
+  userEmail = '',
 }: SidebarProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -80,7 +80,7 @@ export function Sidebar({
       <div className="sidebar-top">
         <div className="sidebar-avatar-wrap">
           <div className="sidebar-avatar" aria-hidden="true">
-            AM
+            {userName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
           </div>
         </div>
 

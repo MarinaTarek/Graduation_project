@@ -13,8 +13,8 @@ export interface ProfilePageProps {
 }
 
 export default function ProfilePage({
-  userName = 'Alex Morgan',
-  userEmail = 'alex.morgan@medora.health',
+  userName = 'User',
+  userEmail = '',
   dark,
   onToggleDark,
   onAction,
@@ -90,7 +90,7 @@ export default function ProfilePage({
                 <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Status:</span>
                 <StatusPill status={telegramLinked ? 'Healthy' : 'Pending'} />
                 <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
-                  {telegramLinked ? '(@alex_medora linked)' : '(Not connected)'}
+                  {telegramLinked ? `(@${userName.toLowerCase().replace(/\s+/g, '_')}_medora linked)` : '(Not connected)'}
                 </span>
               </div>
             </div>

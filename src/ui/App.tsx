@@ -31,15 +31,16 @@ import { UploadInvoiceModal } from '@/ui/pages/invoices/components/UploadInvoice
 import MorePage from '@/ui/pages/more'
 import ReportsPage from '@/ui/pages/reports'
 import ProfilePage from '@/ui/pages/profile'
+import { AuthProvider, useAuth, canAccessPage } from '@/lib/auth'
 
-export default function App() {
+function AppContent() {
+  const { user, role, signOut, isLoading } = useAuth()
   const [active, setActive] = useState('Home')
   const [range, setRange] = useState('Month')
   const [overlay, setOverlay] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
   const [dark, setDark] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [role, setRole] = useState<'admin' | 'rep'>('admin')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const action = (message: string) => {
@@ -55,12 +56,14 @@ export default function App() {
   }
 
   // Shared navigation state with optional page filter and overlay intent.
-  // Reusable pattern: pass { filter?: string, overlay?: string } to navigate to a target page
-  // in a pre-filtered state (e.g. Invoices -> Pending, Clients -> Overdue only, Visits -> Rep).
-  // Navigating normally from the Sidebar clears the page filter.
   const [pageFilter, setPageFilter] = useState<{ [page: string]: string | null }>({})
 
   const navigateTo = (page: string, options?: { filter?: string; overlay?: string }) => {
+    if (!canAccessPage(page, role)) {
+      action("You don't have access to that page")
+      setActive('Home')
+      return
+    }
     setActive(page)
     setPageFilter((prev) => ({
       ...prev,
@@ -86,25 +89,30 @@ export default function App() {
       setProfileOpen((prev) => !prev)
       return
     }
-    // Normal sidebar navigation resets active filters for this page
     navigateTo(label)
   }
 
-  const toggleRole = () => {
-    const nextRole = role === 'admin' ? 'rep' : 'admin'
-    setRole(nextRole)
-    if (nextRole === 'rep') {
-      const adminOnlyPages = ['Users', 'Products & Batches', 'Territories', 'Audit log', 'Admin', 'Reports', 'Settings']
-      if (adminOnlyPages.includes(active)) {
-        setActive('Profile')
-      }
-    }
-    action(`Switched to ${nextRole === 'admin' ? 'Admin' : 'Medical Rep'} view`)
+  if (isLoading) {
+    return null
   }
+
+  if (!user || active === 'Login') {
+    return (
+      <div className={`app-shell ${dark ? 'dark-mode' : ''}`}>
+        <LoginPage onLogin={() => { setActive('Home'); action('Signed in successfully'); }} />
+        {notice && <Toast message={notice} />}
+      </div>
+    )
+  }
+
+  const currentUserName = user.name
+  const currentUserEmail = user.email
+  const greetingName = user.name.split(' ')[0]
+  const userInitials = user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
     <div className={`app-shell ${dark ? 'dark-mode' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
-      {/* Redesigned Attached Left Sidebar */}
+      {/* Attached Left Sidebar */}
       <Sidebar
         active={active}
         onSelect={selectNav}
@@ -112,21 +120,21 @@ export default function App() {
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onOpenLogout={() => open('logout')}
-        userName="Alex Morgan"
-        userEmail="alex.morgan@medora.health"
+        userName={currentUserName}
+        userEmail={currentUserEmail}
       />
 
-      {/* Main Content Area starting right after sidebar */}
+      {/* Main Content Area */}
       <div className="app-main-viewport">
-        {/* Redesigned Top Header */}
+        {/* Top Header */}
         <Header
           onOpenSearch={() => open('search')}
           onOpenNotifications={() => open('notifications')}
           onToggleDark={() => setDark(!dark)}
           dark={dark}
           role={role}
-          onToggleRole={toggleRole}
-          greetingName="Alex"
+          greetingName={greetingName}
+          userInitials={userInitials}
           onOpenProfile={() => setProfileOpen((prev) => !prev)}
         />
 
@@ -150,7 +158,7 @@ export default function App() {
               filter={pageFilter['Clients']}
               onClearFilter={() => clearPageFilter('Clients')}
               role={role}
-              currentUserName="Alex Morgan"
+              currentUserName={currentUserName}
             />
           )}
           {active === 'Invoices' && (
@@ -160,7 +168,7 @@ export default function App() {
               filter={pageFilter['Invoices']}
               onClearFilter={() => clearPageFilter('Invoices')}
               role={role}
-              currentUserName="Alex Morgan"
+              currentUserName={currentUserName}
             />
           )}
           {active === 'Stock' && (
@@ -170,7 +178,7 @@ export default function App() {
               filter={pageFilter['Stock']}
               onClearFilter={() => clearPageFilter('Stock')}
               role={role}
-              currentUserName="Alex Morgan"
+              currentUserName={currentUserName}
             />
           )}
           {active === 'Sell-in' && <SellInPage />}
@@ -182,21 +190,21 @@ export default function App() {
               filterRep={pageFilter['Visits']}
               onClearFilter={() => clearPageFilter('Visits')}
               role={role}
-              currentUserName="Alex Morgan"
+              currentUserName={currentUserName}
             />
           )}
           {active === 'Visit plan' && <VisitPlanPage />}
           {active === 'Reports' && (
             <ReportsPage
               role={role}
-              currentUserName="Alex Morgan"
+              currentUserName={currentUserName}
               onAction={action}
             />
           )}
           {active === 'Profile' && (
             <ProfilePage
-              userName="Alex Morgan"
-              userEmail="alex.morgan@medora.health"
+              userName={currentUserName}
+              userEmail={currentUserEmail}
               dark={dark}
               onToggleDark={() => setDark(!dark)}
               onAction={action}
@@ -211,14 +219,13 @@ export default function App() {
             <AdminPage initialSubpage="settings" />
           ) : (
             <ProfilePage
-              userName="Alex Morgan"
-              userEmail="alex.morgan@medora.health"
+              userName={currentUserName}
+              userEmail={currentUserEmail}
               dark={dark}
               onToggleDark={() => setDark(!dark)}
               onAction={action}
             />
           ))}
-          {active === 'Login' && <LoginPage onLogin={() => selectNav('Home')} />}
           {active === 'More' && (
             <MorePage
               onSelectPage={(page) => selectNav(page)}
@@ -244,7 +251,7 @@ export default function App() {
           setProfileOpen(false)
           open('logout')
         }}
-        userName="Alex Morgan"
+        userName={currentUserName}
         accountType={role === 'admin' ? 'Admin account' : 'Medical Representative'}
       />
 
@@ -274,6 +281,8 @@ export default function App() {
         onClose={() => setOverlay(null)}
         onConfirmLogout={() => {
           setOverlay(null)
+          signOut()
+          setActive('Login')
           action('You have been logged out')
         }}
       />
@@ -333,5 +342,13 @@ export default function App() {
         onSave={() => action('Visit saved')}
       />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
