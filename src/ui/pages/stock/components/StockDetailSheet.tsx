@@ -22,6 +22,7 @@ import {
   deriveBatches,
   type MovementType,
 } from '@/data/mock/stockDerived'
+import { useT } from '@/lib/i18n'
 
 export interface StockDetailSheetProps {
   isOpen?: boolean
@@ -40,6 +41,7 @@ export function StockDetailSheet({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: StockDetailSheetProps) {
+  const { t } = useT()
   const [tab, setTab] = useState<'warehouse' | 'reps' | 'pharmacies' | 'movements'>('warehouse')
   const [movementFilter, setMovementFilter] = useState<string>('all')
 
@@ -143,7 +145,7 @@ export function StockDetailSheet({
   }, [movements, productName, movementFilter])
 
   return (
-    <Drawer title={productName} kicker="PRODUCT INVENTORY & MOVEMENTS" onClose={onClose}>
+    <Drawer title={productName} kicker={t('stock.detail.kicker')} onClose={onClose}>
       {/* Top Banner */}
       <div
         style={{
@@ -159,7 +161,7 @@ export function StockDetailSheet({
       >
         <div>
           <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', display: 'block' }}>
-            Unit Price
+            {t('stock.detail.unitPrice')}
           </span>
           <strong style={{ fontSize: '18px', color: 'var(--heading-text)' }}>
             {formatCurrency(price)}
@@ -167,10 +169,10 @@ export function StockDetailSheet({
         </div>
         <div style={{ textAlign: 'right' }}>
           <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', display: 'block' }}>
-            Available (Non-Expired)
+            {t('stock.detail.available')}
           </span>
           <strong style={{ fontSize: '18px', color: 'var(--ocean)' }}>
-            {derived.available_qty.toLocaleString()} units
+            {t('stock.detail.unitsCount', { count: derived.available_qty.toLocaleString() })}
           </strong>
         </div>
       </div>
@@ -178,16 +180,16 @@ export function StockDetailSheet({
       {/* Tabs */}
       <div className="stock-tabs" style={{ display: 'flex', gap: '4px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <button className={tab === 'warehouse' ? 'active' : ''} onClick={() => setTab('warehouse')}>
-          Warehouse ({derived.in_warehouse.toLocaleString()})
+          {t('stock.detail.tabWarehouse', { count: derived.in_warehouse.toLocaleString() })}
         </button>
         <button className={tab === 'reps' ? 'active' : ''} onClick={() => setTab('reps')}>
-          With reps
+          {t('stock.detail.tabReps')}
         </button>
         <button className={tab === 'pharmacies' ? 'active' : ''} onClick={() => setTab('pharmacies')}>
-          In pharmacies ({derived.in_market.toLocaleString()})
+          {t('stock.detail.tabPharmacies', { count: derived.in_market.toLocaleString() })}
         </button>
         <button className={tab === 'movements' ? 'active' : ''} onClick={() => setTab('movements')}>
-          Movements ({productMovements.length})
+          {t('stock.detail.tabMovements', { count: productMovements.length })}
         </button>
       </div>
 
@@ -204,17 +206,17 @@ export function StockDetailSheet({
             }}
           >
             <div style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
-              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>In warehouse</span>
+              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.detail.inWarehouse')}</span>
               <strong>{derived.in_warehouse.toLocaleString()}</strong>
             </div>
             <div style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
-              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Expiring &lt;90d</span>
+              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.detail.expiring90d')}</span>
               <strong style={{ color: derived.expiring_90d_qty > 0 ? 'var(--rose-text)' : 'inherit' }}>
                 {derived.expiring_90d_qty.toLocaleString()}
               </strong>
             </div>
             <div style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
-              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Expired at risk</span>
+              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.detail.expiredRisk')}</span>
               <strong style={{ color: derived.expired_qty > 0 ? '#64748b' : 'inherit' }}>
                 {derived.expired_qty.toLocaleString()}
               </strong>
@@ -250,12 +252,12 @@ export function StockDetailSheet({
                           gap: '3px',
                         }}
                       >
-                        <Sparkles size={10} /> Sell this batch first
+                        <Sparkles size={10} /> {t('stock.detail.sellFirst')}
                       </span>
                     )}
                   </div>
                   <span style={{ fontSize: '12px', color: 'var(--muted-text)', display: 'block', marginTop: '2px' }}>
-                    {b.qty_remaining.toLocaleString()} units remaining · Exp: {b.expiry_date}
+                    {t('stock.detail.unitsRemaining', { remaining: b.qty_remaining.toLocaleString(), exp: b.expiry_date })}
                   </span>
                 </div>
 
@@ -384,7 +386,7 @@ export function StockDetailSheet({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {type === 'all' ? 'All' : type.replace('_', '-')}
+                {type === 'all' ? t('stock.detail.filterAll') : type.replace('_', '-')}
               </button>
             ))}
           </div>
@@ -459,7 +461,7 @@ export function StockDetailSheet({
               })
             ) : (
               <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted-text)', fontSize: '12px' }}>
-                No movements found matching the selected filter.
+                {t('stock.detail.noMovements')}
               </div>
             )}
           </div>
@@ -468,7 +470,7 @@ export function StockDetailSheet({
 
       <div style={{ marginTop: '16px' }}>
         <Button variant="primary" className="full-button" onClick={onOpenStockCount}>
-          <ClipboardCheck data-icon="inline-start" /> Stock count
+          <ClipboardCheck data-icon="inline-start" /> {t('stock.detail.stockCount')}
         </Button>
       </div>
     </Drawer>

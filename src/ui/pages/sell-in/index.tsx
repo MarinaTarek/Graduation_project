@@ -1,19 +1,21 @@
 import { ArrowUpRight } from 'lucide-react'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { useT } from '@/lib/i18n'
 import { SellInMetrics } from './components/SellInMetrics'
 import { SellInTable } from './components/SellInTable'
 
 export default function SellInPage() {
+  const { t } = useT()
   return (
     <section className="content">
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <ArrowUpRight /> SALES PIPELINE
+            <ArrowUpRight /> {t('sellIn.eyebrow')}
           </span>
-          <h1>Sell-in</h1>
+          <h1>{t('sellIn.title')}</h1>
           <p className="story">
-            Factory-to-distributor distribution, order velocity, and warehouse replenishments.
+            {t('sellIn.story')}
           </p>
         </div>
       </div>
@@ -23,7 +25,7 @@ export default function SellInPage() {
         <SellInTable />
       </div>
 
-      <EmptyState message="All wholesale and distributor orders reconciled" />
+      <EmptyState message={t('sellIn.emptyState')} />
     </section>
   )
 }

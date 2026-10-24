@@ -13,6 +13,7 @@ import {
 } from '@/data/mock/stockDerived'
 import { addAuditLog } from '@/data/mock/audit'
 import { useStore } from '@/data/mock/store'
+import { useT } from '@/lib/i18n'
 
 export type StockActionType = 'receive' | 'adjustment' | 'transfer' | 'sell_out'
 
@@ -31,6 +32,7 @@ export function StockActionModal({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: StockActionModalProps) {
+  const { t } = useT()
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
 
@@ -61,7 +63,7 @@ export function StockActionModal({
     setErrorMsg(null)
 
     if (qty <= 0 && actionType !== 'adjustment') {
-      setErrorMsg('Quantity must be greater than 0.')
+      setErrorMsg(t('stock.modal.errQtyZero'))
       return
     }
 
@@ -70,11 +72,11 @@ export function StockActionModal({
     // 1. RECEIVE STOCK
     if (actionType === 'receive') {
       if (!batchNo.trim()) {
-        setErrorMsg('Batch number is required.')
+        setErrorMsg(t('stock.modal.errBatchRequired'))
         return
       }
       if (!expiryDate) {
-        setErrorMsg('Expiry date is required.')
+        setErrorMsg(t('stock.modal.errExpiryRequired'))
         return
       }
 
@@ -108,7 +110,7 @@ export function StockActionModal({
         details: `Received ${qty} units of ${productName} (Batch ${batchNo.trim().toUpperCase()})`,
       })
 
-      onSuccess(`Received ${qty} units of ${productName}`)
+      onSuccess(t('stock.modal.receivedSuccess', { qty, product: productName }))
       onClose()
       return
     }
@@ -116,18 +118,21 @@ export function StockActionModal({
     // 2. ADJUSTMENT (Admin only)
     if (actionType === 'adjustment') {
       if (role !== 'admin') {
-        setErrorMsg('Only administrators can perform stock adjustments.')
+        setErrorMsg(t('stock.modal.errAdminOnly'))
         return
       }
       if (!reason.trim()) {
-        setErrorMsg('A valid reason is required for audit compliance.')
+        setErrorMsg(t('stock.modal.errReasonRequired'))
         return
       }
 
       // Prevent negative stock: if negative adjustment, check warehouse stock
       if (qty < 0 && Math.abs(qty) > currentDerived.in_warehouse) {
         setErrorMsg(
-          `Cannot deduct ${Math.abs(qty)} units: only ${currentDerived.in_warehouse} units currently in warehouse.`
+          t('stock.modal.errCannotDeduct', {
+            qty: Math.abs(qty),
+            warehouse: currentDerived.in_warehouse,
+          })
         )
         return
       }
@@ -150,7 +155,7 @@ export function StockActionModal({
         details: `Adjusted ${qty > 0 ? `+${qty}` : qty} units of ${productName} (${selectedBatchNo}). Reason: ${reason.trim()}`,
       })
 
-      onSuccess(`Adjusted ${qty > 0 ? `+${qty}` : qty} units of ${productName}`)
+      onSuccess(t('stock.modal.adjustedSuccess', { qty: qty > 0 ? `+${qty}` : qty, product: productName }))
       onClose()
       return
     }
@@ -160,7 +165,10 @@ export function StockActionModal({
       // Prevent negative warehouse stock
       if (qty > currentDerived.in_warehouse) {
         setErrorMsg(
-          `Cannot transfer ${qty} units: only ${currentDerived.in_warehouse} units currently in warehouse.`
+          t('stock.modal.errCannotTransfer', {
+            qty,
+            warehouse: currentDerived.in_warehouse,
+          })
         )
         return
       }
@@ -186,7 +194,7 @@ export function StockActionModal({
         details: `Transferred ${qty} units of ${productName} to ${targetRep}`,
       })
 
-      onSuccess(`Transferred ${qty} units of ${productName} to ${targetRep}`)
+      onSuccess(t('stock.modal.transferredSuccess', { qty, product: productName, rep: targetRep }))
       onClose()
       return
     }
@@ -195,7 +203,10 @@ export function StockActionModal({
     if (actionType === 'sell_out') {
       if (qty > currentDerived.in_market) {
         setErrorMsg(
-          `Cannot record sell-out of ${qty} units: only ${currentDerived.in_market} units currently held in market/pharmacies.`
+          t('stock.modal.errCannotSellOut', {
+            qty,
+            market: currentDerived.in_market,
+          })
         )
         return
       }
@@ -219,17 +230,17 @@ export function StockActionModal({
         details: `Recorded sell-out of ${qty} units of ${productName} from ${targetCustomer}`,
       })
 
-      onSuccess(`Recorded sell-out of ${qty} units from ${targetCustomer}`)
+      onSuccess(t('stock.modal.sellOutSuccess', { qty, customer: targetCustomer }))
       onClose()
       return
     }
   }
 
   const titles: Record<StockActionType, { title: string; kicker: string; icon: React.ReactNode }> = {
-    receive: { title: 'Receive Stock', kicker: 'INBOUND SHIPMENT', icon: <ArrowDownLeft size={20} /> },
-    adjustment: { title: 'Stock Adjustment', kicker: 'AUDIT RECONCILIATION', icon: <Sliders size={20} /> },
-    transfer: { title: 'Transfer to Rep', kicker: 'FIELD CUSTODY BUFFER', icon: <Send size={20} /> },
-    sell_out: { title: 'Record Sell-out', kicker: 'DISPENSARY CONSUMPTION', icon: <ShoppingBag size={20} /> },
+    receive: { title: t('stock.modal.receiveTitle'), kicker: t('stock.modal.receiveKicker'), icon: <ArrowDownLeft size={20} /> },
+    adjustment: { title: t('stock.modal.adjustmentTitle'), kicker: t('stock.modal.adjustmentKicker'), icon: <Sliders size={20} /> },
+    transfer: { title: t('stock.modal.transferTitle'), kicker: t('stock.modal.transferKicker'), icon: <Send size={20} /> },
+    sell_out: { title: t('stock.modal.sellOutTitle'), kicker: t('stock.modal.sellOutKicker'), icon: <ShoppingBag size={20} /> },
   }
 
   const config = titles[actionType]
@@ -252,7 +263,7 @@ export function StockActionModal({
             <span className="eyebrow">{config.kicker}</span>
             <h2>{config.title}</h2>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close">
+          <button className="icon-button" onClick={onClose} aria-label={t('common.close')}>
             <X />
           </button>
         </div>
@@ -280,7 +291,7 @@ export function StockActionModal({
           <div className="form-grid" style={{ marginTop: '16px' }}>
             {/* Product */}
             <label className="full">
-              Product
+              {t('stock.modal.productLabel')}
               <select value={productName} onChange={(e) => setProductName(e.target.value)}>
                 {productOptions.map((p) => (
                   <option key={p} value={p}>
@@ -303,23 +314,23 @@ export function StockActionModal({
                 justifyContent: 'space-between',
               }}
             >
-              <span>Warehouse Stock: <strong>{currentDerived.in_warehouse.toLocaleString()}</strong> units</span>
-              <span>In Market: <strong>{currentDerived.in_market.toLocaleString()}</strong> units</span>
+              <span>{t('stock.modal.warehouseStock', { count: currentDerived.in_warehouse.toLocaleString() })}</span>
+              <span>{t('stock.modal.inMarket', { count: currentDerived.in_market.toLocaleString() })}</span>
             </div>
 
             {/* RECEIVE SPECIFICS */}
             {actionType === 'receive' && (
               <>
                 <label>
-                  Batch Number *
+                  {t('stock.modal.batchNumberLabel')}
                   <input
                     value={batchNo}
                     onChange={(e) => setBatchNo(e.target.value)}
-                    placeholder="e.g. BV-2404"
+                    placeholder={t('stock.modal.batchPlaceholder')}
                   />
                 </label>
                 <label>
-                  Expiry Date *
+                  {t('stock.modal.expiryDateLabel')}
                   <input
                     type="date"
                     value={expiryDate}
@@ -327,7 +338,7 @@ export function StockActionModal({
                   />
                 </label>
                 <label className="full">
-                  Units Received *
+                  {t('stock.modal.unitsReceivedLabel')}
                   <input
                     type="number"
                     min="1"
@@ -342,9 +353,9 @@ export function StockActionModal({
             {actionType === 'adjustment' && (
               <>
                 <label>
-                  Batch
+                  {t('stock.modal.batchLabel')}
                   <select value={batchNo} onChange={(e) => setBatchNo(e.target.value)}>
-                    <option value="">Select batch...</option>
+                    <option value="">{t('stock.modal.selectBatch')}</option>
                     {productBatches.map((b) => (
                       <option key={b.id} value={b.batch_no}>
                         {b.batch_no} (Exp: {b.expiry_date})
@@ -353,21 +364,21 @@ export function StockActionModal({
                   </select>
                 </label>
                 <label>
-                  Quantity Adjustment (+/-) *
+                  {t('stock.modal.qtyAdjustmentLabel')}
                   <input
                     type="number"
                     value={qty}
                     onChange={(e) => setQty(Number(e.target.value))}
-                    placeholder="+50 or -30"
+                    placeholder={t('stock.modal.qtyAdjustmentPlaceholder')}
                   />
                 </label>
                 <label className="full">
-                  Reason for Adjustment (Required) *
+                  {t('stock.modal.reasonLabel')}
                   <textarea
                     rows={3}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="Reason required: Physical recount discrepancy, damaged stock, QC quarantine..."
+                    placeholder={t('stock.modal.reasonPlaceholder')}
                   />
                 </label>
               </>
@@ -377,7 +388,7 @@ export function StockActionModal({
             {actionType === 'transfer' && (
               <>
                 <label>
-                  Assign to Representative
+                  {t('stock.modal.assignRepLabel')}
                   <select value={targetRep} onChange={(e) => setTargetRep(e.target.value)}>
                     {ALL_MOCK_REPS.map((r) => (
                       <option key={r.id} value={r.name}>
@@ -387,9 +398,9 @@ export function StockActionModal({
                   </select>
                 </label>
                 <label>
-                  Batch
+                  {t('stock.modal.batchLabel')}
                   <select value={batchNo} onChange={(e) => setBatchNo(e.target.value)}>
-                    <option value="">Earliest FEFO batch</option>
+                    <option value="">{t('stock.modal.earliestFefo')}</option>
                     {productBatches.map((b) => (
                       <option key={b.id} value={b.batch_no}>
                         {b.batch_no}
@@ -398,7 +409,7 @@ export function StockActionModal({
                   </select>
                 </label>
                 <label className="full">
-                  Units to Transfer *
+                  {t('stock.modal.unitsToTransferLabel')}
                   <input
                     type="number"
                     min="1"
@@ -413,7 +424,7 @@ export function StockActionModal({
             {actionType === 'sell_out' && (
               <>
                 <label className="full">
-                  Pharmacy / Customer
+                  {t('stock.modal.customerLabel')}
                   <select value={targetCustomer} onChange={(e) => setTargetCustomer(e.target.value)}>
                     {clientsMockData.map((c) => (
                       <option key={c.id} value={c.name}>
@@ -423,7 +434,7 @@ export function StockActionModal({
                   </select>
                 </label>
                 <label className="full">
-                  Units Sold to Patients *
+                  {t('stock.modal.unitsSoldLabel')}
                   <input
                     type="number"
                     min="1"
@@ -451,10 +462,10 @@ export function StockActionModal({
           }}
         >
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button variant="primary" onClick={handleExecute}>
-            <Check size={16} style={{ marginRight: '6px' }} /> Confirm Action
+            <Check size={16} style={{ marginRight: '6px' }} /> {t('stock.modal.confirmAction')}
           </Button>
         </div>
       </aside>

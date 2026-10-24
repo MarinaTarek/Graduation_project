@@ -1,6 +1,7 @@
 import { ChevronRight, Package, AlertTriangle } from 'lucide-react'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { formatCurrency } from '@/lib/format'
+import { useT } from '@/lib/i18n'
 import type { StockProductRecord } from '../mock-data'
 import type { DerivedProductStock } from '@/data/mock/stockDerived'
 
@@ -11,6 +12,7 @@ export interface StockListItemProps {
 }
 
 export function StockListItem({ item, derived, onClick }: StockListItemProps) {
+  const { t } = useT()
   const received = derived?.received ?? (parseInt(item.qty.replace(/,/g, ''), 10) || 12000)
   const sell_in = derived?.sell_in ?? Math.round(received * 0.75)
   const sell_out = derived?.sell_out ?? Math.round(sell_in * 0.8)
@@ -66,7 +68,7 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
                 color: '#ffffff',
               }}
             >
-              {derived.expired_qty.toLocaleString()} Expired
+              {t('stock.list.expiredCount', { count: derived.expired_qty.toLocaleString() })}
             </span>
           )}
           {derived && derived.expiring_90d_qty > 0 && (
@@ -84,7 +86,7 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
               }}
             >
               <AlertTriangle size={12} />
-              {derived.expiring_90d_qty.toLocaleString()} expiring &lt;90d
+              {t('stock.list.expiringCount', { count: derived.expiring_90d_qty.toLocaleString() })}
             </span>
           )}
           <StatusPill status={derived && derived.expiring_90d_qty > 0 ? 'Low stock' : item.status} />
@@ -106,15 +108,15 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
         >
           <div
             style={{ width: `${pctSold}%`, background: 'var(--green-text, #16a34a)' }}
-            title={`Sold by customers: ${sell_out.toLocaleString()}`}
+            title={t('stock.list.soldByCustomersTitle', { count: sell_out.toLocaleString() })}
           />
           <div
             style={{ width: `${pctMarket}%`, background: 'var(--ocean, #0284c7)' }}
-            title={`Still in market: ${in_market.toLocaleString()}`}
+            title={t('stock.list.stillInMarketTitle', { count: in_market.toLocaleString() })}
           />
           <div
             style={{ width: `${pctWarehouse}%`, background: 'var(--amber-text, #d97706)' }}
-            title={`In warehouse now: ${in_warehouse.toLocaleString()}`}
+            title={t('stock.list.inWarehouseTitle', { count: in_warehouse.toLocaleString() })}
           />
         </div>
       </div>
@@ -132,27 +134,27 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
         }}
       >
         <div>
-          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Received</span>
+          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.received')}</span>
           <strong style={{ fontSize: '13px' }}>{received.toLocaleString()}</strong>
         </div>
         <div>
-          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Sold to customers (Sell-in)</span>
+          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.soldToCustomersSellIn')}</span>
           <strong style={{ fontSize: '13px', color: 'var(--ocean)' }}>{sell_in.toLocaleString()}</strong>
         </div>
         <div>
-          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Sold by customers (Sell-out)</span>
+          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.soldByCustomersSellOut')}</span>
           <strong style={{ fontSize: '13px', color: 'var(--green-text, #16a34a)' }}>{sell_out.toLocaleString()}</strong>
         </div>
         <div>
-          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>In warehouse now</span>
+          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.inWarehouseNow')}</span>
           <strong style={{ fontSize: '13px', color: '#d97706' }}>{in_warehouse.toLocaleString()}</strong>
         </div>
         <div>
-          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Still in the market, not sold yet</span>
+          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.stillInMarket')}</span>
           <strong style={{ fontSize: '13px' }}>{in_market.toLocaleString()}</strong>
         </div>
         <div>
-          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Sell-through %</span>
+          <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.sellThroughPct')}</span>
           <strong style={{ fontSize: '13px', color: sell_through >= 70 ? 'var(--green-text, #16a34a)' : '#d97706' }}>
             {sell_through}%
           </strong>

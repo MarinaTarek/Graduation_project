@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { UploadProgress } from '@/ui/design-system/components/UploadProgress'
+import { useT } from '@/lib/i18n'
 
 export interface UploadInvoiceModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ export function UploadInvoiceModal({
   onClose,
   onSave,
 }: UploadInvoiceModalProps) {
+  const { t } = useT()
   const [file, setFile] = useState<{ name: string; size: string } | null>(null)
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState<'uploading' | 'success' | 'error'>('uploading')
@@ -61,14 +63,14 @@ export function UploadInvoiceModal({
   }
 
   return (
-    <Drawer title="Upload invoice" kicker="INVOICE INTAKE" onClose={onClose}>
+    <Drawer title={t('invoices.upload.title')} kicker={t('invoices.upload.kicker')} onClose={onClose}>
       <div className="upload-zone">
         <Upload />
-        <strong>Drop an invoice here</strong>
-        <span>or choose a file from your device</span>
+        <strong>{t('invoices.upload.dropzone')}</strong>
+        <span>{t('invoices.upload.orChoose')}</span>
         {!file && (
           <Button variant="secondary" onClick={handleChooseFile}>
-            Choose file
+            {t('invoices.upload.chooseFile')}
           </Button>
         )}
       </div>

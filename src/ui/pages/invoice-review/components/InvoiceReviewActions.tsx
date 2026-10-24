@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { useT } from '@/lib/i18n'
 
 export interface InvoiceReviewActionsProps {
   onReject: () => void
@@ -12,6 +13,7 @@ export function InvoiceReviewActions({
   onApprove,
   loadingAction,
 }: InvoiceReviewActionsProps) {
+  const { t } = useT()
   return (
     <div className="sheet-actions">
       <Button
@@ -20,7 +22,7 @@ export function InvoiceReviewActions({
         loading={loadingAction === 'reject'}
         disabled={Boolean(loadingAction)}
       >
-        Reject
+        {t('common.reject')}
       </Button>
       <Button
         variant="primary"
@@ -28,7 +30,7 @@ export function InvoiceReviewActions({
         loading={loadingAction === 'approve'}
         disabled={Boolean(loadingAction)}
       >
-        <Check data-icon="inline-start" /> Approve
+        <Check data-icon="inline-start" /> {t('common.approve')}
       </Button>
     </div>
   )

@@ -15,6 +15,7 @@ import {
   deriveProductStock,
   type DerivedProductStock,
 } from '@/data/mock/stockDerived'
+import { useT } from '@/lib/i18n'
 
 export interface StockPageProps {
   onAdd: () => void
@@ -35,6 +36,7 @@ export default function StockPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: StockPageProps) {
+  const { t } = useT()
   const stockProductsMockData = useStore(stockProductsStore)
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
@@ -136,11 +138,11 @@ export default function StockPage({
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <Package /> INVENTORY CONTROL
+            <Package /> {t('stock.eyebrow')}
           </span>
-          <h1>Stock</h1>
+          <h1>{t('stock.title')}</h1>
           <p className="story">
-            Derived in real-time from movements. Track warehouse, market pipeline, and batch expiry.
+            {t('stock.story')}
           </p>
         </div>
 
@@ -152,7 +154,7 @@ export default function StockPage({
             onClick={() => setActiveAction('receive')}
             style={{ fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <ArrowDownLeft size={15} /> Receive stock
+            <ArrowDownLeft size={15} /> {t('stock.actions.receiveStock')}
           </Button>
 
           <Button
@@ -161,7 +163,7 @@ export default function StockPage({
             onClick={() => setActiveAction('transfer')}
             style={{ fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <Send size={15} /> Transfer to rep
+            <Send size={15} /> {t('stock.actions.transferToRep')}
           </Button>
 
           <Button
@@ -170,7 +172,7 @@ export default function StockPage({
             onClick={() => setActiveAction('sell_out')}
             style={{ fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <ShoppingBag size={15} /> Record sell-out
+            <ShoppingBag size={15} /> {t('stock.actions.recordSellOut')}
           </Button>
 
           {role === 'admin' && (
@@ -180,12 +182,12 @@ export default function StockPage({
               onClick={() => setActiveAction('adjustment')}
               style={{ fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              <Sliders size={15} /> Adjustment
+              <Sliders size={15} /> {t('stock.actions.adjustment')}
             </Button>
           )}
 
           <Button variant="primary" onClick={onAdd}>
-            <Plus data-icon="inline-start" /> Add product
+            <Plus data-icon="inline-start" /> {t('stock.actions.addProduct')}
           </Button>
         </div>
       </div>
@@ -210,19 +212,19 @@ export default function StockPage({
       {/* Applied Removable Filter Chips */}
       {hasAnyFilter && (
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', margin: '0 0 16px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Active filters:</span>
+          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('stock.filters.activeFilters')}</span>
           {activeFilters.product !== 'All products' && (
-            <Chip active onClick={removeProduct} title="Clear product filter">
+            <Chip active onClick={removeProduct} title={t('stock.filters.clearProduct')}>
               {activeFilters.product} &times;
             </Chip>
           )}
           {activeFilters.expiryStatus !== 'All expiry statuses' && (
-            <Chip active onClick={removeExpiry} title="Clear status filter">
+            <Chip active onClick={removeExpiry} title={t('stock.filters.clearStatus')}>
               {activeFilters.expiryStatus} &times;
             </Chip>
           )}
           {activeFilters.location !== 'All locations' && (
-            <Chip active onClick={removeLocation} title="Clear location filter">
+            <Chip active onClick={removeLocation} title={t('stock.filters.clearLocation')}>
               {activeFilters.location} &times;
             </Chip>
           )}
@@ -273,7 +275,7 @@ export default function StockPage({
                       <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{item.category}</span>
                     </div>
                     {derived && derived.expiring_90d_qty > 0 && (
-                      <Chip active>{derived.expiring_90d_qty} expiring &lt;90d</Chip>
+                      <Chip active>{t('stock.card.expiringCount', { count: derived.expiring_90d_qty })}</Chip>
                     )}
                   </div>
 
@@ -305,24 +307,27 @@ export default function StockPage({
                     }}
                   >
                     <div>
-                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Received</span>
+                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.received')}</span>
                       <strong>{derived?.received.toLocaleString() ?? item.qty}</strong>
                     </div>
                     <div>
-                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>In warehouse now</span>
+                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.inWarehouse')}</span>
                       <strong style={{ color: '#d97706' }}>{derived?.in_warehouse.toLocaleString() ?? item.left}</strong>
                     </div>
                     <div>
-                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Sold to customers</span>
+                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.soldToCustomers')}</span>
                       <strong style={{ color: 'var(--ocean)' }}>{derived?.sell_in.toLocaleString()}</strong>
                     </div>
                     <div>
-                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>Sold by customers</span>
+                      <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.soldByCustomers')}</span>
                       <strong style={{ color: 'var(--green-text, #16a34a)' }}>{derived?.sell_out.toLocaleString()}</strong>
                     </div>
                     <div style={{ gridColumn: 'span 2' }}>
                       <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>
-                        Still in the market, not sold yet: <strong>{derived?.in_market.toLocaleString()}</strong> (Sell-through: <strong>{derived?.sell_through_pct}%</strong>)
+                        {t('stock.card.marketSellThrough', {
+                          market: derived?.in_market.toLocaleString() ?? '0',
+                          sellThrough: derived?.sell_through_pct ?? 0,
+                        })}
                       </span>
                     </div>
                   </div>
@@ -341,7 +346,7 @@ export default function StockPage({
           })
         ) : (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            No stock products match the selected filters.
+            {t('stock.noMatches')}
           </div>
         )}
       </div>

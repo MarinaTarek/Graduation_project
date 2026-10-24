@@ -7,6 +7,7 @@ import { InvoiceToolbar, type InvoiceFiltersState } from './components/InvoiceTo
 import { InvoiceListItem } from './components/InvoiceListItem'
 import { invoicesStore } from '@/data/mock/invoices'
 import { useStore } from '@/data/mock/store'
+import { useT } from '@/lib/i18n'
 
 export interface InvoicesPageProps {
   onAdd: () => void
@@ -25,6 +26,7 @@ export default function InvoicesPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: InvoicesPageProps) {
+  const { t } = useT()
   const invoicesMockData = useStore(invoicesStore)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
@@ -109,13 +111,13 @@ export default function InvoicesPage({
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <FileText /> REVIEW QUEUE
+            <FileText /> {t('invoices.eyebrow')}
           </span>
-          <h1>Invoices</h1>
-          <p className="story">Review, approve, and keep the field team moving.</p>
+          <h1>{t('invoices.title')}</h1>
+          <p className="story">{t('invoices.story')}</p>
         </div>
         <Button variant="primary" onClick={onAdd}>
-          <Plus data-icon="inline-start" /> Add new
+          <Plus data-icon="inline-start" /> {t('invoices.addNew')}
         </Button>
       </div>
 
@@ -144,19 +146,19 @@ export default function InvoicesPage({
       {/* Applied Removable Filter Chips */}
       {hasAnyFilter && (
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', margin: '0 0 16px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Active filters:</span>
+          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('invoices.activeFilters')}</span>
           {effectiveStatus !== 'All statuses' && (
-            <Chip active onClick={removeStatus} title="Clear status filter">
+            <Chip active onClick={removeStatus} title={t('invoices.clearStatusFilter')}>
               {effectiveStatus} &times;
             </Chip>
           )}
           {activeFilters.dateRange !== 'All time' && (
-            <Chip active onClick={removeDateRange} title="Clear date range filter">
+            <Chip active onClick={removeDateRange} title={t('invoices.clearDateRangeFilter')}>
               {activeFilters.dateRange} &times;
             </Chip>
           )}
           {activeFilters.source !== 'All sources' && (
-            <Chip active onClick={removeSource} title="Clear source filter">
+            <Chip active onClick={removeSource} title={t('invoices.clearSourceFilter')}>
               {activeFilters.source} &times;
             </Chip>
           )}
@@ -170,13 +172,13 @@ export default function InvoicesPage({
             onClick={() => toggleSort('id')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontWeight: 600, padding: 0 }}
           >
-            Invoice {sortField === 'id' ? (sortOrder === 'desc' ? '▼' : '▲') : ''}
+            {t('invoices.table.invoice')} {sortField === 'id' ? (sortOrder === 'desc' ? '▼' : '▲') : ''}
           </button>
           <button
             onClick={() => toggleSort('status')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontWeight: 600, padding: 0 }}
           >
-            Status {sortField === 'status' ? (sortOrder === 'desc' ? '▼' : '▲') : ''}
+            {t('invoices.table.status')} {sortField === 'status' ? (sortOrder === 'desc' ? '▼' : '▲') : ''}
           </button>
         </div>
       )}
@@ -196,7 +198,7 @@ export default function InvoicesPage({
           ))
         ) : (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            No invoices match the selected filters.
+            {t('invoices.noMatches')}
           </div>
         )}
       </div>

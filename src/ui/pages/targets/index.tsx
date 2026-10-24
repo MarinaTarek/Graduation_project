@@ -1,19 +1,21 @@
 import { Target } from 'lucide-react'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { useT } from '@/lib/i18n'
 import { TargetProgressCard } from './components/TargetProgressCard'
 import { QuotaBreakdown } from './components/QuotaBreakdown'
 
 export default function TargetsPage() {
+  const { t } = useT()
   return (
     <section className="content">
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <Target /> PERFORMANCE & QUOTA
+            <Target /> {t('targets.eyebrow')}
           </span>
-          <h1>Targets</h1>
+          <h1>{t('targets.title')}</h1>
           <p className="story">
-            Pacing toward our quarterly benchmarks, region by region.
+            {t('targets.story')}
           </p>
         </div>
       </div>
@@ -23,7 +25,7 @@ export default function TargetsPage() {
         <QuotaBreakdown />
       </div>
 
-      <EmptyState message="All quota attributions reconciled" />
+      <EmptyState message={t('targets.emptyState')} />
     </section>
   )
 }

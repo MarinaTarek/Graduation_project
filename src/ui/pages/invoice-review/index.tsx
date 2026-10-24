@@ -5,6 +5,7 @@ import { InvoiceReviewActions } from './components/InvoiceReviewActions'
 import { invoiceReviewMockData } from './mock-data'
 import { useUndo } from '@/lib/useUndo'
 import { addStockMovement, stockMovementsStore } from '@/data/mock/stockDerived'
+import { useT } from '@/lib/i18n'
 
 export interface InvoiceReviewPageProps {
   onClose: () => void
@@ -15,12 +16,13 @@ export default function InvoiceReviewPage({
   onClose,
   onAction,
 }: InvoiceReviewPageProps) {
+  const { t } = useT()
   const data = invoiceReviewMockData
   const [loadingAction, setLoadingAction] = useState<'approve' | 'reject' | null>(null)
   const { trigger } = useUndo(8000)
 
   const handleReject = () => {
-    if (!window.confirm(`Are you sure you want to reject ${data.id}?`)) {
+    if (!window.confirm(t('invoiceReview.confirmReject', { id: data.id }))) {
       return
     }
     setLoadingAction('reject')
@@ -28,11 +30,11 @@ export default function InvoiceReviewPage({
       setLoadingAction(null)
       onClose()
       trigger(
-        `Invoice ${data.id} rejected`,
-        () => onAction(`Invoice ${data.id} rejection finalized`),
-        () => onAction(`Invoice ${data.id} rejection undone`)
+        t('invoiceReview.rejectedToast', { id: data.id }),
+        () => onAction(t('invoiceReview.rejectionFinalized', { id: data.id })),
+        () => onAction(t('invoiceReview.rejectionUndone', { id: data.id }))
       )
-      onAction(`Invoice ${data.id} rejected (Click Undo within 8s)`, () => onAction(`Invoice ${data.id} restored`))
+      onAction(t('invoiceReview.rejectedWithUndo', { id: data.id }), () => onAction(t('invoiceReview.restored', { id: data.id })))
     }, 400)
   }
 
@@ -48,21 +50,21 @@ export default function InvoiceReviewPage({
         type: 'sell_in',
         date: new Date().toISOString().split('T')[0],
         customerName: data.client,
-        notes: `Approved invoice ${data.id}`,
+        notes: t('invoiceReview.approvedNotes', { id: data.id }),
       })
 
       onClose()
       trigger(
-        `Invoice ${data.id} approved`,
-        () => onAction(`Invoice ${data.id} approval finalized`),
+        t('invoiceReview.approvedToast', { id: data.id }),
+        () => onAction(t('invoiceReview.approvalFinalized', { id: data.id })),
         () => {
           stockMovementsStore.update((list) => list.filter((m) => m.id !== movement.id))
-          onAction(`Invoice ${data.id} approval undone`)
+          onAction(t('invoiceReview.approvalUndone', { id: data.id }))
         }
       )
-      onAction(`Invoice ${data.id} approved (Click Undo within 8s)`, () => {
+      onAction(t('invoiceReview.approvedWithUndo', { id: data.id }), () => {
         stockMovementsStore.update((list) => list.filter((m) => m.id !== movement.id))
-        onAction(`Invoice ${data.id} reverted to pending`)
+        onAction(t('invoiceReview.revertedToPending', { id: data.id }))
       })
     }, 400)
   }
