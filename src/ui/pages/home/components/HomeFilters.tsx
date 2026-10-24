@@ -164,7 +164,7 @@ export function HomeFilters({
               minWidth: '220px',
               zIndex: 30,
               padding: '12px',
-              boxShadow: 'var(--shadow)',
+              boxShadow: 'var(--shadow-raised)',
             }}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
@@ -229,7 +229,7 @@ export function HomeFilters({
               minWidth: '230px',
               zIndex: 30,
               padding: '12px',
-              boxShadow: 'var(--shadow)',
+              boxShadow: 'var(--shadow-raised)',
             }}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
@@ -298,7 +298,7 @@ export function HomeFilters({
               minWidth: '250px',
               zIndex: 30,
               padding: '12px',
-              boxShadow: 'var(--shadow)',
+              boxShadow: 'var(--shadow-raised)',
             }}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
@@ -369,7 +369,7 @@ export function HomeFilters({
               minWidth: '240px',
               zIndex: 30,
               padding: '12px',
-              boxShadow: 'var(--shadow)',
+              boxShadow: 'var(--shadow-raised)',
             }}
           >
             <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
