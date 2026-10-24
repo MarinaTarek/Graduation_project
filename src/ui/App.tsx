@@ -29,6 +29,8 @@ import LoginPage from '@/ui/pages/login'
 import { LogoutConfirmDialog } from '@/ui/pages/login/components/LogoutConfirmDialog'
 import { UploadInvoiceModal } from '@/ui/pages/invoices/components/UploadInvoiceModal'
 import MorePage from '@/ui/pages/more'
+import ReportsPage from '@/ui/pages/reports'
+import ProfilePage from '@/ui/pages/profile'
 
 export default function App() {
   const [active, setActive] = useState('Home')
@@ -53,6 +55,10 @@ export default function App() {
   }
 
   const selectNav = (label: string) => {
+    if (label === 'More' || label === 'Menu') {
+      setProfileOpen((prev) => !prev)
+      return
+    }
     setActive(label)
     setOverlay(null)
     setProfileOpen(false)
@@ -61,6 +67,12 @@ export default function App() {
   const toggleRole = () => {
     const nextRole = role === 'admin' ? 'rep' : 'admin'
     setRole(nextRole)
+    if (nextRole === 'rep') {
+      const adminOnlyPages = ['Users', 'Products & Batches', 'Territories', 'Audit log', 'Admin', 'Reports', 'Settings']
+      if (adminOnlyPages.includes(active)) {
+        setActive('Profile')
+      }
+    }
     action(`Switched to ${nextRole === 'admin' ? 'Admin' : 'Medical Rep'} view`)
   }
 
@@ -89,6 +101,7 @@ export default function App() {
           role={role}
           onToggleRole={toggleRole}
           greetingName="Alex"
+          onOpenProfile={() => setProfileOpen((prev) => !prev)}
         />
 
         {/* Primary Page Views */}
@@ -125,13 +138,32 @@ export default function App() {
           {active === 'Targets' && <TargetsPage />}
           {active === 'Visits' && <VisitsPage onNewVisit={() => open('new visit')} />}
           {active === 'Visit plan' && <VisitPlanPage />}
-          {active === 'Reports' && <SellInPage />}
-          {active === 'Admin' && <AdminPage />}
-          {active === 'Users' && <AdminPage initialSubpage="users" />}
-          {active === 'Products & Batches' && <AdminPage initialSubpage="products" />}
-          {active === 'Territories' && <AdminPage initialSubpage="territories" />}
-          {active === 'Audit log' && <AdminPage initialSubpage="audit-log" />}
-          {active === 'Settings' && <AdminPage initialSubpage="settings" />}
+          {active === 'Reports' && role === 'admin' && <ReportsPage />}
+          {active === 'Profile' && (
+            <ProfilePage
+              userName="Alex Morgan"
+              userEmail="alex.morgan@medora.health"
+              dark={dark}
+              onToggleDark={() => setDark(!dark)}
+              onAction={action}
+            />
+          )}
+          {active === 'Admin' && role === 'admin' && <AdminPage />}
+          {active === 'Users' && role === 'admin' && <AdminPage initialSubpage="users" />}
+          {active === 'Products & Batches' && role === 'admin' && <AdminPage initialSubpage="products" />}
+          {active === 'Territories' && role === 'admin' && <AdminPage initialSubpage="territories" />}
+          {active === 'Audit log' && role === 'admin' && <AdminPage initialSubpage="audit-log" />}
+          {active === 'Settings' && (role === 'admin' ? (
+            <AdminPage initialSubpage="settings" />
+          ) : (
+            <ProfilePage
+              userName="Alex Morgan"
+              userEmail="alex.morgan@medora.health"
+              dark={dark}
+              onToggleDark={() => setDark(!dark)}
+              onAction={action}
+            />
+          ))}
           {active === 'Login' && <LoginPage onLogin={() => selectNav('Home')} />}
           {active === 'More' && (
             <MorePage
@@ -143,15 +175,27 @@ export default function App() {
       </div>
 
       {/* Profile Sheet (Mobile / Action Menu) */}
+      {profileOpen && (
+        <div
+          className="profile-menu-backdrop"
+          onClick={() => setProfileOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 11 }}
+        />
+      )}
       <MenuSheet
         isOpen={profileOpen}
         dark={dark}
         onToggleDark={() => setDark(!dark)}
-        onOpenLogout={() => open('logout')}
+        onOpenLogout={() => {
+          setProfileOpen(false)
+          open('logout')
+        }}
+        userName="Alex Morgan"
+        accountType={role === 'admin' ? 'Admin account' : 'Medical Representative'}
       />
 
       {/* Mobile Bottom Navigation (<768px) */}
-      <BottomDock active={active} onSelect={selectNav} />
+      <BottomDock active={profileOpen ? 'More' : active} onSelect={selectNav} />
 
       {/* Floating Feedback Toast */}
       {notice && <Toast message={notice} />}

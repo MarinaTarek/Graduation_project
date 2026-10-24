@@ -10,6 +10,7 @@ export interface HeaderProps {
   role?: 'admin' | 'rep'
   onToggleRole?: () => void
   greetingName?: string
+  onOpenProfile?: () => void
 }
 
 export function Header({
@@ -20,6 +21,7 @@ export function Header({
   role = 'admin',
   onToggleRole,
   greetingName = 'Alex',
+  onOpenProfile,
 }: HeaderProps) {
   return (
     <header className="page-header">
@@ -75,6 +77,33 @@ export function Header({
           <Bell />
           <span className="bell-rose-dot" />
         </button>
+
+        {/* User Profile Avatar (MenuSheet trigger on desktop) */}
+        {onOpenProfile && (
+          <button
+            className="header-avatar-btn"
+            onClick={onOpenProfile}
+            aria-label="User profile menu"
+            title="User profile menu"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--navy)',
+              color: '#FFFFFF',
+              border: '2px solid var(--border-subtle)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              marginLeft: '4px',
+            }}
+          >
+            AM
+          </button>
+        )}
       </div>
     </header>
   )

@@ -5,7 +5,7 @@ import type { ElementType } from 'react'
 import {
   Activity, ArrowUpRight, BarChart2, CalendarDays, ChevronLeft, ChevronRight,
   ClipboardCheck, FileText, LayoutGrid, MapPin, Package,
-  Power, Settings2, Stethoscope, Target, Users,
+  Power, Settings2, Stethoscope, Target, User, Users,
 } from 'lucide-react'
 
 export interface SidebarProps {
@@ -49,21 +49,26 @@ export function Sidebar({
     { label: 'Targets', activeKey: 'Targets', icon: Target },
     { label: 'Visits', activeKey: 'Visits', icon: Stethoscope },
     { label: 'Visit plan', activeKey: 'Visit plan', icon: CalendarDays },
-    { label: 'Reports', activeKey: 'Reports', icon: BarChart2 },
-    { label: 'Settings', activeKey: 'Settings', icon: Settings2 },
   ]
 
   // Admin-only items
   const adminNav: NavItem[] = [
+    { label: 'Reports', activeKey: 'Reports', icon: BarChart2 },
     { label: 'Users', activeKey: 'Users', icon: Users },
     { label: 'Products & Batches', activeKey: 'Products & Batches', icon: Package },
     { label: 'Territories', activeKey: 'Territories', icon: MapPin },
     { label: 'Audit log', activeKey: 'Audit log', icon: ClipboardCheck },
+    { label: 'Settings', activeKey: 'Settings', icon: Settings2 },
+  ]
+
+  // Rep-only items
+  const repNav: NavItem[] = [
+    { label: 'My profile', activeKey: 'Profile', icon: User },
   ]
 
   const navItems: NavItem[] = role === 'admin'
-    ? [...baseNav.slice(0, 9), ...adminNav, ...baseNav.slice(9)]
-    : baseNav
+    ? [...baseNav, ...adminNav]
+    : [...baseNav, ...repNav]
 
   return (
     <aside

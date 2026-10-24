@@ -50,7 +50,7 @@ export default function HomePage({
       <AttentionSection items={homeAttentionItems} onAction={onAction} />
 
       <div className="bento-grid">
-        <SellInChartPanel onClick={() => onOpen('sell-in')} />
+        <SellInChartPanel onClick={() => setActive('Sell-in')} />
         <TargetPanel />
         <ProductsPanel
           onNavigateStock={() => setActive('Stock')}
