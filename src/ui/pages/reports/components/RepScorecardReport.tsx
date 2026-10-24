@@ -232,7 +232,7 @@ export function RepScorecardReport({
                     borderRadius: '99px',
                     border: '1px solid var(--border-subtle)',
                     background: selectedRepName === r.name ? 'var(--ocean)' : 'var(--input-bg)',
-                    color: selectedRepName === r.name ? '#ffffff' : 'var(--heading-text)',
+                    color: selectedRepName === r.name ? 'var(--text-on-primary)' : 'var(--heading-text)',
                     fontSize: '12px',
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -277,7 +277,7 @@ export function RepScorecardReport({
                     <path d={d} fill="none" stroke="var(--ocean)" strokeWidth="3" strokeLinecap="round" />
                     {coords.map((c) => (
                       <g key={c.month}>
-                        <circle cx={c.x} cy={c.y} r="5" fill="var(--navy)" stroke="#fff" strokeWidth="2" />
+                        <circle cx={c.x} cy={c.y} r="5" fill="var(--navy)" stroke="var(--card-bg)" strokeWidth="2" />
                         <text
                           x={c.x}
                           y={c.y - 10}

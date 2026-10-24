@@ -81,7 +81,7 @@ export function Header({
               height: '36px',
               borderRadius: '50%',
               backgroundColor: 'var(--navy)',
-              color: '#FFFFFF',
+              color: 'var(--text-on-dark)',
               border: '2px solid var(--border-subtle)',
               display: 'inline-flex',
               alignItems: 'center',

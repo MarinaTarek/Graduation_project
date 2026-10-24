@@ -173,8 +173,8 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                 const yOut = getY(m.sellOut)
                 return (
                   <g key={m.month}>
-                    <circle cx={x} cy={yIn} r="4" fill="var(--ocean)" stroke="#fff" strokeWidth="1.5" />
-                    <circle cx={x} cy={yOut} r="4" fill="var(--story-em, #3e9a78)" stroke="#fff" strokeWidth="1.5" />
+                    <circle cx={x} cy={yIn} r="4" fill="var(--ocean)" stroke="var(--card-bg)" strokeWidth="1.5" />
+                    <circle cx={x} cy={yOut} r="4" fill="var(--story-em, #3e9a78)" stroke="var(--card-bg)" strokeWidth="1.5" />
                     <text x={x} y={height - 8} textAnchor="middle" fontSize="11" fill="var(--muted-text)">
                       {m.month}
                     </text>

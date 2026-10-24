@@ -130,7 +130,7 @@ export function UserListTable() {
             bottom: '24px',
             right: '24px',
             background: 'var(--navy)',
-            color: '#FFFFFF',
+            color: 'var(--text-on-dark)',
             padding: '12px 18px',
             borderRadius: '12px',
             boxShadow: 'var(--shadow)',
