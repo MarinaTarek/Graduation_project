@@ -28,7 +28,7 @@ export function CapsuleProgress({
       <div className="capsule-visual">
         <div className={`capsule-fill ${color}`} style={{ height }} />
         <div className="capsule-shine" />
-        <span className={`capsule-badge ${color}`}>{sold}</span>
+        <span className="capsule-badge">{sold}</span>
       </div>
       <strong>{name}</strong>
       <div className="capsule-stats">
