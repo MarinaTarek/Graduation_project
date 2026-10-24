@@ -653,3 +653,118 @@ button { cursor: pointer; }
   .pharma-bento .span-2, .pharma-bento .span-3 { grid-column: span 1; }
   .kpi-strip { grid-template-columns: repeat(2, 1fr) !important; }
 }
+
+/* ── RTL & Arabic Typography ────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
+
+html[lang="ar"],
+html[dir="rtl"],
+body[dir="rtl"],
+[dir="rtl"] {
+  font-family: var(--font-ibm-plex-arabic), 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+[lang="ar"] .eyebrow,
+[dir="rtl"] .eyebrow,
+[dir="rtl"] [class*="tracking-"],
+[lang="ar"] [class*="tracking-"],
+[dir="rtl"] .uppercase,
+[lang="ar"] .uppercase {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* Logical layout properties for RTL */
+[dir="rtl"] .app-main-viewport {
+  margin-left: 0;
+  margin-right: 260px;
+  transition: margin-right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[dir="rtl"] .app-shell.sidebar-collapsed .app-main-viewport {
+  margin-left: 0;
+  margin-right: 72px;
+}
+
+[dir="rtl"] .app-sidebar {
+  left: auto;
+  right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 24px;
+  border-bottom-left-radius: 24px;
+}
+
+[dir="rtl"] .sidebar-collapse-btn {
+  right: auto;
+  left: -14px;
+}
+
+[dir="rtl"] .sidebar-scroll-zone {
+  padding: 8px 16px 8px 0;
+}
+
+[dir="rtl"] .sidebar-nav-item {
+  text-align: right;
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+[dir="rtl"] .sidebar-nav-item.active {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 24px;
+  border-bottom-right-radius: 24px;
+  margin-left: 0;
+}
+
+[dir="rtl"] .sidebar-nav-item.active::before {
+  right: auto;
+  left: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 20px;
+  box-shadow: -6px 6px 0 6px var(--body-bg);
+}
+
+[dir="rtl"] .sidebar-nav-item.active::after {
+  right: auto;
+  left: 0;
+  border-top-right-radius: 0;
+  border-top-left-radius: 20px;
+  box-shadow: -6px -6px 0 6px var(--body-bg);
+}
+
+/* Flip chevrons and directional arrows in RTL */
+[dir="rtl"] .sidebar-collapse-btn svg,
+[dir="rtl"] .header-back-btn svg,
+[dir="rtl"] .back-pill-btn svg,
+[dir="rtl"] .collection-item svg:last-child,
+[dir="rtl"] [data-icon="chevron-right"],
+[dir="rtl"] .rtl-flip,
+[dir="rtl"] .lucide-chevron-right,
+[dir="rtl"] .lucide-arrow-right,
+[dir="rtl"] .lucide-arrow-left {
+  transform: scaleX(-1);
+}
+
+/* Data numbers, charts, emails, phone numbers, and dates stay LTR */
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="date"],
+[dir="rtl"] .ltr-data,
+[dir="rtl"] .chart-container,
+[dir="rtl"] [data-ltr="true"] {
+  direction: ltr;
+  text-align: start;
+  unicode-bidi: isolate;
+}
+
+/* Side Sheet (Drawers) in RTL */
+[dir="rtl"] .side-sheet {
+  border-top-left-radius: 24px;
+  border-bottom-left-radius: 24px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+

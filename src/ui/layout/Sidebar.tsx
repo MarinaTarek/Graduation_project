@@ -10,7 +10,29 @@ import {
 import { canAccessPage, type User as AuthUser } from '@/lib/auth'
 import { storedUsersStore } from '@/lib/auth/mock-users'
 import { useStore } from '@/data/mock/store'
+import { useT, type TranslationKey } from '@/lib/i18n'
 import { Logo } from './Logo'
+
+const NAV_LABEL_MAP: Record<string, TranslationKey> = {
+  'Dashboard': 'nav.dashboard',
+  'Clients': 'nav.clients',
+  'Invoices': 'nav.invoices',
+  'Stock': 'nav.stock',
+  'Sell-in': 'nav.sellIn',
+  'Sell-out': 'nav.sellOut',
+  'Targets': 'nav.targets',
+  'Visits': 'nav.visits',
+  'Visit plan': 'nav.visitPlan',
+  'Reports': 'nav.reports',
+  'Admin': 'nav.admin',
+  'Users': 'nav.users',
+  'Products & Batches': 'nav.catalog',
+  'Territories': 'nav.territories',
+  'Audit log': 'nav.audit',
+  'Settings': 'nav.settings',
+  'My scorecard': 'nav.scorecard',
+  'My profile': 'nav.profile',
+}
 
 export interface SidebarProps {
   active: string
@@ -35,8 +57,11 @@ export function Sidebar({
   userEmail = '',
   user,
 }: SidebarProps) {
+  const { t, lang } = useT()
   const scrollRef = useRef<HTMLDivElement>(null)
   const pendingCount = useStore(storedUsersStore).filter((u) => u.status === 'pending').length
+
+  const displayName = lang === 'ar' ? (user?.name_ar || userName) : userName
 
   interface NavItem {
     label: string
@@ -112,13 +137,13 @@ export function Sidebar({
       <div className="sidebar-top">
         <div className="sidebar-avatar-wrap">
           <div className="sidebar-avatar" aria-hidden="true">
-            {userName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+            {displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
           </div>
         </div>
 
         {!collapsed && (
           <div className="sidebar-profile-info">
-            <span className="sidebar-user-name">{userName}</span>
+            <span className="sidebar-user-name">{displayName}</span>
             <span className="sidebar-user-email">{userEmail}</span>
           </div>
         )}
@@ -141,19 +166,21 @@ export function Sidebar({
           {navItems.map((item) => {
             const Icon = item.icon
             const isItemActive = active === item.activeKey || (item.activeKey === 'Home' && active === 'Dashboard')
+            const translatedLabel = NAV_LABEL_MAP[item.label] ? t(NAV_LABEL_MAP[item.label]) : item.label
+
             return (
               <button
                 key={item.label}
                 className={`sidebar-nav-item ${isItemActive ? 'active' : ''}`}
                 onClick={() => onSelect(item.activeKey)}
-                title={item.label}
-                aria-label={item.label}
+                title={translatedLabel}
+                aria-label={translatedLabel}
               >
                 <div className="sidebar-item-icon">
                   <Icon />
                 </div>
                 {!collapsed && (
-                  <span className="sidebar-item-label">{item.label}</span>
+                  <span className="sidebar-item-label">{translatedLabel}</span>
                 )}
                 {!collapsed && item.badge && (
                   <span
@@ -191,13 +218,13 @@ export function Sidebar({
         <button
           className="sidebar-logout-btn"
           onClick={onOpenLogout}
-          title="Log out"
-          aria-label="Log out"
+          title={t('nav.logout')}
+          aria-label={t('nav.logout')}
         >
           <div className="sidebar-item-icon">
             <Power />
           </div>
-          {!collapsed && <span>Log out</span>}
+          {!collapsed && <span>{t('nav.logout')}</span>}
         </button>
       </div>
     </aside>

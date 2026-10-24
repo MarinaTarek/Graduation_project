@@ -33,6 +33,7 @@ import MorePage from '@/ui/pages/more'
 import ReportsPage from '@/ui/pages/reports'
 import ProfilePage from '@/ui/pages/profile'
 import { AuthProvider, useAuth, canAccessPage } from '@/lib/auth'
+import { LanguageProvider, useT } from '@/lib/i18n'
 
 function AppContent() {
   const { user, role, signOut, isLoading } = useAuth()
@@ -197,6 +198,7 @@ function AppContent() {
           role={role}
           greetingName={greetingName}
           userInitials={userInitials}
+          user={user}
           onOpenProfile={() => setProfileOpen((prev) => !prev)}
           activePage={active}
           onBack={goBack}
@@ -433,8 +435,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </LanguageProvider>
   )
 }

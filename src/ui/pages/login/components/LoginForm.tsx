@@ -4,6 +4,7 @@ import { Button } from '@/ui/design-system/components/Button'
 import { useAuth } from '@/lib/auth'
 import { FieldError } from '@/ui/design-system/components/FieldError'
 import * as authService from '@/lib/auth/auth-service'
+import { useT } from '@/lib/i18n'
 
 export interface LoginFormProps {
   onLogin: () => void
@@ -125,6 +126,7 @@ function PasswordInput({
 
 // ─── Segmented Tabs ──────────────────────────────────────
 function SegmentedTabs({ active, onChange }: { active: 'login' | 'signup'; onChange: (v: 'login' | 'signup') => void }) {
+  const { t } = useT()
   return (
     <div
       style={{
@@ -154,7 +156,7 @@ function SegmentedTabs({ active, onChange }: { active: 'login' | 'signup'; onCha
             boxShadow: active === tab ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
           }}
         >
-          {tab === 'login' ? 'Log in' : 'Create account'}
+          {tab === 'login' ? t('login.loginTab') : t('login.createAccountTab')}
         </button>
       ))}
     </div>
@@ -162,7 +164,9 @@ function SegmentedTabs({ active, onChange }: { active: 'login' | 'signup'; onCha
 }
 
 // ─── Back Link ────────────────────────────────────────────
-function BackLink({ onClick, label = 'Back' }: { onClick: () => void; label?: string }) {
+function BackLink({ onClick, label }: { onClick: () => void; label?: string }) {
+  const { t } = useT()
+  const displayLabel = label || t('common.back')
   return (
     <button
       type="button"

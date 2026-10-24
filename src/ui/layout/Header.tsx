@@ -2,6 +2,8 @@
 
 import { ArrowLeft, Bell, Moon, Search, Sun } from 'lucide-react'
 import { useGreeting } from '@/lib/useGreeting'
+import { useT } from '@/lib/i18n'
+import { LanguageSwitch } from '@/ui/design-system/components/LanguageSwitch'
 
 export interface HeaderProps {
   onOpenSearch: () => void
@@ -11,7 +13,9 @@ export interface HeaderProps {
   role?: 'admin' | 'rep'
   onToggleRole?: () => void
   greetingName?: string
+  nameAr?: string
   userInitials?: string
+  user?: { name: string; name_ar?: string } | null
   onOpenProfile?: () => void
   activePage?: string
   onBack?: () => void
@@ -24,26 +28,38 @@ export function Header({
   dark,
   role = 'admin',
   greetingName = '',
+  nameAr = '',
   userInitials,
+  user,
   onOpenProfile,
   activePage = 'Home',
   onBack,
 }: HeaderProps) {
+  const { t, lang } = useT()
   const displayInitials = userInitials || (greetingName ? greetingName.slice(0, 2).toUpperCase() : 'U')
   const { greeting, dateLabel } = useGreeting()
-  const headingText = greetingName ? `${greeting}, ${greetingName}!` : `${greeting}!`
+
+  const nowHour = new Date().getHours()
+  const isMorning = nowHour >= 5 && nowHour < 12
+  const firstNameAr = user?.name_ar ? user.name_ar.split(' ')[0] : (nameAr ? nameAr.split(' ')[0] : '')
+  const firstNameEn = greetingName ? greetingName.split(' ')[0] : ''
+
+  const headingText = lang === 'ar'
+    ? (firstNameAr ? `${isMorning ? 'صباح الخير' : 'مساء الخير'}، ${firstNameAr}!` : `${isMorning ? 'صباح الخير' : 'مساء الخير'}!`)
+    : (firstNameEn ? `${greeting}, ${firstNameEn}!` : `${greeting}!`)
+
   const showBack = activePage !== 'Home' && activePage !== 'Login' && activePage !== 'Dashboard'
 
   return (
     <header className="page-header">
-      {/* Left: Back button + Greeting */}
+      {/* Left / Start: Back button + Greeting */}
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {showBack && onBack && (
           <button
             onClick={onBack}
-            aria-label="Back"
-            title="Back"
-            className="back-pill-btn"
+            aria-label={t('header.back')}
+            title={t('header.back')}
+            className="back-pill-btn header-back-btn"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -53,74 +69,73 @@ export function Header({
               borderRadius: '999px',
               border: '1px solid var(--border-soft)',
               background: 'transparent',
-              color: 'var(--heading-text)',
+              color: 'var(--body-text)',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              transition: 'background 0.15s',
+              transition: 'background 0.15s, border-color 0.15s',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-raised)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
           >
             <ArrowLeft style={{ width: '16px', height: '16px' }} />
-            <span className="back-pill-label">Back</span>
+            <span>{t('header.back')}</span>
           </button>
         )}
         <div>
-          <h1 className="header-greeting">{headingText}</h1>
+          <h2 className="header-greeting">{headingText}</h2>
           {dateLabel && (
-            <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)', fontWeight: 400, marginTop: '2px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--muted-text)', fontWeight: 500 }}>
               {dateLabel}
-            </p>
+            </span>
           )}
         </div>
       </div>
 
-      {/* Right: Controls */}
-      <div className="header-right">
-        {/* Pill-shaped search field with 1.5px Navy border */}
+      {/* Right / End: Controls */}
+      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Search */}
         <button
           className="header-search-pill"
           onClick={onOpenSearch}
-          aria-label="Search"
+          aria-label={t('header.search')}
         >
           <Search className="search-icon" />
-          <span>Search anything...</span>
+          <span>{t('header.search')}</span>
           <kbd>⌘ K</kbd>
         </button>
+
+        {/* Language switch */}
+        <LanguageSwitch />
 
         {/* Light / Dark Toggle Switch */}
         <button
           className="theme-toggle-switch"
           onClick={onToggleDark}
-          aria-label={dark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          title={dark ? 'Light mode' : 'Dark mode'}
+          aria-label={dark ? t('header.lightMode') : t('header.darkMode')}
+          title={dark ? t('header.lightMode') : t('header.darkMode')}
         >
           <span className={`switch-thumb ${dark ? 'dark' : 'light'}`}>
             {dark ? <Moon className="switch-icon" /> : <Sun className="switch-icon" />}
           </span>
         </button>
 
-        {/* Notification Bell with Rose Dot */}
+        {/* Notification Bell */}
         <button
           className="header-bell-btn"
-          aria-label="Notifications"
-          title="Notifications"
+          aria-label={t('header.notifications')}
+          title={t('header.notifications')}
           onClick={onOpenNotifications}
         >
           <Bell />
           <span className="bell-rose-dot" />
         </button>
 
-        {/* User Profile Avatar (MenuSheet trigger on desktop) */}
+        {/* User Profile Avatar */}
         {onOpenProfile && (
           <button
             className="header-avatar-btn"
             onClick={onOpenProfile}
-            aria-label="User profile menu"
-            title="User profile menu"
+            aria-label={t('header.userMenu')}
+            title={t('header.userMenu')}
             style={{
               width: '36px',
               height: '36px',
@@ -134,7 +149,7 @@ export function Header({
               fontWeight: 700,
               fontSize: '13px',
               cursor: 'pointer',
-              marginLeft: '4px',
+              marginInlineStart: '4px',
             }}
           >
             {displayInitials}
