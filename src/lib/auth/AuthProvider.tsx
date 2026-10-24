@@ -25,6 +25,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session.user)
     }
     setIsLoading(false)
+
+    const handleLiveUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<User>
+      if (customEvent.detail) {
+        setUser((prev) => {
+          if (!prev) return prev
+          if (prev.id === customEvent.detail.id || prev.email.toLowerCase() === customEvent.detail.email.toLowerCase()) {
+            return { ...prev, ...customEvent.detail }
+          }
+          return prev
+        })
+      }
+    }
+
+    window.addEventListener('medora_user_updated', handleLiveUpdate)
+    return () => window.removeEventListener('medora_user_updated', handleLiveUpdate)
   }, [])
 
   const handleSignIn = async (email: string, password: string): Promise<User> => {

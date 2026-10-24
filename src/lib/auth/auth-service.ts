@@ -45,3 +45,30 @@ export function getSession(): AuthSession | null {
     return null
   }
 }
+
+export function setSessionUser(user: User): void {
+  if (typeof window === 'undefined') return
+  const session = getSession()
+  if (session) {
+    session.user = user
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+  }
+}
+
+export function updateMockUser(updatedUser: Partial<User> & { id?: string; email?: string }): void {
+  const found = MOCK_USERS.find(
+    (u) => (updatedUser.id && u.id === updatedUser.id) || (updatedUser.email && u.email.toLowerCase() === updatedUser.email.toLowerCase())
+  )
+  if (found) {
+    Object.assign(found, updatedUser)
+  }
+
+  const session = getSession()
+  if (session?.user && ((updatedUser.id && session.user.id === updatedUser.id) || (updatedUser.email && session.user.email.toLowerCase() === updatedUser.email.toLowerCase()))) {
+    const newSessionUser = { ...session.user, ...updatedUser } as User
+    setSessionUser(newSessionUser)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('medora_user_updated', { detail: newSessionUser }))
+    }
+  }
+}

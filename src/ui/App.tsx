@@ -59,7 +59,7 @@ function AppContent() {
   const [pageFilter, setPageFilter] = useState<{ [page: string]: string | null }>({})
 
   const navigateTo = (page: string, options?: { filter?: string; overlay?: string }) => {
-    if (!canAccessPage(page, role)) {
+    if (!canAccessPage(page, role, user)) {
       action("You don't have access to that page")
       setActive('Home')
       return
@@ -122,6 +122,7 @@ function AppContent() {
         onOpenLogout={() => open('logout')}
         userName={currentUserName}
         userEmail={currentUserEmail}
+        user={user}
       />
 
       {/* Main Content Area */}
@@ -210,12 +211,12 @@ function AppContent() {
               onAction={action}
             />
           )}
-          {active === 'Admin' && role === 'admin' && <AdminPage />}
-          {active === 'Users' && role === 'admin' && <AdminPage initialSubpage="users" />}
-          {active === 'Products & Batches' && role === 'admin' && <AdminPage initialSubpage="products" />}
-          {active === 'Territories' && role === 'admin' && <AdminPage initialSubpage="territories" />}
-          {active === 'Audit log' && role === 'admin' && <AdminPage initialSubpage="audit-log" />}
-          {active === 'Settings' && (role === 'admin' ? (
+          {active === 'Admin' && canAccessPage('Admin', role, user) && <AdminPage />}
+          {active === 'Users' && canAccessPage('Users', role, user) && <AdminPage initialSubpage="users" />}
+          {active === 'Products & Batches' && canAccessPage('Products & Batches', role, user) && <AdminPage initialSubpage="products" />}
+          {active === 'Territories' && canAccessPage('Territories', role, user) && <AdminPage initialSubpage="territories" />}
+          {active === 'Audit log' && canAccessPage('Audit log', role, user) && <AdminPage initialSubpage="audit-log" />}
+          {active === 'Settings' && (canAccessPage('Settings', role, user) ? (
             <AdminPage initialSubpage="settings" />
           ) : (
             <ProfilePage
