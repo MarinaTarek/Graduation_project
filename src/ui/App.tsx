@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Toast } from '@/ui/design-system/components/Toast'
 import { RecordFormDrawer } from '@/ui/design-system/components/RecordFormDrawer'
 import { Header } from '@/ui/layout/Header'
@@ -9,6 +9,7 @@ import { BottomDock } from '@/ui/layout/BottomDock'
 import { MenuSheet } from '@/ui/layout/MenuSheet'
 import { CommandPalette } from '@/ui/layout/CommandPalette'
 import { NotificationsDrawer } from '@/ui/layout/NotificationsDrawer'
+import { runBackHandlers } from '@/lib/useBackHandler'
 
 // Self-contained page imports
 import HomePage from '@/ui/pages/home'
@@ -43,6 +44,31 @@ function AppContent() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
+  // Navigation history stack
+  type NavEntry = { page: string; filter: string | null; overlay: string | null }
+  const [navStack, setNavStack] = useState<NavEntry[]>([])
+  // Ref to overlay so popstate handler can read latest
+  const overlayRef = useRef<string | null>(null)
+  overlayRef.current = overlay
+
+  // Push a browser history entry when active page changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.history.pushState({ page: active }, '', window.location.pathname)
+  }, [active])
+
+  // Browser Back / Alt+Left: delegate to goBack
+  useEffect(() => {
+    const handler = () => {
+      goBack()
+      // Re-push so we always have an entry to pop next time
+      window.history.pushState({ page: active }, '', window.location.pathname)
+    }
+    window.addEventListener('popstate', handler)
+    return () => window.removeEventListener('popstate', handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, navStack])
+
   const action = (message: string) => {
     setNotice(message)
     window.setTimeout(() => setNotice(''), 2600)
@@ -58,11 +84,40 @@ function AppContent() {
   // Shared navigation state with optional page filter and overlay intent.
   const [pageFilter, setPageFilter] = useState<{ [page: string]: string | null }>({})
 
+  // goBack: a) close overlay; b) run sub-view handler; c) pop stack; d) Home
+  const goBack = useCallback(() => {
+    if (overlayRef.current) {
+      setOverlay(null)
+      return
+    }
+    if (runBackHandlers()) return
+    setNavStack((prev) => {
+      if (prev.length === 0) {
+        setActive('Home')
+        setPageFilter((pf) => ({ ...pf, Home: null }))
+        return prev
+      }
+      const entry = prev[prev.length - 1]
+      setActive(entry.page)
+      setPageFilter((pf) => ({ ...pf, [entry.page]: entry.filter }))
+      if (entry.overlay) setOverlay(entry.overlay)
+      return prev.slice(0, -1)
+    })
+  }, [])
+
   const navigateTo = (page: string, options?: { filter?: string; overlay?: string }) => {
     if (!canAccessPage(page, role, user)) {
       action("You don't have access to that page")
       setActive('Home')
       return
+    }
+    // Push current state onto stack (skip if same page, max 30)
+    if (page !== active) {
+      setNavStack((prev) => {
+        const entry: NavEntry = { page: active, filter: pageFilter[active] ?? null, overlay }
+        const next = [...prev, entry]
+        return next.length > 30 ? next.slice(-30) : next
+      })
     }
     setActive(page)
     setPageFilter((prev) => ({
@@ -88,6 +143,10 @@ function AppContent() {
     if (label === 'More' || label === 'Menu') {
       setProfileOpen((prev) => !prev)
       return
+    }
+    // Clicking Dashboard clears the history stack
+    if (label === 'Home' || label === 'Dashboard') {
+      setNavStack([])
     }
     navigateTo(label)
   }
@@ -137,6 +196,8 @@ function AppContent() {
           greetingName={greetingName}
           userInitials={userInitials}
           onOpenProfile={() => setProfileOpen((prev) => !prev)}
+          activePage={active}
+          onBack={goBack}
         />
 
         {/* Primary Page Views */}
@@ -283,6 +344,7 @@ function AppContent() {
         onConfirmLogout={() => {
           setOverlay(null)
           signOut()
+          setNavStack([])
           setActive('Login')
           action('You have been logged out')
         }}

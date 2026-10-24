@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Moon, Search, Sun, UserCheck, Shield } from 'lucide-react'
+import { ArrowLeft, Bell, Moon, Search, Sun } from 'lucide-react'
 import { useGreeting } from '@/lib/useGreeting'
 
 export interface HeaderProps {
@@ -13,6 +13,8 @@ export interface HeaderProps {
   greetingName?: string
   userInitials?: string
   onOpenProfile?: () => void
+  activePage?: string
+  onBack?: () => void
 }
 
 export function Header({
@@ -24,21 +26,56 @@ export function Header({
   greetingName = '',
   userInitials,
   onOpenProfile,
+  activePage = 'Home',
+  onBack,
 }: HeaderProps) {
   const displayInitials = userInitials || (greetingName ? greetingName.slice(0, 2).toUpperCase() : 'U')
   const { greeting, dateLabel } = useGreeting()
   const headingText = greetingName ? `${greeting}, ${greetingName}!` : `${greeting}!`
+  const showBack = activePage !== 'Home' && activePage !== 'Login' && activePage !== 'Dashboard'
 
   return (
     <header className="page-header">
-      {/* Left: Greeting */}
-      <div className="header-left">
-        <h1 className="header-greeting">{headingText}</h1>
-        {dateLabel && (
-          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)', fontWeight: 400, marginTop: '2px' }}>
-            {dateLabel}
-          </p>
+      {/* Left: Back button + Greeting */}
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {showBack && onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Back"
+            title="Back"
+            className="back-pill-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              height: '40px',
+              padding: '0 14px',
+              borderRadius: '999px',
+              border: '1px solid var(--border-soft)',
+              background: 'transparent',
+              color: 'var(--heading-text)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-raised)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+          >
+            <ArrowLeft style={{ width: '16px', height: '16px' }} />
+            <span className="back-pill-label">Back</span>
+          </button>
         )}
+        <div>
+          <h1 className="header-greeting">{headingText}</h1>
+          {dateLabel && (
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)', fontWeight: 400, marginTop: '2px' }}>
+              {dateLabel}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Right: Controls */}

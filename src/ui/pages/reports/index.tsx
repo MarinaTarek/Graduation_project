@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import {
   ArrowLeft,
@@ -22,6 +20,7 @@ import { VisitCoverageReport } from './components/VisitCoverageReport'
 import { StockExpiryReport } from './components/StockExpiryReport'
 import { InvoicesApprovalsReport } from './components/InvoicesApprovalsReport'
 import { RepScorecardReport } from './components/RepScorecardReport'
+import { useBackHandler } from '@/lib/useBackHandler'
 
 export interface ReportsPageProps {
   role?: 'admin' | 'rep'
@@ -80,6 +79,15 @@ export default function ReportsPage({
 
   // Check if current filter produces empty results
   const isEmptyPeriod = filters.month === 'Q2 2026 (Apr - Jun)' && filters.regions.length > 3
+
+  // Register back handler: if a report is open and admin, go back to hub
+  useBackHandler(() => {
+    if (selectedReportId && role === 'admin') {
+      setSelectedReportId(null)
+      return true
+    }
+    return false
+  })
 
   const getReportTitle = (id: string | null) => {
     switch (id) {

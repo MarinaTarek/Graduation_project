@@ -615,3 +615,13 @@ button { cursor: pointer; }
   .bottom-dock button span { font-size: 9px; }
   .toast { bottom: 110px; }
 }
+
+/* ── Back pill button ─────────────────────────────────────────── */
+.back-pill-btn:focus-visible {
+  outline: 2px solid var(--ocean);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .back-pill-label { display: none; }
+  .back-pill-btn { padding: 0 10px; gap: 0; }
+}
