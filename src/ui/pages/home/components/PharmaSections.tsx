@@ -4,6 +4,9 @@ import {
   ChevronRight, X, AlertTriangle
 } from 'lucide-react'
 import { Skeleton } from '@/ui/design-system/components/Skeleton'
+import { customersStore, type Customer } from '@/data/mock/customers'
+import { stockMovementsStore } from '@/data/mock/stock-movements'
+import { useStore } from '@/data/mock/store'
 import {
   VISIT_INTERVAL_DAYS,
   homeCustomers,
@@ -16,6 +19,22 @@ import {
   type HomeCustomer,
   type HomeReceivable,
 } from '../mock-data'
+
+function adaptCustomer(c: Customer): HomeCustomer {
+  const rawClass = c.classification?.replace('Class ', '').trim() || 'A'
+  const classification = (rawClass === 'B' || rawClass === 'C') ? rawClass : 'A'
+  return {
+    customer_id: c.id || '',
+    name: c.name,
+    name_ar: c.name_ar,
+    classification,
+    rep_id: c.rep_id || 'u-admin-1',
+    rep_name: c.repName || 'Alex Morgan',
+    region: c.region || 'North region',
+    last_visit_date: c.last_visit_date || '2026-10-18',
+    status: c.status || 'Active',
+  }
+}
 
 // ── shared helpers ──────────────────────────────────────────────────────────
 function daysSince(isoDate: string): number {
@@ -80,7 +99,9 @@ export function KpiStrip({
   repId?: string
   onNav?: (page: string, opts?: { filter?: string }) => void
 }) {
-  const customers = repId ? homeCustomers.filter(c => c.rep_id === repId) : homeCustomers
+  const stored = useStore(customersStore).filter((c) => !c.deleted_at && c.active !== false)
+  const allList = stored.length > 0 ? stored.map(adaptCustomer) : homeCustomers
+  const customers = repId ? allList.filter(c => c.rep_id === repId) : allList
   const total = customers.length
   const visited = customers.filter(c => !isOverdue(c)).length
   const coveragePct = total > 0 ? Math.round((visited / total) * 100) : 0
@@ -159,7 +180,9 @@ export function VisitCoverageByClass({
   repId?: string
   onNav?: (page: string, opts?: { filter?: string }) => void
 }) {
-  const customers = repId ? homeCustomers.filter(c => c.rep_id === repId) : homeCustomers
+  const stored = useStore(customersStore).filter((c) => !c.deleted_at && c.active !== false)
+  const allList = stored.length > 0 ? stored.map(adaptCustomer) : homeCustomers
+  const customers = repId ? allList.filter(c => c.rep_id === repId) : allList
   const classes = ['A', 'B', 'C'] as const
 
   const stats = classes.map((cls) => {
@@ -210,19 +233,21 @@ export function VisitCoverageByClass({
 
 // ── 3. Samples This Month ───────────────────────────────────────────────────
 export function SamplesPanel({ repId, onNav }: { repId?: string; onNav?: (page: string) => void }) {
-  const entries = repId ? homeSamples.filter(s => s.rep_id === repId) : homeSamples
-
-  const totalUnits = entries.reduce((s, e) => s + e.samples_this_month, 0)
+  const movements = useStore(stockMovementsStore).filter((m) => m.type === 'sample')
+  const baseEntries = repId ? homeSamples.filter(s => s.rep_id === repId) : homeSamples
+  const movementUnits = movements.reduce((acc, m) => acc + m.quantity, 0)
+  const totalUnits = baseEntries.reduce((s, e) => s + e.samples_this_month, 0) + movementUnits
 
   // top 5 products
   const byProduct: Record<string, number> = {}
-  entries.forEach(e => { byProduct[e.product_name] = (byProduct[e.product_name] ?? 0) + e.samples_this_month })
+  baseEntries.forEach(e => { byProduct[e.product_name] = (byProduct[e.product_name] ?? 0) + e.samples_this_month })
+  movements.forEach(m => { byProduct[m.productName] = (byProduct[m.productName] ?? 0) + m.quantity })
   const topProducts = Object.entries(byProduct).sort((a, b) => b[1] - a[1]).slice(0, 5)
   const maxProd = topProducts[0]?.[1] ?? 1
 
   // top 3 reps
   const byRep: Record<string, number> = {}
-  entries.forEach(e => { byRep[e.rep_name] = (byRep[e.rep_name] ?? 0) + e.samples_this_month })
+  baseEntries.forEach(e => { byRep[e.rep_name] = (byRep[e.rep_name] ?? 0) + e.samples_this_month })
   const topReps = Object.entries(byRep).sort((a, b) => b[1] - a[1]).slice(0, 3)
 
   return (

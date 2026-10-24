@@ -8,7 +8,7 @@ export const visitsStore = createStore<StoredVisit[]>('visits', visitsMockData a
 
 const now = () => new Date().toISOString()
 
-export function addVisit(data: Omit<StoredVisit, 'updated_at'> & { id?: string }) {
+export function addVisit(data: Omit<StoredVisit, 'updated_at' | 'id'> & { id?: string }) {
   const visit: StoredVisit = {
     ...data,
     id: data.id ?? `V-${Date.now()}`,

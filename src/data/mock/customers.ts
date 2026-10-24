@@ -25,15 +25,42 @@ export function addCustomer(data: Omit<Customer, 'updated_at' | 'deleted_at'> & 
   return customer
 }
 
-export function updateCustomer(id: string, patch: Partial<Customer>) {
+export function updateCustomer(id: string, patch: Partial<Customer>, actor?: string) {
+  const at = now()
+  let targetName = id
   customersStore.update((list) =>
-    list.map((c) => (c.id === id ? { ...c, ...patch, updated_at: now() } : c)),
+    list.map((c) => {
+      if (c.id === id) {
+        targetName = c.name
+        return { ...c, ...patch, updated_at: at }
+      }
+      return c
+    }),
   )
+  addAuditLog({
+    action: patch.deleted_at === null ? 'Customer Restored' : 'Customer Updated',
+    actor: actor || 'User',
+    time: 'Just now',
+    details: `Updated customer ${targetName}`,
+  })
 }
 
-export function deleteCustomer(id: string) {
+export function deleteCustomer(id: string, actor?: string) {
   const at = now()
+  let targetName = id
   customersStore.update((list) =>
-    list.map((c) => (c.id === id ? { ...c, deleted_at: at, updated_at: at } : c)),
+    list.map((c) => {
+      if (c.id === id) {
+        targetName = c.name
+        return { ...c, deleted_at: at, updated_at: at }
+      }
+      return c
+    }),
   )
+  addAuditLog({
+    action: 'Customer Deleted',
+    actor: actor || 'User',
+    time: 'Just now',
+    details: `Deleted customer ${targetName}`,
+  })
 }

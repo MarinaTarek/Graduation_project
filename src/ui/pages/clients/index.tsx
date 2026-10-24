@@ -1,16 +1,18 @@
-import { useState } from 'react'
-import { Plus, Users } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Plus, Users, Edit3 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { Toast } from '@/ui/design-system/components/Toast'
 import { ClientToolbar, type ClientFiltersState } from './components/ClientToolbar'
 import { ClientListItem } from './components/ClientListItem'
-import { customersStore } from '@/data/mock/customers'
+import { EditCustomerDrawer } from './components/EditCustomerDrawer'
+import { customersStore, updateCustomer, type Customer } from '@/data/mock/customers'
 import { useStore } from '@/data/mock/store'
 
 export interface ClientsPageProps {
   onAdd: () => void
-  onItem: () => void
+  onItem: (client?: Customer) => void
   filter?: string | null
   onClearFilter?: () => void
   role?: 'admin' | 'rep'
@@ -28,6 +30,28 @@ export default function ClientsPage({
   const customers = useStore(customersStore).filter((c) => !c.deleted_at)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [toastUndo, setToastUndo] = useState<(() => void) | null>(null)
+  const toastTimeoutRef = useRef<number | null>(null)
+
+  const showUndoToast = (msg: string, undoCb: () => void) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToastMessage(msg)
+    setToastUndo(() => undoCb)
+    toastTimeoutRef.current = window.setTimeout(() => {
+      setToastMessage(null)
+      setToastUndo(null)
+    }, 8000)
+  }
+
+  const isCustomerEditable = (c: Customer): boolean => {
+    if (role === 'admin') return true
+    return Boolean(
+      (c.repName && c.repName.toLowerCase() === currentUserName.toLowerCase()) ||
+      (c.rep_id && currentUserName && c.rep_id.toLowerCase().includes(currentUserName.toLowerCase().split(' ')[0]))
+    )
+  }
   const [activeFilters, setActiveFilters] = useState<ClientFiltersState>({
     specialty: 'All specialties',
     classification: 'All classes',
@@ -170,9 +194,78 @@ export default function ClientsPage({
         }
       >
         {sortedClients.length > 0 ? (
-          sortedClients.map((client) => (
-            <ClientListItem key={client.name} item={client} onClick={onItem} />
-          ))
+          sortedClients.map((client) => {
+            const canEdit = isCustomerEditable(client)
+            if (viewMode === 'cards') {
+              return (
+                <div
+                  key={client.id || client.name}
+                  className="collection-card"
+                  onClick={() => onItem(client)}
+                  role="button"
+                  tabIndex={0}
+                  style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-soft)',
+                    background: 'var(--surface)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <strong style={{ fontSize: '15px', display: 'block' }}>{client.name}</strong>
+                      {client.name_ar && (
+                        <span style={{ fontSize: '12px', color: 'var(--muted-text)', display: 'block' }}>
+                          {client.name_ar}
+                        </span>
+                      )}
+                    </div>
+                    <Chip active={client.status === 'Active'}>{client.status}</Chip>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--muted-text)', lineHeight: 1.5 }}>
+                    <div>{client.meta}</div>
+                    <div>Rep: {client.repName}</div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+                    {canEdit && (
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingCustomer(client)
+                        }}
+                        style={{
+                          height: '28px',
+                          padding: '0 10px',
+                          fontSize: '12px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Edit3 size={12} /> Edit
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <ClientListItem
+                key={client.id || client.name}
+                item={client}
+                onClick={() => onItem(client)}
+                onEdit={() => setEditingCustomer(client)}
+                canEdit={canEdit}
+              />
+            )
+          })
         ) : (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
             No clients match the selected filters.
@@ -181,6 +274,37 @@ export default function ClientsPage({
       </div>
 
       <EmptyState />
+
+      {/* Edit Customer Drawer */}
+      <EditCustomerDrawer
+        customer={editingCustomer}
+        isOpen={Boolean(editingCustomer)}
+        onClose={() => setEditingCustomer(null)}
+        role={role}
+        currentUserName={currentUserName}
+        onSave={(updated, previous) => {
+          showUndoToast(`Saved changes for ${updated.name}`, () => {
+            if (previous.id) {
+              updateCustomer(previous.id, previous)
+            }
+          })
+        }}
+        onDelete={(deleted) => {
+          showUndoToast(`Deleted ${deleted.name}`, () => {
+            if (deleted.id) {
+              updateCustomer(deleted.id, { deleted_at: null })
+            }
+          })
+        }}
+      />
+
+      {/* Undo Toast */}
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          onUndo={toastUndo ?? undefined}
+        />
+      )}
     </section>
   )
 }

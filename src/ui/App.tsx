@@ -39,6 +39,7 @@ function AppContent() {
   const [active, setActive] = useState('Home')
   const [range, setRange] = useState('Month')
   const [overlay, setOverlay] = useState<string | null>(null)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>('c-1')
   const [notice, setNotice] = useState('')
   const [dark, setDark] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -216,7 +217,10 @@ function AppContent() {
           {active === 'Clients' && (
             <ClientsPage
               onAdd={() => open('add doctor')}
-              onItem={() => open('doctor profile')}
+              onItem={(client) => {
+                if (client?.id) setSelectedCustomerId(client.id)
+                open('doctor profile')
+              }}
               filter={pageFilter['Clients']}
               onClearFilter={() => clearPageFilter('Clients')}
               role={role}
@@ -389,6 +393,9 @@ function AppContent() {
       {/* Doctor Profile Detail */}
       {overlay === 'doctor profile' && (
         <DoctorProfilePage
+          customerId={selectedCustomerId}
+          role={role}
+          currentUserName={currentUserName}
           onClose={() => setOverlay(null)}
           onNewVisit={() => open('new visit')}
           onSave={save}
@@ -405,8 +412,15 @@ function AppContent() {
       {/* New Visit Wizard */}
       <NewVisitWizard
         isOpen={overlay === 'new visit'}
+        initialClientId={selectedCustomerId}
+        role={role}
+        currentUserName={currentUserName}
         onClose={() => setOverlay(null)}
         onSave={() => action('Visit saved')}
+        onViewVisit={(_visitId) => {
+          setOverlay(null)
+          navigateTo('Visits')
+        }}
       />
     </div>
   )
