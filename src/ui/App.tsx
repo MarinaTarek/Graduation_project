@@ -40,6 +40,7 @@ function AppContent() {
   const [range, setRange] = useState('Month')
   const [overlay, setOverlay] = useState<string | null>(null)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>('c-1')
+  const [selectedStockProduct, setSelectedStockProduct] = useState<string>('Bevato')
   const [notice, setNotice] = useState('')
   const [dark, setDark] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -241,6 +242,7 @@ function AppContent() {
             <StockPage
               onAdd={() => open('add product')}
               onItem={() => open('stock detail')}
+              onSelectProduct={setSelectedStockProduct}
               filter={pageFilter['Stock']}
               onClearFilter={() => clearPageFilter('Stock')}
               role={role}
@@ -405,6 +407,9 @@ function AppContent() {
       {/* Stock Detail */}
       <StockDetailSheet
         isOpen={overlay === 'stock detail'}
+        productName={selectedStockProduct}
+        role={role}
+        currentUserName={currentUserName}
         onClose={() => setOverlay(null)}
         onOpenStockCount={() => open('stock count')}
       />

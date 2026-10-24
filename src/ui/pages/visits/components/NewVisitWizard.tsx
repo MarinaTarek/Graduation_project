@@ -244,6 +244,7 @@ export function NewVisitWizard({
             productName: p,
             quantity: qty,
             type: 'sample',
+            date: now.toISOString().split('T')[0],
           })
         }
       })

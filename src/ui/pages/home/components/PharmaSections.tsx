@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { Skeleton } from '@/ui/design-system/components/Skeleton'
 import { customersStore, type Customer } from '@/data/mock/customers'
-import { stockMovementsStore } from '@/data/mock/stock-movements'
+import { stockMovementsStore, batchesStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
 import { useStore } from '@/data/mock/store'
 import {
   VISIT_INTERVAL_DAYS,
@@ -106,6 +106,10 @@ export function KpiStrip({
   const visited = customers.filter(c => !isOverdue(c)).length
   const coveragePct = total > 0 ? Math.round((visited / total) * 100) : 0
 
+  const batches = useStore(batchesStore)
+  const movements = useStore(stockMovementsStore)
+  const batchesNearExpiryCount = getBatchesNearExpiry(movements, batches, 90).length
+
   const tiles = [
     {
       label: 'Visit Coverage',
@@ -130,7 +134,7 @@ export function KpiStrip({
     },
     {
       label: 'Batches Expiring',
-      value: String(homeKpiStrip.batches_near_expiry),
+      value: String(batchesNearExpiryCount),
       sub: 'next 90 days',
       color: 'var(--rose-text)',
       onClick: () => onNav?.('Stock', { filter: 'Expiring' }),
@@ -296,32 +300,39 @@ function expiryTone(isoDate: string): { label: string; bg: string } {
 }
 
 export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId: string) => void }) {
-  const batches = homeExpiringBatches.slice(0, 4)
+  const batches = useStore(batchesStore)
+  const movements = useStore(stockMovementsStore)
+  const expiring = getBatchesNearExpiry(movements, batches, 90)
 
   return (
     <CardShell>
       <CardTitle icon={AlertTriangle} label="Expiring Soon" />
-      {batches.map((b) => {
-        const tone = expiryTone(b.expiry_date)
-        return (
-          <button
-            key={b.batch_id}
-            onClick={() => onOpenDetail?.(b.batch_id)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '8px 0', borderBottom: '1px solid var(--border-soft)' }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>{b.product_name}</div>
-                <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{b.batch_no} · {b.qty}</div>
+      {expiring.length > 0 ? (
+        expiring.slice(0, 4).map((b) => {
+          return (
+            <button
+              key={b.id || b.batch_no}
+              onClick={() => onOpenDetail?.(b.id)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '8px 0', borderBottom: '1px solid var(--border-soft)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>{b.productName}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{b.batch_no} · {b.qty_remaining.toLocaleString()} units remaining</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {pill(b.status_label, b.status_color === 'rose' ? '#ef4444' : '#d97706')}
+                  <ChevronRight style={{ width: '14px', height: '14px', color: 'var(--muted-text)' }} />
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {pill(tone.label, tone.bg)}
-                <ChevronRight style={{ width: '14px', height: '14px', color: 'var(--muted-text)' }} />
-              </div>
-            </div>
-          </button>
-        )
-      })}
+            </button>
+          )
+        })
+      ) : (
+        <div style={{ padding: '16px 0', textAlign: 'center', color: 'var(--muted-text)', fontSize: '12px' }}>
+          No batches expiring within 90 days.
+        </div>
+      )}
     </CardShell>
   )
 }

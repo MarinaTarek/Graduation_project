@@ -1,21 +1,79 @@
 'use client'
 
-import { AlertTriangle, Clock, Package, ShieldCheck } from 'lucide-react'
-import { STOCK_EXPIRY_MOCK, type StockBatchRecord } from '../mock-data'
+import { AlertTriangle, Clock, Package, ShieldCheck, Sparkles } from 'lucide-react'
+import { STOCK_EXPIRY_MOCK } from '../mock-data'
 import type { ReportFiltersState } from './ReportFilters'
+import { useStore } from '@/data/mock/store'
+import {
+  batchesStore,
+  stockMovementsStore,
+  deriveBatches,
+  type DerivedBatch,
+} from '@/data/mock/stockDerived'
 
 export interface StockExpiryReportProps {
   filters: ReportFiltersState
 }
 
 export function StockExpiryReport({ filters }: StockExpiryReportProps) {
-  const batches = STOCK_EXPIRY_MOCK.batches.filter((b) => {
-    if (filters.products.length > 0 && !filters.products.includes(b.product)) return false
+  const rawBatches = useStore(batchesStore)
+  const movements = useStore(stockMovementsStore)
+  const allDerived = deriveBatches(rawBatches, movements)
+
+  const batches = allDerived.filter((b) => {
+    if (filters.products.length > 0 && !filters.products.includes(b.productName)) return false
     return true
   })
 
-  const getExpiryPill = (status: StockBatchRecord['status'], monthsRemaining: number) => {
-    if (status === 'critical' || monthsRemaining < 3) {
+  // Summary stats derived from batches
+  const totalAvailable = batches
+    .filter((b) => !b.is_expired)
+    .reduce((sum, b) => sum + b.qty_remaining, 0)
+  const criticalCount = batches.filter((b) => b.status === 'critical').length
+  const expiredCount = batches.filter((b) => b.is_expired).length
+
+  const summary = [
+    {
+      label: 'Warehouse Available Stock',
+      value: `${totalAvailable.toLocaleString()} units`,
+      change: 'Active lots on hand',
+      isPositive: true,
+    },
+    {
+      label: 'Batches Expiring (<90d)',
+      value: `${criticalCount} lots`,
+      change: 'Priority sell-through required',
+      isPositive: criticalCount === 0,
+    },
+    {
+      label: 'Expired Lots at Risk',
+      value: `${expiredCount} lots`,
+      change: expiredCount > 0 ? 'Excluded from available stock' : 'Zero expired stock',
+      isPositive: expiredCount === 0,
+    },
+  ]
+
+  const getExpiryPill = (b: DerivedBatch) => {
+    if (b.is_expired) {
+      return (
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 600,
+            padding: '4px 10px',
+            borderRadius: '99px',
+            background: '#64748b',
+            color: '#ffffff',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          Expired ({b.qty_remaining.toLocaleString()} at risk)
+        </span>
+      )
+    }
+    if (b.status === 'critical') {
       return (
         <span
           style={{
@@ -31,11 +89,11 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
           }}
         >
           <AlertTriangle style={{ width: '12px', height: '12px' }} />
-          Critical ({monthsRemaining} mo)
+          Critical ({b.days_to_expiry}d)
         </span>
       )
     }
-    if (status === 'expiring' || monthsRemaining <= 6) {
+    if (b.status === 'warning') {
       return (
         <span
           style={{
@@ -51,7 +109,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
           }}
         >
           <Clock style={{ width: '12px', height: '12px' }} />
-          Expiring ({monthsRemaining} mo)
+          Expiring ({Math.ceil(b.days_to_expiry / 30)} mo)
         </span>
       )
     }
@@ -70,7 +128,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
         }}
       >
         <ShieldCheck style={{ width: '12px', height: '12px' }} />
-        Good ({monthsRemaining} mo)
+        Good (&gt;6 mo)
       </span>
     )
   }
@@ -85,7 +143,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
           gap: '16px',
         }}
       >
-        {STOCK_EXPIRY_MOCK.summary.map((stat) => (
+        {summary.map((stat) => (
           <div
             key={stat.label}
             className="panel"
@@ -136,7 +194,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
             Total Inventory Volume by SKU
           </h3>
           <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-            Physical inventory units distributed across central warehouse and regional depot points.
+            Derived inventory units distributed across central warehouse and regional depot points.
           </p>
         </div>
 
@@ -169,11 +227,11 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
               >
                 <div
                   style={{
-                    width: `${prod.pct * 2}%`,
-                    maxWidth: '100%',
                     height: '100%',
+                    width: `${prod.pct}%`,
+                    background: 'var(--ocean)',
                     borderRadius: '99px',
-                    background: prod.color,
+                    transition: 'width 0.4s ease',
                   }}
                 />
               </div>
@@ -182,11 +240,11 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
         </div>
       </div>
 
-      {/* Rounded-row Table: Batches with Expiry Pills */}
+      {/* Batches Table with Expiration Runway */}
       <div
         className="panel"
         style={{
-          padding: '20px 24px',
+          padding: '24px',
           borderRadius: '24px',
           border: '1px solid var(--border-subtle)',
         }}
@@ -197,7 +255,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
               Batch Manifest & Expiration Runway
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--muted-text)' }}>
-              Pills categorize batch shelf life: Green (&gt;6 months), Amber (3-6 months), Rose (&lt;3 months).
+              FEFO ordered: Green (&gt;6 months), Amber (3-6 months), Rose (&lt;3 months), Grey (Expired).
             </p>
           </div>
           <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ocean)' }}>
@@ -211,7 +269,6 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
               <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ padding: '8px 12px' }}>Batch Number</th>
                 <th style={{ padding: '8px 12px' }}>Product</th>
-                <th style={{ padding: '8px 12px' }}>Storage Location</th>
                 <th style={{ padding: '8px 12px', textAlign: 'right' }}>On-Hand Qty</th>
                 <th style={{ padding: '8px 12px' }}>Expiry Date</th>
                 <th style={{ padding: '8px 12px', textAlign: 'center' }}>Shelf Life Status</th>
@@ -220,7 +277,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
             <tbody>
               {batches.map((b) => (
                 <tr
-                  key={b.id}
+                  key={b.id || b.batch_no}
                   style={{
                     background: 'var(--input-bg)',
                     borderRadius: '14px',
@@ -236,15 +293,33 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
                       borderBottomLeftRadius: '14px',
                     }}
                   >
-                    {b.batchNo}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {b.batch_no}
+                      {b.is_fefo_first && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '99px',
+                            background: 'rgba(2, 132, 199, 0.15)',
+                            color: 'var(--ocean)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                          }}
+                        >
+                          <Sparkles size={10} /> Sell First
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td style={{ padding: '12px', fontWeight: 500, color: 'var(--heading-text)' }}>{b.product}</td>
-                  <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{b.location}</td>
+                  <td style={{ padding: '12px', fontWeight: 500, color: 'var(--heading-text)' }}>{b.productName}</td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    {b.quantity.toLocaleString()} packs
+                    {b.qty_remaining.toLocaleString()} packs
                   </td>
                   <td style={{ padding: '12px', color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
-                    {b.expiryDate}
+                    {b.expiry_date}
                   </td>
                   <td
                     style={{
@@ -254,7 +329,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
                       borderBottomRightRadius: '14px',
                     }}
                   >
-                    {getExpiryPill(b.status, b.monthsRemaining)}
+                    {getExpiryPill(b)}
                   </td>
                 </tr>
               ))}

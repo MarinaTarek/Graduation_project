@@ -4,6 +4,7 @@ import { InvoiceDetailCard } from './components/InvoiceDetailCard'
 import { InvoiceReviewActions } from './components/InvoiceReviewActions'
 import { invoiceReviewMockData } from './mock-data'
 import { useUndo } from '@/lib/useUndo'
+import { addStockMovement, stockMovementsStore } from '@/data/mock/stockDerived'
 
 export interface InvoiceReviewPageProps {
   onClose: () => void
@@ -39,13 +40,30 @@ export default function InvoiceReviewPage({
     setLoadingAction('approve')
     setTimeout(() => {
       setLoadingAction(null)
+
+      // Create sell_in movement from approved invoice
+      const movement = addStockMovement({
+        productName: 'Bevato',
+        quantity: 20,
+        type: 'sell_in',
+        date: new Date().toISOString().split('T')[0],
+        customerName: data.client,
+        notes: `Approved invoice ${data.id}`,
+      })
+
       onClose()
       trigger(
         `Invoice ${data.id} approved`,
         () => onAction(`Invoice ${data.id} approval finalized`),
-        () => onAction(`Invoice ${data.id} approval undone`)
+        () => {
+          stockMovementsStore.update((list) => list.filter((m) => m.id !== movement.id))
+          onAction(`Invoice ${data.id} approval undone`)
+        }
       )
-      onAction(`Invoice ${data.id} approved (Click Undo within 8s)`, () => onAction(`Invoice ${data.id} reverted to pending`))
+      onAction(`Invoice ${data.id} approved (Click Undo within 8s)`, () => {
+        stockMovementsStore.update((list) => list.filter((m) => m.id !== movement.id))
+        onAction(`Invoice ${data.id} reverted to pending`)
+      })
     }, 400)
   }
 

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Plus, Users } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, Users, Clock3, FileText, Stethoscope } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { useAuth } from '@/lib/auth'
 import { storedUsersStore } from '@/lib/auth/mock-users'
 import { useStore } from '@/data/mock/store'
+import { batchesStore, stockMovementsStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
 import { HomeFilters, type HomeFiltersState } from './components/HomeFilters'
 import { AttentionSection } from './components/AttentionSection'
 import { SellInChartPanel } from './components/SellInChartPanel'
@@ -100,6 +101,25 @@ export default function HomePage({
 
   const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: 'EGP 42.8K', percent: '94%' }
 
+  const allBatches = useStore(batchesStore)
+  const allMovements = useStore(stockMovementsStore)
+  const expiringBatchesList = getBatchesNearExpiry(allMovements, allBatches, 90)
+  const firstExpiringBatch = expiringBatchesList[0]
+
+  const dynamicAttentionItems = [
+    { icon: FileText, label: 'Invoices to review', count: '5', tone: 'amber' as const, detail: 'A few are waiting on you' },
+    { icon: Stethoscope, label: 'Doctors to reconnect', count: '3', tone: 'rose' as const, detail: 'No visit in 30+ days' },
+    {
+      icon: Clock3,
+      label: 'Batch nearing expiry',
+      count: String(expiringBatchesList.length),
+      tone: 'blue' as const,
+      detail: firstExpiringBatch
+        ? `${firstExpiringBatch.productName} · ${firstExpiringBatch.days_to_expiry} days`
+        : 'All batches healthy',
+    },
+  ]
+
   return (
     <section className="content">
       <div className="home-hero-row">
@@ -183,9 +203,9 @@ export default function HomePage({
                   tone: 'amber' as const,
                   detail: `${pendingCount} pending review`,
                 },
-                ...homeAttentionItems,
+                ...dynamicAttentionItems,
               ]
-            : homeAttentionItems
+            : dynamicAttentionItems
         }
         onAction={onAction}
         onOpenNotifications={() => onOpen('notifications')}
