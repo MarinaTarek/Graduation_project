@@ -1,18 +1,207 @@
-import { Filter, LayoutGrid, Search } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Filter, LayoutGrid, List, Search, X } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 
-export function InvoiceToolbar() {
+export interface InvoiceFiltersState {
+  status: string
+  dateRange: string
+  source: string
+}
+
+export interface InvoiceToolbarProps {
+  searchQuery: string
+  onSearchChange: (q: string) => void
+  viewMode: 'list' | 'cards'
+  onToggleView: () => void
+  activeFilters: InvoiceFiltersState
+  onApplyFilters: (f: InvoiceFiltersState) => void
+  onClearFilters: () => void
+}
+
+const STATUSES = ['All statuses', 'Pending', 'Approved', 'Rejected']
+const DATE_RANGES = ['All time', 'Today', 'Last 7 days', 'This month', 'Last month']
+const SOURCES = ['All sources', 'Telegram', 'Web upload']
+
+export function InvoiceToolbar({
+  searchQuery,
+  onSearchChange,
+  viewMode,
+  onToggleView,
+  activeFilters,
+  onApplyFilters,
+  onClearFilters,
+}: InvoiceToolbarProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [draft, setDraft] = useState<InvoiceFiltersState>(activeFilters)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setDraft(activeFilters)
+  }, [activeFilters])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  const handleApply = () => {
+    onApplyFilters(draft)
+    setIsOpen(false)
+  }
+
+  const handleClear = () => {
+    const empty: InvoiceFiltersState = {
+      status: 'All statuses',
+      dateRange: 'All time',
+      source: 'All sources',
+    }
+    setDraft(empty)
+    onClearFilters()
+    setIsOpen(false)
+  }
+
+  const activeCount =
+    (activeFilters.status !== 'All statuses' ? 1 : 0) +
+    (activeFilters.dateRange !== 'All time' ? 1 : 0) +
+    (activeFilters.source !== 'All sources' ? 1 : 0)
+
   return (
-    <div className="collection-toolbar">
+    <div className="collection-toolbar" style={{ position: 'relative' }} ref={popoverRef}>
       <div className="search-inline">
         <Search />
-        <input placeholder="Search invoices..." />
+        <input
+          placeholder="Search invoices..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
       </div>
-      <Button variant="secondary">
-        <Filter data-icon="inline-start" /> Filters
-      </Button>
-      <Button variant="secondary">
-        <LayoutGrid data-icon="inline-start" /> View
+
+      <div style={{ position: 'relative' }}>
+        <Button
+          variant={activeCount > 0 ? 'primary' : 'secondary'}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <Filter data-icon="inline-start" /> Filters
+          {activeCount > 0 && ` (${activeCount})`}
+        </Button>
+
+        {isOpen && (
+          <div
+            className="panel"
+            style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: '8px',
+              minWidth: '280px',
+              zIndex: 30,
+              padding: '16px',
+              boxShadow: 'var(--shadow)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span className="eyebrow">INVOICE FILTERS</span>
+              <button
+                onClick={() => setIsOpen(false)}
+                style={{ background: 'transparent', border: 0, cursor: 'pointer', color: 'var(--muted-text)' }}
+              >
+                <X style={{ width: '16px', height: '16px' }} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Status */}
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
+                Status
+                <select
+                  value={draft.status}
+                  onChange={(e) => setDraft({ ...draft, status: e.target.value })}
+                  style={{
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-input)',
+                    background: 'var(--input-bg)',
+                    color: 'var(--input-text)',
+                  }}
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </label>
+
+              {/* Date range */}
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
+                Date Range
+                <select
+                  value={draft.dateRange}
+                  onChange={(e) => setDraft({ ...draft, dateRange: e.target.value })}
+                  style={{
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-input)',
+                    background: 'var(--input-bg)',
+                    color: 'var(--input-text)',
+                  }}
+                >
+                  {DATE_RANGES.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </label>
+
+              {/* Source */}
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
+                Intake Source
+                <select
+                  value={draft.source}
+                  onChange={(e) => setDraft({ ...draft, source: e.target.value })}
+                  style={{
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-input)',
+                    background: 'var(--input-bg)',
+                    color: 'var(--input-text)',
+                  }}
+                >
+                  {SOURCES.map((src) => (
+                    <option key={src} value={src}>{src}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
+              <Button variant="secondary" style={{ flex: 1, padding: '6px' }} onClick={handleClear}>
+                Clear
+              </Button>
+              <Button variant="primary" style={{ flex: 1, padding: '6px' }} onClick={handleApply}>
+                Apply
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Button variant="secondary" onClick={onToggleView} title={`Switch to ${viewMode === 'list' ? 'Cards' : 'List'} view`}>
+        {viewMode === 'list' ? (
+          <>
+            <LayoutGrid data-icon="inline-start" /> Cards
+          </>
+        ) : (
+          <>
+            <List data-icon="inline-start" /> List
+          </>
+        )}
       </Button>
     </div>
   )

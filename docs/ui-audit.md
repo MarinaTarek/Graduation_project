@@ -65,10 +65,10 @@
 | 39 | **Home** | Story link "$240K" | `src/ui/pages/home/index.tsx:37` | `OK` | Opens Invoice Review detail drawer (`InvoiceReviewPage`) |
 | 40 | **Home** | Primary button "New visit" | `src/ui/pages/home/index.tsx:43` | `OK` | Opens New Visit wizard drawer (`NewVisitWizard`) |
 | 41 | **Home** | Sell-in chart panel | `src/ui/pages/home/index.tsx:53` | `OK (FIXED)` | Calls `setActive('Sell-in')` directly navigating to the Sell-in page |
-| 42 | **Home** | Filter Chip "Month" | `src/ui/pages/home/components/HomeFilters.tsx:12` | `NO HANDLER` | Date range selector dropdown / popover |
-| 43 | **Home** | Filter Chip "All regions" | `src/ui/pages/home/components/HomeFilters.tsx:15` | `NO HANDLER` | Region filter dropdown / popover |
-| 44 | **Home** | Filter Chip "All reps" | `src/ui/pages/home/components/HomeFilters.tsx:18` | `NO HANDLER` | Medical representative filter dropdown / popover |
-| 45 | **Home** | Filter Chip "All products" | `src/ui/pages/home/components/HomeFilters.tsx:21` | `NO HANDLER` | Product portfolio filter dropdown / popover |
+| 42 | **Home** | Filter Chip "Month" | `src/ui/pages/home/components/HomeFilters.tsx:180` | `OK (FIXED)` | Opens month picker dropdown with Apply & Clear |
+| 43 | **Home** | Filter Chip "All regions" | `src/ui/pages/home/components/HomeFilters.tsx:220` | `OK (FIXED)` | Opens multi-select region dropdown with checkboxes, Apply & Clear |
+| 44 | **Home** | Filter Chip "All reps" | `src/ui/pages/home/components/HomeFilters.tsx:280` | `OK (FIXED)` | Opens multi-select rep dropdown with rep avatars, Apply & Clear |
+| 45 | **Home** | Filter Chip "All products" | `src/ui/pages/home/components/HomeFilters.tsx:350` | `OK (FIXED)` | Opens multi-select product dropdown with checkboxes, Apply & Clear |
 | 46 | **Home** | View toggle button ("Month/Week") | `src/ui/pages/home/components/HomeFilters.tsx:25` | `OK` | Toggles time range state between Month and Week |
 | 47 | **Home** | Needs Attention "View all" | `src/ui/pages/home/components/AttentionSection.tsx:18` | `OK (FIXED)` | Opens Notifications panel (`NotificationsDrawer`) |
 | 48 | **Home** | Card "Invoices to review" | `src/ui/pages/home/components/AttentionSection.tsx:24` | `OK (FIXED)` | Navigates to `InvoicesPage` pre-filtered to "Pending" with removable filter chip |
@@ -79,15 +79,15 @@
 | 53 | **Home** | Top reps round arrow | `src/ui/pages/home/components/TopRepsPanel.tsx:19` | `OK` | Navigates to More page (`setActive('More')`) / Users list |
 | 54 | **Home** | Top rep rows (4 items) | `src/ui/pages/home/components/TopRepsPanel.tsx:25` | `OK (FIXED)` | Opens `VisitsPage` pre-filtered to clicked representative with removable filter chip |
 | 55 | **Clients** | Primary button "Add new" | `src/ui/pages/clients/index.tsx:24` | `OK` | Opens `RecordFormDrawer` with title "Add doctor" |
-| 56 | **Clients** | Toolbar "Filters" button | `src/ui/pages/clients/components/ClientToolbar.tsx:11` | `NO HANDLER` | Client filter options popover |
-| 57 | **Clients** | Toolbar "View" button | `src/ui/pages/clients/components/ClientToolbar.tsx:14` | `NO HANDLER` | Client layout toggle (List / Grid view) |
+| 56 | **Clients** | Toolbar "Filters" button | `src/ui/pages/clients/components/ClientToolbar.tsx:11` | `OK (FIXED)` | Opens popover with Specialty, Classification, Region selects and Overdue-only checkbox; Apply/Clear; applied filters appear as removable chips |
+| 57 | **Clients** | Toolbar "View" button | `src/ui/pages/clients/components/ClientToolbar.tsx:14` | `OK (FIXED)` | Toggles between Cards and List layout; state held in ClientToolbar, layout applied in ClientsPage |
 | 58 | **Clients** | Client list item rows (3 items) | `src/ui/pages/clients/components/ClientListItem.tsx:12` | `OK` | Opens Doctor Profile drawer (`DoctorProfilePage`) |
 | 59 | **Doctor Profile** | Close backdrop / X | `src/ui/pages/doctor-profile/index.tsx:24` | `OK` | Dismisses Doctor Profile drawer |
 | 60 | **Doctor Profile** | Button "+ New visit" | `src/ui/pages/doctor-profile/index.tsx:33` | `OK` | Opens New Visit wizard drawer (`NewVisitWizard`) |
 | 61 | **Doctor Profile** | Button "Edit doctor" | `src/ui/pages/doctor-profile/index.tsx:36` | `OK` | Triggers save, displays confirmation toast, closes drawer |
 | 62 | **Invoices** | Primary button "Add new" | `src/ui/pages/invoices/index.tsx:24` | `OK` | Opens Upload Invoice modal (`UploadInvoiceModal`) |
-| 63 | **Invoices** | Toolbar "Filters" button | `src/ui/pages/invoices/components/InvoiceToolbar.tsx:11` | `NO HANDLER` | Invoice status filter popover |
-| 64 | **Invoices** | Toolbar "View" button | `src/ui/pages/invoices/components/InvoiceToolbar.tsx:14` | `NO HANDLER` | Invoice density view switch |
+| 63 | **Invoices** | Toolbar "Filters" button | `src/ui/pages/invoices/components/InvoiceToolbar.tsx:11` | `OK (FIXED)` | Opens popover with Status, Date Range, and Source (Telegram/Web) selects; Apply/Clear; applied filters appear as removable chips |
+| 64 | **Invoices** | Toolbar "View" button | `src/ui/pages/invoices/components/InvoiceToolbar.tsx:14` | `OK (FIXED)` | Toggles between Cards and List layout; state held in InvoiceToolbar, layout applied in InvoicesPage |
 | 65 | **Invoices** | Invoice list item rows (3 items) | `src/ui/pages/invoices/components/InvoiceListItem.tsx:11` | `OK` | Opens Invoice Review detail drawer (`InvoiceReviewPage`) |
 | 66 | **Upload Invoice** | Close backdrop / X | `src/ui/pages/invoices/components/UploadInvoiceModal.tsx:19` | `OK` | Dismisses Upload Invoice modal |
 | 67 | **Upload Invoice** | Button "Choose file" | `src/ui/pages/invoices/components/UploadInvoiceModal.tsx:24` | `OK` | Simulates file upload, closes modal with confirmation toast |
@@ -95,13 +95,13 @@
 | 69 | **Invoice Review** | Button "Reject" | `src/ui/pages/invoice-review/components/InvoiceReviewActions.tsx:15` | `OK` | Rejects invoice with toast notification |
 | 70 | **Invoice Review** | Button "Approve" | `src/ui/pages/invoice-review/components/InvoiceReviewActions.tsx:18` | `OK` | Approves invoice, closes drawer, shows confirmation toast |
 | 71 | **Stock** | Primary button "Add new" | `src/ui/pages/stock/index.tsx:26` | `OK` | Opens `RecordFormDrawer` with title "Add product" |
-| 72 | **Stock** | Toolbar "Filters" button | `src/ui/pages/stock/components/StockToolbar.tsx:11` | `NO HANDLER` | Stock inventory filter popover |
-| 73 | **Stock** | Toolbar "View" button | `src/ui/pages/stock/components/StockToolbar.tsx:14` | `NO HANDLER` | Stock layout toggle |
+| 72 | **Stock** | Toolbar "Filters" button | `src/ui/pages/stock/components/StockToolbar.tsx:11` | `OK (FIXED)` | Opens popover with Product SKU, Expiry Status, and Inventory Location selects; Apply/Clear; applied filters appear as removable chips |
+| 73 | **Stock** | Toolbar "View" button | `src/ui/pages/stock/components/StockToolbar.tsx:14` | `OK (FIXED)` | Toggles between Cards and List layout; state held in StockToolbar, layout applied in StockPage |
 | 74 | **Stock** | Stock list item rows (3 items) | `src/ui/pages/stock/components/StockListItem.tsx:12` | `OK` | Opens Stock Product detail sheet (`StockDetailSheet`) |
 | 75 | **Stock Detail** | Close backdrop / X | `src/ui/pages/stock/components/StockDetailSheet.tsx:20` | `OK` | Dismisses Stock Detail sheet |
-| 76 | **Stock Detail** | Tab "Warehouse" | `src/ui/pages/stock/components/StockDetailSheet.tsx:22` | `NO HANDLER` | Filters batch view to Warehouse inventory |
-| 77 | **Stock Detail** | Tab "With reps" | `src/ui/pages/stock/components/StockDetailSheet.tsx:23` | `NO HANDLER` | Filters batch view to Field rep inventory |
-| 78 | **Stock Detail** | Tab "In pharmacies" | `src/ui/pages/stock/components/StockDetailSheet.tsx:24` | `NO HANDLER` | Filters batch view to Consigned pharmacy inventory |
+| 76 | **Stock Detail** | Tab "Warehouse" | `src/ui/pages/stock/components/StockDetailSheet.tsx:22` | `OK (FIXED)` | Switches to Warehouse tab: shows batch list with quantity and expiry pills |
+| 77 | **Stock Detail** | Tab "With reps" | `src/ui/pages/stock/components/StockDetailSheet.tsx:23` | `OK (FIXED)` | Switches to With Reps tab: shows per-rep quantity, territory, and status |
+| 78 | **Stock Detail** | Tab "In pharmacies" | `src/ui/pages/stock/components/StockDetailSheet.tsx:24` | `OK (FIXED)` | Switches to In Pharmacies tab: shows per-pharmacy quantity, batch, and status |
 | 79 | **Stock Detail** | Button "Stock count" | `src/ui/pages/stock/components/StockDetailSheet.tsx:35` | `OK` | Opens `RecordFormDrawer` with title "Stock count" |
 | 80 | **Visits** | Primary button "New visit" | `src/ui/pages/visits/index.tsx:24` | `OK` | Opens New Visit wizard drawer (`NewVisitWizard`) |
 | 81 | **Visits** | Visit list item rows (5 items) | `src/ui/pages/visits/index.tsx:63` | `OK (FIXED)` | Opens `VisitDetailDrawer` with date/time, doctor, rep, products presented, samples quantity, reaction emoji, notes, next visit date, GPS verified badge |
@@ -170,18 +170,21 @@
 
 ---
 
-### Priority 3: Secondary Actions (Filters, Tabs & Toolbars)
+### Priority 3: Secondary Actions (Filters, Tabs & Toolbars — All Resolved)
 9. **Collection Toolbars "Filters" & "View" Buttons**:  
-   - `src/ui/pages/clients/components/ClientToolbar.tsx:11,14` (`NO HANDLER`)  
-   - `src/ui/pages/invoices/components/InvoiceToolbar.tsx:11,14` (`NO HANDLER`)  
-   - `src/ui/pages/stock/components/StockToolbar.tsx:11,14` (`NO HANDLER`)  
-   - *Target*: Connect to interactive filter drawers/popovers and view density switches.
-10. **Home Filter Chips** (`src/ui/pages/home/components/HomeFilters.tsx:12,15,18,21`):  
-    - *Status*: `NO HANDLER`  
-    - *Target*: Connect to selection menus for Region, Rep, and Product scopes.
-11. **Stock Detail Sheet Warehouse / Rep / Pharmacy Tabs** (`src/ui/pages/stock/components/StockDetailSheet.tsx:22,23,24`):  
-    - *Status*: `NO HANDLER`  
-    - *Target*: Add active tab state switching between Warehouse, Rep-consigned, and Pharmacy batches.
+   - `src/ui/pages/clients/components/ClientToolbar.tsx` — *Status*: `RESOLVED`  
+     *Fix*: Filters opens a popover with Specialty, Classification, Region selects and an Overdue-only checkbox (draft state, Apply/Clear). View toggles List/Cards layout via `view` state prop.  
+   - `src/ui/pages/invoices/components/InvoiceToolbar.tsx` — *Status*: `RESOLVED`  
+     *Fix*: Filters opens a popover with Status, Date Range, and Source (Telegram/Web) selects. View toggles List/Cards layout.  
+   - `src/ui/pages/stock/components/StockToolbar.tsx` — *Status*: `RESOLVED`  
+     *Fix*: Filters opens a popover with Product SKU, Expiry Status, and Inventory Location selects. View toggles List/Cards layout.  
+   - Applied filters appear as removable chips in each page; navigation filters (Priority 2) coexist via `effectiveStatus` combining logic.
+10. **Home Filter Chips** (`src/ui/pages/home/components/HomeFilters.tsx`):  
+    - *Status*: `RESOLVED`  
+    - *Fix*: Month chip opens a month picker (current + previous 11 months). Region/Rep/Product chips open multi-select lists with checkboxes (Rep shows avatars). Each has Apply/Clear. After Apply the chip label shows selection count, and Home headline metrics, capsules, and lists react to the active filter state.
+11. **Stock Detail Sheet Warehouse / Rep / Pharmacy Tabs** (`src/ui/pages/stock/components/StockDetailSheet.tsx`):  
+    - *Status*: `RESOLVED`  
+    - *Fix*: `useState('warehouse')` drives tab state. Warehouse shows batch list with qty + expiry pills; With Reps shows per-rep qty/territory/status; In Pharmacies shows per-pharmacy qty/batch/status. All tabs use mock data from `src/ui/pages/stock/mock-data.ts`.
 12. **MenuSheet Language Selection** (`src/ui/layout/MenuSheet.tsx:31`):  
     - *Status*: `NO HANDLER`  
     - *Target*: Connect to language switcher modal or toggle.

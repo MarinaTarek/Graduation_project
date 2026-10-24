@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
-import { InvoiceToolbar } from './components/InvoiceToolbar'
+import { InvoiceToolbar, type InvoiceFiltersState } from './components/InvoiceToolbar'
 import { InvoiceListItem } from './components/InvoiceListItem'
 import { invoicesMockData } from './mock-data'
 
@@ -11,6 +12,8 @@ export interface InvoicesPageProps {
   onItem: () => void
   filter?: string | null
   onClearFilter?: () => void
+  role?: 'admin' | 'rep'
+  currentUserName?: string
 }
 
 export default function InvoicesPage({
@@ -18,10 +21,63 @@ export default function InvoicesPage({
   onItem,
   filter,
   onClearFilter,
+  role = 'admin',
+  currentUserName = 'Alex Morgan',
 }: InvoicesPageProps) {
-  const displayedInvoices = filter
-    ? invoicesMockData.filter((inv) => inv.status.toLowerCase() === filter.toLowerCase())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
+  const [activeFilters, setActiveFilters] = useState<InvoiceFiltersState>({
+    status: filter || 'All statuses',
+    dateRange: 'All time',
+    source: 'All sources',
+  })
+
+  // Role scoping: Reps only see their assigned invoices
+  const roleScopedInvoices = role === 'rep'
+    ? invoicesMockData.filter((inv) => inv.repName.toLowerCase() === currentUserName.toLowerCase())
     : invoicesMockData
+
+  // Apply search and popover filters
+  const displayedInvoices = roleScopedInvoices.filter((invoice) => {
+    // 1. Search text
+    if (searchQuery) {
+      const matchName = invoice.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchMeta = invoice.meta.toLowerCase().includes(searchQuery.toLowerCase())
+      if (!matchName && !matchMeta) return false
+    }
+
+    // 2. Status (from navigation filter or popover)
+    const effectiveStatus = filter || activeFilters.status
+    if (effectiveStatus !== 'All statuses' && invoice.status.toLowerCase() !== effectiveStatus.toLowerCase()) {
+      return false
+    }
+
+    // 3. Date range
+    if (activeFilters.dateRange !== 'All time' && invoice.dateRange !== activeFilters.dateRange) {
+      return false
+    }
+
+    // 4. Source
+    if (activeFilters.source !== 'All sources' && invoice.source !== activeFilters.source) {
+      return false
+    }
+
+    return true
+  })
+
+  const removeStatus = () => {
+    setActiveFilters((prev) => ({ ...prev, status: 'All statuses' }))
+    if (onClearFilter) onClearFilter()
+  }
+
+  const removeDateRange = () => setActiveFilters((prev) => ({ ...prev, dateRange: 'All time' }))
+  const removeSource = () => setActiveFilters((prev) => ({ ...prev, source: 'All sources' }))
+
+  const effectiveStatus = filter || activeFilters.status
+  const hasAnyFilter =
+    effectiveStatus !== 'All statuses' ||
+    activeFilters.dateRange !== 'All time' ||
+    activeFilters.source !== 'All sources'
 
   return (
     <section className="content">
@@ -38,22 +94,68 @@ export default function InvoicesPage({
         </Button>
       </div>
 
-      <InvoiceToolbar />
+      <InvoiceToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        viewMode={viewMode}
+        onToggleView={() => setViewMode(viewMode === 'list' ? 'cards' : 'list')}
+        activeFilters={activeFilters}
+        onApplyFilters={(f) => {
+          setActiveFilters(f)
+          if (filter && f.status !== filter && onClearFilter) {
+            onClearFilter()
+          }
+        }}
+        onClearFilters={() => {
+          setActiveFilters({
+            status: 'All statuses',
+            dateRange: 'All time',
+            source: 'All sources',
+          })
+          if (onClearFilter) onClearFilter()
+        }}
+      />
 
-      {/* Removable filter chip when filter prop is active */}
-      {filter && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '16px 0 8px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Active filter:</span>
-          <Chip active onClick={onClearFilter} title="Click to clear filter">
-            {filter} &times;
-          </Chip>
+      {/* Applied Removable Filter Chips */}
+      {hasAnyFilter && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', margin: '0 0 16px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Active filters:</span>
+          {effectiveStatus !== 'All statuses' && (
+            <Chip active onClick={removeStatus} title="Clear status filter">
+              {effectiveStatus} &times;
+            </Chip>
+          )}
+          {activeFilters.dateRange !== 'All time' && (
+            <Chip active onClick={removeDateRange} title="Clear date range filter">
+              {activeFilters.dateRange} &times;
+            </Chip>
+          )}
+          {activeFilters.source !== 'All sources' && (
+            <Chip active onClick={removeSource} title="Clear source filter">
+              {activeFilters.source} &times;
+            </Chip>
+          )}
         </div>
       )}
 
-      <div className="collection-list">
-        {displayedInvoices.map((invoice) => (
-          <InvoiceListItem key={invoice.name} item={invoice} onClick={onItem} />
-        ))}
+      {/* Collection items in List or Cards layout */}
+      <div
+        className="collection-list"
+        style={
+          viewMode === 'cards'
+            ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }
+            : undefined
+        }
+      >
+        {displayedInvoices.length > 0 ? (
+          displayedInvoices.map((invoice) => (
+            <InvoiceListItem key={invoice.name} item={invoice} onClick={onItem} />
+          ))
+        ) : (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
+            No invoices match the selected filters.
+          </div>
+        )}
       </div>
 
       <EmptyState />

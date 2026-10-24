@@ -149,6 +149,8 @@ export default function App() {
               onItem={() => open('doctor profile')}
               filter={pageFilter['Clients']}
               onClearFilter={() => clearPageFilter('Clients')}
+              role={role}
+              currentUserName="Alex Morgan"
             />
           )}
           {active === 'Invoices' && (
@@ -157,12 +159,18 @@ export default function App() {
               onItem={() => open('invoice detail')}
               filter={pageFilter['Invoices']}
               onClearFilter={() => clearPageFilter('Invoices')}
+              role={role}
+              currentUserName="Alex Morgan"
             />
           )}
           {active === 'Stock' && (
             <StockPage
               onAdd={() => open('add product')}
               onItem={() => open('stock detail')}
+              filter={pageFilter['Stock']}
+              onClearFilter={() => clearPageFilter('Stock')}
+              role={role}
+              currentUserName="Alex Morgan"
             />
           )}
           {active === 'Sell-in' && <SellInPage />}
