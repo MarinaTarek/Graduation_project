@@ -35,8 +35,8 @@ export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
         >
           <defs>
             <linearGradient id="areaBlue" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="#3F6593" stopOpacity=".25" />
-              <stop offset="1" stopColor="#3F6593" stopOpacity="0" />
+              <stop offset="0" stopColor="var(--ocean)" stopOpacity=".25" />
+              <stop offset="1" stopColor="var(--ocean)" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path
@@ -46,7 +46,7 @@ export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
           <path
             d="M0 155 C55 148 68 119 120 128 S195 120 235 94 S306 104 350 82 S420 98 466 65 S540 72 585 40 S630 48 660 28"
             fill="none"
-            stroke="#3F6593"
+            stroke="var(--ocean)"
             strokeWidth="3"
           />
         </svg>

@@ -37,6 +37,8 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [dark, setDark] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [role, setRole] = useState<'admin' | 'rep'>('admin')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const action = (message: string) => {
     setNotice(message)
@@ -56,15 +58,91 @@ export default function App() {
     setProfileOpen(false)
   }
 
+  const toggleRole = () => {
+    const nextRole = role === 'admin' ? 'rep' : 'admin'
+    setRole(nextRole)
+    action(`Switched to ${nextRole === 'admin' ? 'Admin' : 'Medical Rep'} view`)
+  }
+
   return (
-    <main className={`app-shell ${dark ? 'dark-mode' : ''}`}>
-      <Header
-        onOpenSearch={() => open('search')}
-        onOpenNotifications={() => open('notifications')}
-        onToggleProfile={() => setProfileOpen(!profileOpen)}
-        isProfileOpen={profileOpen}
+    <div className={`app-shell ${dark ? 'dark-mode' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
+      {/* Redesigned Attached Left Sidebar */}
+      <Sidebar
+        active={active}
+        onSelect={selectNav}
+        role={role}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onOpenLogout={() => open('logout')}
+        userName="Alex Morgan"
+        userEmail="alex.morgan@medora.health"
       />
 
+      {/* Main Content Area starting right after sidebar */}
+      <div className="app-main-viewport">
+        {/* Redesigned Top Header */}
+        <Header
+          onOpenSearch={() => open('search')}
+          onOpenNotifications={() => open('notifications')}
+          onToggleDark={() => setDark(!dark)}
+          dark={dark}
+          role={role}
+          onToggleRole={toggleRole}
+          greetingName="Alex"
+        />
+
+        {/* Primary Page Views */}
+        <div className="page-content-wrapper">
+          {active === 'Home' && (
+            <HomePage
+              onAction={action}
+              onOpen={open}
+              range={range}
+              setRange={setRange}
+              setActive={setActive}
+            />
+          )}
+          {active === 'Clients' && (
+            <ClientsPage
+              onAdd={() => open('add doctor')}
+              onItem={() => open('doctor profile')}
+            />
+          )}
+          {active === 'Invoices' && (
+            <InvoicesPage
+              onAdd={() => open('upload invoice')}
+              onItem={() => open('invoice detail')}
+            />
+          )}
+          {active === 'Stock' && (
+            <StockPage
+              onAdd={() => open('add product')}
+              onItem={() => open('stock detail')}
+            />
+          )}
+          {active === 'Sell-in' && <SellInPage />}
+          {active === 'Sell-out' && <SellOutPage />}
+          {active === 'Targets' && <TargetsPage />}
+          {active === 'Visits' && <VisitsPage onNewVisit={() => open('new visit')} />}
+          {active === 'Visit plan' && <VisitPlanPage />}
+          {active === 'Reports' && <SellInPage />}
+          {active === 'Admin' && <AdminPage />}
+          {active === 'Users' && <AdminPage initialSubpage="users" />}
+          {active === 'Products & Batches' && <AdminPage initialSubpage="products" />}
+          {active === 'Territories' && <AdminPage initialSubpage="territories" />}
+          {active === 'Audit log' && <AdminPage initialSubpage="audit-log" />}
+          {active === 'Settings' && <AdminPage initialSubpage="settings" />}
+          {active === 'Login' && <LoginPage onLogin={() => selectNav('Home')} />}
+          {active === 'More' && (
+            <MorePage
+              onSelectPage={(page) => selectNav(page)}
+              onAction={action}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Profile Sheet (Mobile / Action Menu) */}
       <MenuSheet
         isOpen={profileOpen}
         dark={dark}
@@ -72,79 +150,27 @@ export default function App() {
         onOpenLogout={() => open('logout')}
       />
 
-      {/* Primary Page Views */}
-      {active === 'Home' && (
-        <HomePage
-          onAction={action}
-          onOpen={open}
-          range={range}
-          setRange={setRange}
-          setActive={setActive}
-        />
-      )}
-      {active === 'Clients' && (
-        <ClientsPage
-          onAdd={() => open('add doctor')}
-          onItem={() => open('doctor profile')}
-        />
-      )}
-      {active === 'Invoices' && (
-        <InvoicesPage
-          onAdd={() => open('upload invoice')}
-          onItem={() => open('invoice detail')}
-        />
-      )}
-      {active === 'Stock' && (
-        <StockPage
-          onAdd={() => open('add product')}
-          onItem={() => open('stock detail')}
-        />
-      )}
-      {active === 'Sell-in' && <SellInPage />}
-      {active === 'Sell-out' && <SellOutPage />}
-      {active === 'Targets' && <TargetsPage />}
-      {active === 'Visits' && <VisitsPage onNewVisit={() => open('new visit')} />}
-      {active === 'Visit plan' && <VisitPlanPage />}
-      {active === 'Admin' && <AdminPage />}
-      {active === 'Users' && <AdminPage initialSubpage="users" />}
-      {active === 'Products & Batches' && <AdminPage initialSubpage="products" />}
-      {active === 'Territories' && <AdminPage initialSubpage="territories" />}
-      {active === 'Audit log' && <AdminPage initialSubpage="audit-log" />}
-      {active === 'Settings' && <AdminPage initialSubpage="settings" />}
-      {active === 'Login' && <LoginPage onLogin={() => selectNav('Home')} />}
-      {active === 'More' && (
-        <MorePage
-          onSelectPage={(page) => selectNav(page)}
-          onAction={action}
-        />
-      )}
-
-      {/* Navigation Layout */}
-      <Sidebar
-        active={active}
-        onSelect={selectNav}
-        dark={dark}
-        onToggleDark={() => setDark(!dark)}
-        onOpen={open}
-      />
+      {/* Mobile Bottom Navigation (<768px) */}
       <BottomDock active={active} onSelect={selectNav} />
 
-      {/* Floating Feedback */}
+      {/* Floating Feedback Toast */}
       {notice && <Toast message={notice} />}
 
-      {/* Layout Overlays */}
+      {/* Command Palette Modal */}
       <CommandPalette
         isOpen={overlay === 'search'}
         onClose={() => setOverlay(null)}
         onAction={action}
       />
 
+      {/* Notifications Drawer */}
       <NotificationsDrawer
         isOpen={overlay === 'notifications'}
         onClose={() => setOverlay(null)}
         onAction={action}
       />
 
+      {/* Log out Confirmation */}
       <LogoutConfirmDialog
         isOpen={overlay === 'logout'}
         onClose={() => setOverlay(null)}
@@ -154,7 +180,7 @@ export default function App() {
         }}
       />
 
-      {/* Shared Record Drawers */}
+      {/* Record Form Drawers */}
       {['add doctor', 'add product', 'stock count', 'add pharmacy'].includes(overlay || '') && (
         <RecordFormDrawer
           title={
@@ -171,12 +197,14 @@ export default function App() {
         />
       )}
 
+      {/* Upload Invoice */}
       <UploadInvoiceModal
         isOpen={overlay === 'upload invoice'}
         onClose={() => setOverlay(null)}
         onSave={save}
       />
 
+      {/* Invoice Review Detail */}
       {overlay === 'invoice detail' && (
         <InvoiceReviewPage
           onClose={() => setOverlay(null)}
@@ -184,6 +212,7 @@ export default function App() {
         />
       )}
 
+      {/* Doctor Profile Detail */}
       {overlay === 'doctor profile' && (
         <DoctorProfilePage
           onClose={() => setOverlay(null)}
@@ -192,17 +221,19 @@ export default function App() {
         />
       )}
 
+      {/* Stock Detail */}
       <StockDetailSheet
         isOpen={overlay === 'stock detail'}
         onClose={() => setOverlay(null)}
         onOpenStockCount={() => open('stock count')}
       />
 
+      {/* New Visit Wizard */}
       <NewVisitWizard
         isOpen={overlay === 'new visit'}
         onClose={() => setOverlay(null)}
         onSave={() => action('Visit saved')}
       />
-    </main>
+    </div>
   )
 }

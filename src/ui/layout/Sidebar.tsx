@@ -1,161 +1,143 @@
-import { useEffect, useRef, useState } from 'react'
+'use client'
+
+import { useRef } from 'react'
 import type { ElementType } from 'react'
 import {
-  Activity, ArrowUpRight, Bell, CalendarDays, ClipboardCheck,
-  FileText, Home, LogOut, MapPin, Moon, Package,
-  Plus, Search, Settings2, Stethoscope, Sun, Target, Users,
+  Activity, ArrowUpRight, BarChart2, CalendarDays, ChevronLeft, ChevronRight,
+  ClipboardCheck, FileText, LayoutGrid, MapPin, Package,
+  Power, Settings2, Stethoscope, Target, Users,
 } from 'lucide-react'
-import { Logo } from './Logo'
 
 export interface SidebarProps {
   active: string
   onSelect: (label: string) => void
-  dark: boolean
-  onToggleDark: () => void
-  onOpen: (name: string) => void
+  role?: 'admin' | 'rep'
+  collapsed?: boolean
+  onToggleCollapse?: () => void
+  onOpenLogout: () => void
+  userName?: string
+  userEmail?: string
 }
 
 export function Sidebar({
   active,
   onSelect,
-  dark,
-  onToggleDark,
-  onOpen,
+  role = 'admin',
+  collapsed = false,
+  onToggleCollapse,
+  onOpenLogout,
+  userName = 'Alex Morgan',
+  userEmail = 'alex.morgan@medora.health',
 }: SidebarProps) {
-  const [expanded, setExpanded] = useState(false)
-  const [pinned, setPinned] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const primary = [
-    ['Home', Home],
-    ['Clients', Users],
-    ['Invoices', FileText],
-    ['Stock', Package],
-  ] as const
+  interface NavItem {
+    label: string
+    activeKey: string
+    icon: ElementType
+    badge?: string
+  }
 
-  const sales = [
-    ['Sell-in', ArrowUpRight],
-    ['Sell-out', Activity],
-    ['Targets', Target],
-  ] as const
+  // Standard items visible to both Admin and Rep
+  const baseNav: NavItem[] = [
+    { label: 'Dashboard', activeKey: 'Home', icon: LayoutGrid },
+    { label: 'Clients', activeKey: 'Clients', icon: Users },
+    { label: 'Invoices', activeKey: 'Invoices', icon: FileText, badge: '5' },
+    { label: 'Stock', activeKey: 'Stock', icon: Package },
+    { label: 'Sell-in', activeKey: 'Sell-in', icon: ArrowUpRight },
+    { label: 'Sell-out', activeKey: 'Sell-out', icon: Activity },
+    { label: 'Targets', activeKey: 'Targets', icon: Target },
+    { label: 'Visits', activeKey: 'Visits', icon: Stethoscope },
+    { label: 'Visit plan', activeKey: 'Visit plan', icon: CalendarDays },
+    { label: 'Reports', activeKey: 'Reports', icon: BarChart2 },
+    { label: 'Settings', activeKey: 'Settings', icon: Settings2 },
+  ]
 
-  const field = [
-    ['Visits', Stethoscope],
-    ['Visit plan', CalendarDays],
-  ] as const
+  // Admin-only items
+  const adminNav: NavItem[] = [
+    { label: 'Users', activeKey: 'Users', icon: Users },
+    { label: 'Products & Batches', activeKey: 'Products & Batches', icon: Package },
+    { label: 'Territories', activeKey: 'Territories', icon: MapPin },
+    { label: 'Audit log', activeKey: 'Audit log', icon: ClipboardCheck },
+  ]
 
-  const manage = [
-    ['Users', Users],
-    ['Products & Batches', Package],
-    ['Territories', MapPin],
-    ['Audit log', ClipboardCheck],
-    ['Settings', Settings2],
-  ] as const
-
-  const isOpen = expanded || pinned
-
-  useEffect(() => {
-    const activeItem = scrollRef.current?.querySelector('.rail-item.active')
-    activeItem?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  }, [active])
-
-  const renderItem = (label: string, Icon: ElementType) => (
-    <button
-      key={label}
-      className={`rail-item ${active === label ? 'active' : ''}`}
-      onClick={() => onSelect(label)}
-      title={!isOpen ? label : undefined}
-    >
-      <Icon />
-      <span>{label}</span>
-      {label === 'Invoices' && <b>5</b>}
-    </button>
-  )
+  const navItems: NavItem[] = role === 'admin'
+    ? [...baseNav.slice(0, 9), ...adminNav, ...baseNav.slice(9)]
+    : baseNav
 
   return (
     <aside
-      className={`side-rail ${isOpen ? 'is-expanded' : ''} ${pinned ? 'is-pinned' : ''}`}
-      onMouseEnter={() => !pinned && setExpanded(true)}
-      onMouseLeave={() => !pinned && setExpanded(false)}
+      className={`app-sidebar ${collapsed ? 'is-collapsed' : ''}`}
+      aria-label="Main Navigation"
     >
-      <div className="rail-top">
-        <button
-          className="rail-logo"
-          aria-label="Medora home"
-          onClick={() => onSelect('Home')}
-        >
-          <Logo />
-          <span>medora</span>
-        </button>
-        <button className="rail-search" onClick={() => onOpen('search')}>
-          <Search />
-          <span>Search anything...</span>
-          <kbd>⌘K</kbd>
-        </button>
-      </div>
-
-      <div ref={scrollRef} className="rail-scroll-zone" aria-label="Rail navigation">
-        <div className="rail-primary">
-          {primary.map(([label, Icon]) => renderItem(label, Icon))}
-        </div>
-
-        <button className="visit-rail" onClick={() => onOpen('new visit')}>
-          <Plus />
-          <span>New visit</span>
-        </button>
-
-        <div className="rail-groups">
-          <div>
-            <small>SALES</small>
-            {sales.map(([label, Icon]) => renderItem(label, Icon))}
-          </div>
-          <div>
-            <small>FIELD</small>
-            {field.map(([label, Icon]) => renderItem(label, Icon))}
-          </div>
-          <div>
-            <small>MANAGE</small>
-            {manage.map(([label, Icon]) => renderItem(label, Icon))}
+      {/* Top Profile Zone (Fixed) */}
+      <div className="sidebar-top">
+        <div className="sidebar-avatar-wrap">
+          <div className="sidebar-avatar" aria-hidden="true">
+            AM
           </div>
         </div>
+
+        {!collapsed && (
+          <div className="sidebar-profile-info">
+            <span className="sidebar-user-name">{userName}</span>
+            <span className="sidebar-user-email">{userEmail}</span>
+          </div>
+        )}
+
+        {onToggleCollapse && (
+          <button
+            className="sidebar-collapse-btn"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight /> : <ChevronLeft />}
+          </button>
+        )}
       </div>
 
-      <div className="rail-bottom">
-        <button
-          className="rail-item"
-          onClick={() => onOpen('notifications')}
-          title={!isOpen ? 'Notifications' : undefined}
-        >
-          <Bell />
-          <span>Notifications</span>
-          <i />
-        </button>
-        <button
-          className="rail-item"
-          onClick={onToggleDark}
-          aria-label="Toggle dark mode"
-          title={!isOpen ? 'Toggle dark mode' : undefined}
-        >
-          {dark ? <Sun /> : <Moon />}
-          <span>{dark ? 'Light mode' : 'Dark mode'}</span>
-        </button>
-        <button className="rail-item" onClick={() => onOpen('profile')}>
-          <div className="rail-avatar">AM</div>
-          <span>Alex Morgan</span>
-        </button>
-        <button className="rail-item" onClick={() => onOpen('logout')}>
-          <LogOut />
-          <span>Log out</span>
-        </button>
+      {/* Middle Nav Items Zone (Scrollable with thin scrollbar & edge mask) */}
+      <div ref={scrollRef} className="sidebar-scroll-zone">
+        <nav className="sidebar-nav-list" aria-label="Sidebar Links">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isItemActive = active === item.activeKey || (item.activeKey === 'Home' && active === 'Dashboard')
+            return (
+              <button
+                key={item.label}
+                className={`sidebar-nav-item ${isItemActive ? 'active' : ''}`}
+                onClick={() => onSelect(item.activeKey)}
+                title={collapsed ? item.label : undefined}
+              >
+                <div className="sidebar-item-icon">
+                  <Icon />
+                </div>
+                {!collapsed && (
+                  <span className="sidebar-item-label">{item.label}</span>
+                )}
+                {!collapsed && item.badge && (
+                  <span className="sidebar-item-badge">{item.badge}</span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
       </div>
 
-      <button
-        className={`rail-pin ${pinned ? 'on' : ''}`}
-        onClick={() => setPinned(!pinned)}
-        aria-label={pinned ? 'Unpin rail' : 'Pin rail'}
-      >
-        •
-      </button>
+      {/* Bottom Log out Zone (Fixed) */}
+      <div className="sidebar-bottom">
+        <button
+          className="sidebar-logout-btn"
+          onClick={onOpenLogout}
+          title={collapsed ? 'Log out' : undefined}
+        >
+          <div className="sidebar-item-icon">
+            <Power />
+          </div>
+          {!collapsed && <span>Log out</span>}
+        </button>
+      </div>
     </aside>
   )
 }
