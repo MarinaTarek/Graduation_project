@@ -3,7 +3,10 @@ import { ClipboardCheck } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { formatCurrency } from '@/lib/format'
-import { cardiwellBatches, cardiwellRepsStock, cardiwellPharmaciesStock, stockProductsMockData } from '../mock-data'
+import { batchesStore } from '@/data/mock/batches'
+import { stockProductsStore } from '@/data/mock/products'
+import { useStore } from '@/data/mock/store'
+import { cardiwellRepsStock, cardiwellPharmaciesStock } from '../mock-data'
 
 export interface StockDetailSheetProps {
   isOpen?: boolean
@@ -19,6 +22,8 @@ export function StockDetailSheet({
   productName = 'Bevato',
 }: StockDetailSheetProps) {
   const [tab, setTab] = useState<'warehouse' | 'reps' | 'pharmacies'>('warehouse')
+  const stockProductsMockData = useStore(stockProductsStore)
+  const cardiwellBatches = useStore(batchesStore)
 
   if (!isOpen) return null
 

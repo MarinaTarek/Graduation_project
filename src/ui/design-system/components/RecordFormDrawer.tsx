@@ -3,7 +3,7 @@ import { Check, X, Search, ChevronDown } from 'lucide-react'
 import { Button } from './Button'
 import { Avatar } from './Avatar'
 import { FieldError } from './FieldError'
-import { clientsMockData } from '@/ui/pages/clients/mock-data'
+import { addCustomer } from '@/data/mock/customers'
 import { addProduct } from '@/lib/productService'
 
 export interface RecordFormDrawerProps {
@@ -153,7 +153,7 @@ export function RecordFormDrawer({
         rep_id: repToSave.id,
       }
 
-      clientsMockData.unshift(newCustomer)
+      addCustomer(newCustomer)
       onSave(`Doctor ${newCustomer.name} added successfully`)
       return
     }

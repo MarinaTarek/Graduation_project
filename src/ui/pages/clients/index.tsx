@@ -5,7 +5,8 @@ import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { ClientToolbar, type ClientFiltersState } from './components/ClientToolbar'
 import { ClientListItem } from './components/ClientListItem'
-import { clientsMockData } from './mock-data'
+import { customersStore } from '@/data/mock/customers'
+import { useStore } from '@/data/mock/store'
 
 export interface ClientsPageProps {
   onAdd: () => void
@@ -24,6 +25,7 @@ export default function ClientsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: ClientsPageProps) {
+  const customers = useStore(customersStore).filter((c) => !c.deleted_at)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
   const [activeFilters, setActiveFilters] = useState<ClientFiltersState>({
@@ -35,11 +37,11 @@ export default function ClientsPage({
 
   // Role scoping: Reps only see their assigned clients
   const roleScopedClients = role === 'rep'
-    ? clientsMockData.filter((c) =>
+    ? customers.filter((c) =>
         (c.repName && c.repName.toLowerCase() === currentUserName.toLowerCase()) ||
         (c.rep_id && currentUserName && c.rep_id.toLowerCase().includes(currentUserName.toLowerCase().split(' ')[0]))
       )
-    : clientsMockData
+    : customers
 
   // Apply search and popover filters
   const displayedClients = roleScopedClients.filter((client) => {

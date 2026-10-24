@@ -1,3 +1,4 @@
+import { createStore } from '@/data/mock/store'
 import type { User } from './types'
 import { getDefaultPermissions } from './permissions'
 
@@ -44,8 +45,6 @@ export const MOCK_USERS: MockUserRecord[] = [
   },
 ]
 
-const USERS_STORAGE_KEY = 'navigen_users'
-
 export const INITIAL_STORED_USERS: MockUserRecord[] = [
   {
     id: 'u-req-1',
@@ -77,25 +76,17 @@ export const INITIAL_STORED_USERS: MockUserRecord[] = [
   },
 ]
 
+export const storedUsersStore = createStore<MockUserRecord[]>('users', INITIAL_STORED_USERS)
+
 /** Load extra users registered via sign-up from localStorage */
 export function getStoredUsers(): MockUserRecord[] {
-  if (typeof window === 'undefined') return INITIAL_STORED_USERS
-  try {
-    const raw = localStorage.getItem(USERS_STORAGE_KEY)
-    if (!raw) {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_STORED_USERS))
-      return [...INITIAL_STORED_USERS]
-    }
-    return JSON.parse(raw) as MockUserRecord[]
-  } catch {
-    return [...INITIAL_STORED_USERS]
-  }
+  return storedUsersStore.get()
 }
 
 /** Save extra users to localStorage */
 export function saveStoredUsers(users: MockUserRecord[]): void {
+  storedUsersStore.set(users)
   if (typeof window !== 'undefined') {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
     window.dispatchEvent(new CustomEvent('navigen_users_updated'))
   }
 }

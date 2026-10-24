@@ -7,11 +7,13 @@ import { FieldError } from '@/ui/design-system/components/FieldError'
 import { useAuth } from '@/lib/auth'
 import { formatCurrency } from '@/lib/format'
 import { updateProductPrice } from '@/lib/productService'
-import { adminProductsMockData, type CatalogProduct } from '../mock-data'
+import { productsStore } from '@/data/mock/products'
+import { useStore } from '@/data/mock/store'
+import { type CatalogProduct } from '../mock-data'
 
 export function CatalogTable() {
   const { role, user } = useAuth()
-  const [products, setProducts] = useState<CatalogProduct[]>([...adminProductsMockData])
+  const products = useStore(productsStore)
   const [editingCode, setEditingCode] = useState<string | null>(null)
   const [inlinePrice, setInlinePrice] = useState<string>('')
   const [inlineError, setInlineError] = useState<string | null>(null)
@@ -64,7 +66,6 @@ export function CatalogTable() {
         userName: user?.name || 'Admin',
       })
 
-      setProducts([...adminProductsMockData])
       setEditingCode(null)
       setInlineError(null)
       showToast(`Price changed: ${item.name} ${oldPrice} -> ${newPrice} by ${user?.name || 'Admin'}`)
@@ -109,7 +110,6 @@ export function CatalogTable() {
         userName: user?.name || 'Admin',
       })
 
-      setProducts([...adminProductsMockData])
       handleCloseEditModal()
       showToast(`Price changed: ${modalProduct.name} ${oldPrice} -> ${newPrice} by ${user?.name || 'Admin'}`)
     } catch (err: any) {

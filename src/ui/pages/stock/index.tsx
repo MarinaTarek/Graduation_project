@@ -5,7 +5,8 @@ import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { StockToolbar, type StockFiltersState } from './components/StockToolbar'
 import { StockListItem } from './components/StockListItem'
-import { stockProductsMockData } from './mock-data'
+import { stockProductsStore } from '@/data/mock/products'
+import { useStore } from '@/data/mock/store'
 
 export interface StockPageProps {
   onAdd: () => void
@@ -24,6 +25,7 @@ export default function StockPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: StockPageProps) {
+  const stockProductsMockData = useStore(stockProductsStore)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
   const [activeFilters, setActiveFilters] = useState<StockFiltersState>({

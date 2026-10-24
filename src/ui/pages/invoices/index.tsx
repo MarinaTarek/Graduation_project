@@ -5,7 +5,8 @@ import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { InvoiceToolbar, type InvoiceFiltersState } from './components/InvoiceToolbar'
 import { InvoiceListItem } from './components/InvoiceListItem'
-import { invoicesMockData } from './mock-data'
+import { invoicesStore } from '@/data/mock/invoices'
+import { useStore } from '@/data/mock/store'
 
 export interface InvoicesPageProps {
   onAdd: () => void
@@ -24,6 +25,7 @@ export default function InvoicesPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: InvoicesPageProps) {
+  const invoicesMockData = useStore(invoicesStore)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
   const [activeFilters, setActiveFilters] = useState<InvoiceFiltersState>({

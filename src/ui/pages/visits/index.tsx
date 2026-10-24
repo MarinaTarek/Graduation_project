@@ -5,7 +5,9 @@ import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { VisitListItem } from './components/VisitListItem'
 import { VisitDetailDrawer } from './components/VisitDetailDrawer'
-import { visitsMockData, type VisitRecord } from './mock-data'
+import { visitsStore } from '@/data/mock/visits'
+import { useStore } from '@/data/mock/store'
+import { type VisitRecord } from './mock-data'
 
 export interface VisitsPageProps {
   onNewVisit: () => void
@@ -22,6 +24,7 @@ export default function VisitsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: VisitsPageProps) {
+  const visitsMockData = useStore(visitsStore)
   const [selectedVisit, setSelectedVisit] = useState<VisitRecord | null>(null)
 
   // 1. Role-based scoping: reps only see their own visits

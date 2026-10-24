@@ -13,10 +13,12 @@ import {
   getDefaultPermissions,
 } from '@/lib/auth/permissions'
 import { updateMockUser } from '@/lib/auth/auth-service'
-import { getStoredUsers, saveStoredUsers, type MockUserRecord } from '@/lib/auth/mock-users'
+import { getStoredUsers, saveStoredUsers, storedUsersStore, type MockUserRecord } from '@/lib/auth/mock-users'
+import { addAuditLog } from '@/data/mock/audit'
+import { addUser, deleteUser, updateUser, usersStore } from '@/data/mock/users'
+import { useStore } from '@/data/mock/store'
 import { addMockNotification } from '@/ui/layout/notifications-mock'
-import { adminUsersMockData, type AdminUserRecord } from '../mock-data'
-import { adminAuditLogMockData } from '../../audit-log/mock-data'
+import { type AdminUserRecord } from '../mock-data'
 import { useUndo } from '@/lib/useUndo'
 
 export interface UserListTableProps {
@@ -31,23 +33,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
     if (initialTab) setActiveTab(initialTab)
   }, [initialTab])
 
-  const [pendingRequests, setPendingRequests] = useState<MockUserRecord[]>(() =>
-    typeof window !== 'undefined'
-      ? getStoredUsers().filter((u) => u.status === 'pending')
-      : []
-  )
-
-  const loadPending = () => {
-    if (typeof window !== 'undefined') {
-      setPendingRequests(getStoredUsers().filter((u) => u.status === 'pending'))
-    }
-  }
-
-  useEffect(() => {
-    loadPending()
-    window.addEventListener('navigen_users_updated', loadPending)
-    return () => window.removeEventListener('navigen_users_updated', loadPending)
-  }, [])
+  const storedUsers = useStore(storedUsersStore)
+  const pendingRequests = storedUsers.filter((u) => u.status === 'pending')
 
   // Approve drawer state
   const [approvingUser, setApprovingUser] = useState<MockUserRecord | null>(null)
@@ -62,7 +49,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const [rejectingUser, setRejectingUser] = useState<MockUserRecord | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [isSavingReject, setIsSavingReject] = useState(false)
-  const [users, setUsers] = useState<AdminUserRecord[]>(adminUsersMockData)
+  const users = useStore(usersStore)
   const [deletedUser, setDeletedUser] = useState<AdminUserRecord | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -215,14 +202,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       permissions: editPermissions,
     }
 
-    // Update in state
-    setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? updatedUser : u)))
-
-    // Update in mock data array
-    const targetIdx = adminUsersMockData.findIndex((u) => u.id === editingUser.id)
-    if (targetIdx !== -1) {
-      adminUsersMockData[targetIdx] = updatedUser
-    }
+    updateUser(editingUser.id, updatedUser, currentUser?.name || 'Admin')
 
     // Sync live mock user & session
     updateMockUser({
@@ -233,16 +213,6 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       region: updatedUser.region,
       status: updatedUser.status as 'pending' | 'active' | 'rejected' | 'disabled' | undefined,
       permissions: updatedUser.permissions,
-    })
-
-    // Audit log entry: "Permissions changed for {user}"
-    const newLogId = `LOG-${adminAuditLogMockData.length + 410}`
-    adminAuditLogMockData.unshift({
-      id: newLogId,
-      action: 'Permissions Updated',
-      actor: currentUser?.name || 'Admin',
-      time: 'Just now',
-      details: `Permissions changed for ${updatedUser.name}`,
     })
 
     setIsSavingEdit(false)
@@ -266,7 +236,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
     }
 
     setDeletedUser(user)
-    setUsers((prev) => prev.filter((u) => u.id !== user.id))
+    deleteUser(user.id)
 
     trigger(
       `User ${user.name} deleted`,
@@ -274,14 +244,14 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
         setDeletedUser(null)
       },
       () => {
-        setUsers((prev) => [...prev, user])
+        addUser(user)
         setDeletedUser(null)
       }
     )
 
     showToast(`User ${user.name} deleted`, () => {
       undo()
-      setUsers((prev) => [...prev, user])
+      addUser(user)
       setToastMessage(`Restored ${user.name}`)
       setTimeout(() => setToastMessage(null), 3000)
     })
@@ -310,8 +280,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
         permissions: getDefaultPermissions(addRole),
       }
 
-      setUsers((prev) => [newUser, ...prev])
-      adminUsersMockData.unshift(newUser)
+      addUser(newUser, currentUser?.name || 'Admin')
 
       updateMockUser({
         id: newUser.id,
@@ -421,11 +390,9 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
         permissions: approvePermissions,
       }
 
-      setUsers((prev) => [newAdminUser, ...prev.filter((u) => u.id !== approvingUser.id)])
-      adminUsersMockData.unshift(newAdminUser)
+      addUser(newAdminUser)
 
-      adminAuditLogMockData.unshift({
-        id: `LOG-${adminAuditLogMockData.length + 410}`,
+      addAuditLog({
         action: 'Account Approved',
         actor: currentUser?.name || 'Admin',
         time: 'Just now',
@@ -437,7 +404,6 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
       setIsSavingApprove(false)
       setApprovingUser(null)
-      loadPending()
     }, 300)
   }
 
@@ -468,15 +434,12 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       saveStoredUsers(allStored)
     }
 
-    adminAuditLogMockData.unshift({
-      id: `LOG-${adminAuditLogMockData.length + 410}`,
+    addAuditLog({
       action: 'Account Rejected',
       actor: currentUser?.name || 'Admin',
       time: 'Just now',
       details: `Account request rejected for ${userToReject.name}${reasonText ? `: ${reasonText}` : ''}`,
     })
-
-    setPendingRequests((prev) => prev.filter((u) => u.id !== userToReject.id))
 
     trigger(
       `Account request rejected for ${userToReject.name}`,
@@ -488,7 +451,6 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
           currentStored[idx] = { ...currentStored[idx], status: 'pending' }
           saveStoredUsers(currentStored)
         }
-        loadPending()
       }
     )
 
@@ -500,7 +462,6 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
         currentStored[idx] = { ...currentStored[idx], status: 'pending' }
         saveStoredUsers(currentStored)
       }
-      loadPending()
       setToastMessage(`Restored ${userToReject.name} request`)
       setTimeout(() => setToastMessage(null), 3000)
     })

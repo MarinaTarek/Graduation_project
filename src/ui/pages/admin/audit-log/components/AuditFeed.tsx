@@ -1,7 +1,9 @@
 import { ClipboardCheck } from 'lucide-react'
-import { adminAuditLogMockData } from '../mock-data'
+import { auditStore } from '@/data/mock/audit'
+import { useStore } from '@/data/mock/store'
 
 export function AuditFeed() {
+  const adminAuditLogMockData = useStore(auditStore)
   return (
     <div className="collection-list">
       {adminAuditLogMockData.map((log) => (
