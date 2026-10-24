@@ -7,6 +7,7 @@ import { VisitListItem } from './components/VisitListItem'
 import { VisitDetailDrawer } from './components/VisitDetailDrawer'
 import { visitsStore } from '@/data/mock/visits'
 import { useStore } from '@/data/mock/store'
+import { useT } from '@/lib/i18n'
 import { type VisitRecord } from './mock-data'
 
 export interface VisitsPageProps {
@@ -24,6 +25,7 @@ export default function VisitsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: VisitsPageProps) {
+  const { t } = useT()
   const visitsMockData = useStore(visitsStore)
   const [selectedVisit, setSelectedVisit] = useState<VisitRecord | null>(null)
 
@@ -44,23 +46,23 @@ export default function VisitsPage({
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <Stethoscope /> FIELD ENGAGEMENTS
+            <Stethoscope /> {t('visits.eyebrow')}
           </span>
-          <h1>Visits</h1>
+          <h1>{t('visits.title')}</h1>
           <p className="story">
-            Direct clinical details, sample hand-offs, and physician interactions.
+            {t('visits.subtitle')}
           </p>
         </div>
         <Button variant="primary" onClick={onNewVisit}>
-          <Plus data-icon="inline-start" /> New visit
+          <Plus data-icon="inline-start" /> {t('visits.newVisit')}
         </Button>
       </div>
 
       {/* Removable filter chip when filtered by rep from TopRepsPanel */}
       {filterRep && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Filtered by rep:</span>
-          <Chip active onClick={onClearFilter} title="Click to clear filter">
+          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('visits.filteredByRep')}</span>
+          <Chip active onClick={onClearFilter} title={t('visits.clearFilter')}>
             {filterRep} &times;
           </Chip>
         </div>
@@ -77,12 +79,12 @@ export default function VisitsPage({
           ))
         ) : (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            No visits recorded matching this filter.
+            {t('visits.noMatch')}
           </div>
         )}
       </div>
 
-      <EmptyState message="All logged interactions synced to field records" />
+      <EmptyState message={t('visits.emptyState')} />
 
       {/* Visit detail drawer */}
       <VisitDetailDrawer

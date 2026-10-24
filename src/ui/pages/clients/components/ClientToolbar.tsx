@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Filter, LayoutGrid, List, Search, X } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { DropdownPortal } from '@/ui/design-system/components/DropdownPortal'
+import { useT } from '@/lib/i18n'
 
 export interface ClientFiltersState {
   specialty: string
@@ -33,6 +34,7 @@ export function ClientToolbar({
   onApplyFilters,
   onClearFilters,
 }: ClientToolbarProps) {
+  const { t } = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [draft, setDraft] = useState<ClientFiltersState>(activeFilters)
   const filterBtnRef = useRef<HTMLDivElement>(null)
@@ -69,7 +71,7 @@ export function ClientToolbar({
       <div className="search-inline">
         <Search />
         <input
-          placeholder="Search clients..."
+          placeholder={t('clients.toolbar.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -80,7 +82,7 @@ export function ClientToolbar({
           variant={activeCount > 0 ? 'primary' : 'secondary'}
           onClick={() => setIsOpen(!isOpen)}
         >
-          <Filter data-icon="inline-start" /> Filters
+          <Filter data-icon="inline-start" /> {t('clients.toolbar.filters')}
           {activeCount > 0 && ` (${activeCount})`}
         </Button>
 
@@ -92,7 +94,7 @@ export function ClientToolbar({
           align="right"
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span className="eyebrow">CLIENT FILTERS</span>
+            <span className="eyebrow">{t('clients.toolbar.filtersEyebrow')}</span>
             <button
               onClick={() => setIsOpen(false)}
               style={{ background: 'transparent', border: 0, cursor: 'pointer', color: 'var(--muted-text)' }}
@@ -104,7 +106,7 @@ export function ClientToolbar({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Specialty */}
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
-              Specialty
+              {t('clients.toolbar.specialty')}
               <select
                 value={draft.specialty}
                 onChange={(e) => setDraft({ ...draft, specialty: e.target.value })}
@@ -124,7 +126,7 @@ export function ClientToolbar({
 
             {/* Classification */}
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
-              Classification
+              {t('clients.toolbar.classification')}
               <select
                 value={draft.classification}
                 onChange={(e) => setDraft({ ...draft, classification: e.target.value })}
@@ -144,7 +146,7 @@ export function ClientToolbar({
 
             {/* Region */}
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
-              Region
+              {t('clients.toolbar.region')}
               <select
                 value={draft.region}
                 onChange={(e) => setDraft({ ...draft, region: e.target.value })}
@@ -170,29 +172,29 @@ export function ClientToolbar({
                 onChange={(e) => setDraft({ ...draft, overdueOnly: e.target.checked })}
                 style={{ cursor: 'pointer' }}
               />
-              <span>Overdue for visit only</span>
+              <span>{t('clients.toolbar.overdueForVisit')}</span>
             </label>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
             <Button variant="secondary" style={{ flex: 1, padding: '6px' }} onClick={handleClear}>
-              Clear
+              {t('common.clear')}
             </Button>
             <Button variant="primary" style={{ flex: 1, padding: '6px' }} onClick={handleApply}>
-              Apply
+              {t('common.apply')}
             </Button>
           </div>
         </DropdownPortal>
       </div>
 
-      <Button variant="secondary" onClick={onToggleView} title={`Switch to ${viewMode === 'list' ? 'Cards' : 'List'} view`}>
+      <Button variant="secondary" onClick={onToggleView} title={viewMode === 'list' ? t('clients.toolbar.switchToCards') : t('clients.toolbar.switchToList')}>
         {viewMode === 'list' ? (
           <>
-            <LayoutGrid data-icon="inline-start" /> Cards
+            <LayoutGrid data-icon="inline-start" /> {t('clients.toolbar.cards')}
           </>
         ) : (
           <>
-            <List data-icon="inline-start" /> List
+            <List data-icon="inline-start" /> {t('clients.toolbar.list')}
           </>
         )}
       </Button>

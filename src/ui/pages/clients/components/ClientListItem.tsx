@@ -1,6 +1,7 @@
 import { ChevronRight, Users, Edit3 } from 'lucide-react'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Button } from '@/ui/design-system/components/Button'
+import { useT } from '@/lib/i18n'
 import type { ClientRecord } from '../mock-data'
 
 export interface ClientListItemProps {
@@ -11,6 +12,8 @@ export interface ClientListItemProps {
 }
 
 export function ClientListItem({ item, onClick, onEdit, canEdit = true }: ClientListItemProps) {
+  const { t } = useT()
+
   return (
     <div
       className="collection-item"
@@ -52,7 +55,7 @@ export function ClientListItem({ item, onClick, onEdit, canEdit = true }: Client
           }}
         >
           <Edit3 size={13} />
-          Edit
+          {t('common.edit')}
         </Button>
       )}
       <ChevronRight />

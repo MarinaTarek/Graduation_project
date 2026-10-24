@@ -3,6 +3,7 @@ import { X, Check, Trash2, Search, Lock, UserCheck, AlertCircle } from 'lucide-r
 import { Button } from '@/ui/design-system/components/Button'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
 import { updateCustomer, deleteCustomer, type Customer } from '@/data/mock/customers'
+import { useT } from '@/lib/i18n'
 
 export interface EditCustomerDrawerProps {
   customer: Customer | null
@@ -78,10 +79,12 @@ export function EditCustomerDrawer({
     )
   }, [repSearch])
 
+  const { t } = useT()
+
   const handleClose = () => {
     if (isDirty) {
       const confirmDiscard = window.confirm(
-        'You have unsaved changes. Are you sure you want to discard them?'
+        t('clients.edit.discardChanges')
       )
       if (!confirmDiscard) return
     }
@@ -91,12 +94,12 @@ export function EditCustomerDrawer({
   const validate = () => {
     const nextErrors: { name?: string; phone?: string } = {}
     if (!name.trim()) {
-      nextErrors.name = 'Customer name is required'
+      nextErrors.name = t('clients.edit.nameRequired')
     }
 
     const cleanPhone = phone.replace(/[^0-9]/g, '')
     if (phone.trim() && cleanPhone.length < 8) {
-      nextErrors.phone = 'Phone number must have at least 8 digits'
+      nextErrors.phone = t('clients.edit.phoneInvalid')
     }
 
     setErrors(nextErrors)
@@ -135,7 +138,7 @@ export function EditCustomerDrawer({
   const handleDelete = () => {
     if (!customer.id) return
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${customer.name}? You can undo this action.`
+      t('clients.edit.confirmDelete', { name: customer.name })
     )
     if (!confirmed) return
 
@@ -161,11 +164,11 @@ export function EditCustomerDrawer({
         <div className="sheet-head" style={{ flexShrink: 0 }}>
           <div>
             <span className="eyebrow">
-              {customer.specialty === 'Pharmacy' ? 'EDIT PHARMACY' : 'EDIT DOCTOR'}
+              {customer.specialty === 'Pharmacy' ? t('clients.edit.editPharmacy') : t('clients.edit.editDoctor')}
             </span>
             <h2>{customer.name}</h2>
           </div>
-          <button className="icon-button" onClick={handleClose} aria-label="Close">
+          <button className="icon-button" onClick={handleClose} aria-label={t('common.close')}>
             <X />
           </button>
         </div>
@@ -187,18 +190,18 @@ export function EditCustomerDrawer({
               }}
             >
               <AlertCircle size={18} />
-              <span>You can only edit customers assigned to you.</span>
+              <span>{t('clients.edit.cannotEdit')}</span>
             </div>
           )}
 
           <div className="form-grid" style={{ marginTop: '16px' }}>
             {/* Name */}
             <label className="full">
-              Full Name *
+              {t('clients.edit.fullName')}
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Dr. Sarah Kim"
+                placeholder={t('clients.edit.fullNamePlaceholder')}
                 disabled={!isOwnCustomer}
                 style={errors.name ? { borderColor: 'var(--rose-text, #ef4444)' } : undefined}
               />
@@ -211,11 +214,11 @@ export function EditCustomerDrawer({
 
             {/* Arabic Name */}
             <label className="full">
-              Name (Arabic)
+              {t('clients.edit.nameArabic')}
               <input
                 value={nameAr}
                 onChange={(e) => setNameAr(e.target.value)}
-                placeholder="e.g. د. سارة كيم"
+                placeholder={t('clients.edit.nameArabicPlaceholder')}
                 dir="rtl"
                 disabled={!isOwnCustomer}
               />
@@ -223,7 +226,7 @@ export function EditCustomerDrawer({
 
             {/* Specialty */}
             <label>
-              Specialty
+              {t('clients.edit.specialty')}
               <select
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value)}
@@ -241,21 +244,21 @@ export function EditCustomerDrawer({
 
             {/* Classification */}
             <label>
-              Class
+              {t('clients.edit.class')}
               <select
                 value={classification}
                 onChange={(e) => setClassification(e.target.value)}
                 disabled={!isOwnCustomer}
               >
-                <option value="Class A">Class A (High priority)</option>
-                <option value="Class B">Class B (Medium priority)</option>
-                <option value="Class C">Class C (Standard)</option>
+                <option value="Class A">{t('clients.edit.classAHigh')}</option>
+                <option value="Class B">{t('clients.edit.classBMedium')}</option>
+                <option value="Class C">{t('clients.edit.classCStandard')}</option>
               </select>
             </label>
 
             {/* Region */}
             <label>
-              Region
+              {t('clients.edit.region')}
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
@@ -270,7 +273,7 @@ export function EditCustomerDrawer({
 
             {/* Phone */}
             <label>
-              Phone *
+              {t('clients.edit.phone')}
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -287,11 +290,11 @@ export function EditCustomerDrawer({
 
             {/* Address */}
             <label className="full">
-              Address
+              {t('clients.edit.address')}
               <input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. 12 Medical Plaza, North District"
+                placeholder={t('clients.edit.addressPlaceholder')}
                 disabled={!isOwnCustomer}
               />
             </label>
@@ -299,10 +302,10 @@ export function EditCustomerDrawer({
             {/* Assigned Rep Section */}
             <div className="full" style={{ position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600 }}>Assigned Representative</span>
+                <span style={{ fontSize: '13px', fontWeight: 600 }}>{t('clients.edit.assignedRep')}</span>
                 {isRep ? (
                   <span style={{ fontSize: '12px', color: 'var(--muted-text)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Lock size={12} /> Rep cannot change rep
+                    <Lock size={12} /> {t('clients.edit.repLocked')}
                   </span>
                 ) : (
                   <Button
@@ -311,7 +314,7 @@ export function EditCustomerDrawer({
                     style={{ fontSize: '12px', padding: 0, height: 'auto', color: 'var(--ocean)' }}
                     onClick={() => setIsRepDropdownOpen(!isRepDropdownOpen)}
                   >
-                    Reassign rep
+                    {t('clients.edit.reassignRep')}
                   </Button>
                 )}
               </div>
@@ -330,7 +333,7 @@ export function EditCustomerDrawer({
                 <UserCheck size={18} style={{ color: 'var(--ocean)' }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: '14px' }}>{assignedRepName}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--muted-text)' }}>ID: {assignedRepId}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('clients.edit.idLabel', { id: assignedRepId })}</div>
                 </div>
               </div>
 
@@ -359,7 +362,7 @@ export function EditCustomerDrawer({
                     <input
                       value={repSearch}
                       onChange={(e) => setRepSearch(e.target.value)}
-                      placeholder="Search reps by name or region..."
+                      placeholder={t('clients.edit.searchReps')}
                       style={{ width: '100%', paddingLeft: '32px', height: '34px', fontSize: '13px' }}
                       autoFocus
                     />
@@ -400,11 +403,11 @@ export function EditCustomerDrawer({
 
             {/* Notes */}
             <label className="full">
-              Notes
+              {t('clients.edit.notes')}
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add relationship notes, target preferences, scheduling constraints..."
+                placeholder={t('clients.edit.notesPlaceholder')}
                 rows={3}
                 disabled={!isOwnCustomer}
               />
@@ -424,9 +427,9 @@ export function EditCustomerDrawer({
               }}
             >
               <div>
-                <strong style={{ fontSize: '14px', display: 'block' }}>Customer Active Status</strong>
+                <strong style={{ fontSize: '14px', display: 'block' }}>{t('clients.edit.activeStatus')}</strong>
                 <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
-                  Active customers appear in visit scheduling and coverage metrics
+                  {t('clients.edit.activeHelp')}
                 </span>
               </div>
               <label style={{ display: 'inline-flex', alignItems: 'center', cursor: isOwnCustomer ? 'pointer' : 'default', margin: 0 }}>
@@ -438,7 +441,7 @@ export function EditCustomerDrawer({
                   style={{ width: '18px', height: '18px', accentColor: 'var(--ocean)' }}
                 />
                 <span style={{ marginLeft: '8px', fontSize: '13px', fontWeight: 600 }}>
-                  {active ? 'Active' : 'Inactive'}
+                  {active ? t('clients.edit.active') : t('clients.edit.inactive')}
                 </span>
               </label>
             </div>
@@ -457,10 +460,10 @@ export function EditCustomerDrawer({
             >
               <div>
                 <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--rose-text, #ef4444)' }}>
-                  Delete customer
+                  {t('clients.edit.deleteCustomer')}
                 </span>
                 <span style={{ display: 'block', fontSize: '12px', color: 'var(--muted-text)' }}>
-                  Soft delete will archive this customer with 8s undo.
+                  {t('clients.edit.deleteHelp')}
                 </span>
               </div>
               <Button
@@ -476,7 +479,7 @@ export function EditCustomerDrawer({
                 }}
               >
                 <Trash2 size={14} style={{ marginRight: '6px' }} />
-                Delete
+                {t('common.delete')}
               </Button>
             </div>
           </div>
@@ -499,7 +502,7 @@ export function EditCustomerDrawer({
           }}
         >
           <Button variant="secondary" onClick={handleClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -507,7 +510,7 @@ export function EditCustomerDrawer({
             disabled={!isOwnCustomer}
           >
             <Check size={16} style={{ marginRight: '6px' }} />
-            Save changes
+            {t('clients.edit.saveChanges')}
           </Button>
         </div>
       </aside>

@@ -9,6 +9,7 @@ import { ClientListItem } from './components/ClientListItem'
 import { EditCustomerDrawer } from './components/EditCustomerDrawer'
 import { customersStore, updateCustomer, type Customer } from '@/data/mock/customers'
 import { useStore } from '@/data/mock/store'
+import { useT } from '@/lib/i18n'
 
 export interface ClientsPageProps {
   onAdd: () => void
@@ -27,6 +28,7 @@ export default function ClientsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: ClientsPageProps) {
+  const { t } = useT()
   const customers = useStore(customersStore).filter((c) => !c.deleted_at)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
@@ -129,13 +131,13 @@ export default function ClientsPage({
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <Users /> RELATIONSHIPS
+            <Users /> {t('clients.eyebrow')}
           </span>
-          <h1>Clients</h1>
-          <p className="story">Every relationship, remembered.</p>
+          <h1>{t('clients.title')}</h1>
+          <p className="story">{t('clients.subtitle')}</p>
         </div>
         <Button variant="primary" onClick={onAdd}>
-          <Plus data-icon="inline-start" /> Add new
+          <Plus data-icon="inline-start" /> {t('clients.addNew')}
         </Button>
       </div>
 
@@ -160,24 +162,24 @@ export default function ClientsPage({
       {/* Applied Removable Filter Chips */}
       {hasAnyFilter && (
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', margin: '0 0 16px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>Active filters:</span>
+          <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('clients.activeFilters')}</span>
           {(activeFilters.overdueOnly || filter === 'Overdue only') && (
-            <Chip active onClick={removeOverdue} title="Clear overdue filter">
-              Overdue only &times;
+            <Chip active onClick={removeOverdue} title={t('clients.clearOverdue')}>
+              {t('clients.overdueOnly')} &times;
             </Chip>
           )}
           {activeFilters.specialty !== 'All specialties' && (
-            <Chip active onClick={removeSpecialty} title="Clear specialty filter">
+            <Chip active onClick={removeSpecialty} title={t('clients.clearSpecialty')}>
               {activeFilters.specialty} &times;
             </Chip>
           )}
           {activeFilters.classification !== 'All classes' && (
-            <Chip active onClick={removeClassification} title="Clear classification filter">
+            <Chip active onClick={removeClassification} title={t('clients.clearClassification')}>
               {activeFilters.classification} &times;
             </Chip>
           )}
           {activeFilters.region !== 'All regions' && (
-            <Chip active onClick={removeRegion} title="Clear region filter">
+            <Chip active onClick={removeRegion} title={t('clients.clearRegion')}>
               {activeFilters.region} &times;
             </Chip>
           )}
@@ -229,7 +231,7 @@ export default function ClientsPage({
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--muted-text)', lineHeight: 1.5 }}>
                     <div>{client.meta}</div>
-                    <div>Rep: {client.repName}</div>
+                    <div>{t('clients.rep', { name: client.repName })}</div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
                     {canEdit && (
@@ -249,7 +251,7 @@ export default function ClientsPage({
                           gap: '4px',
                         }}
                       >
-                        <Edit3 size={12} /> Edit
+                        <Edit3 size={12} /> {t('common.edit')}
                       </Button>
                     )}
                   </div>
@@ -268,7 +270,7 @@ export default function ClientsPage({
           })
         ) : (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            No clients match the selected filters.
+            {t('clients.noMatch')}
           </div>
         )}
       </div>
@@ -283,14 +285,14 @@ export default function ClientsPage({
         role={role}
         currentUserName={currentUserName}
         onSave={(updated, previous) => {
-          showUndoToast(`Saved changes for ${updated.name}`, () => {
+          showUndoToast(t('clients.savedChanges', { name: updated.name }), () => {
             if (previous.id) {
               updateCustomer(previous.id, previous)
             }
           })
         }}
         onDelete={(deleted) => {
-          showUndoToast(`Deleted ${deleted.name}`, () => {
+          showUndoToast(t('clients.deleted', { name: deleted.name }), () => {
             if (deleted.id) {
               updateCustomer(deleted.id, { deleted_at: null })
             }

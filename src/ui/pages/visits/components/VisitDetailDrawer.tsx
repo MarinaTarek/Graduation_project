@@ -1,6 +1,7 @@
 import { Calendar, CheckCircle2, Clock, MapPin, Package, Stethoscope, User } from 'lucide-react'
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
+import { useT } from '@/lib/i18n'
 import type { VisitRecord } from '../mock-data'
 
 export interface VisitDetailDrawerProps {
@@ -14,12 +15,14 @@ export function VisitDetailDrawer({
   onClose,
   visit,
 }: VisitDetailDrawerProps) {
+  const { t } = useT()
+
   if (!isOpen || !visit) return null
 
   return (
     <Drawer
       title={visit.clientName}
-      kicker={`VISIT LOG · ${visit.id}`}
+      kicker={t('visits.detail.kicker', { id: visit.id })}
       onClose={onClose}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -38,7 +41,7 @@ export function VisitDetailDrawer({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <MapPin style={{ width: '16px', height: '16px', color: 'var(--ocean)' }} />
             <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ocean)' }}>
-              {visit.gpsVerified ? 'GPS Location Verified' : 'Standard Log'}
+              {visit.gpsVerified ? t('visits.detail.gpsVerified') : t('visits.detail.standardLog')}
             </span>
           </div>
           <StatusPill status={visit.status} />
@@ -49,19 +52,19 @@ export function VisitDetailDrawer({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Clock style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
             <span style={{ fontSize: '13px', color: 'var(--card-text)' }}>
-              <strong>Date & Time:</strong> {visit.date} at {visit.time}
+              <strong>{t('visits.detail.dateTime')}</strong> {visit.date} at {visit.time}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <User style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
             <span style={{ fontSize: '13px', color: 'var(--card-text)' }}>
-              <strong>Representative:</strong> {visit.repName}
+              <strong>{t('visits.detail.representative')}</strong> {visit.repName}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Stethoscope style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
             <span style={{ fontSize: '13px', color: 'var(--card-text)' }}>
-              <strong>Doctor / Clinic:</strong> {visit.clientName}
+              <strong>{t('visits.detail.doctorClinic')}</strong> {visit.clientName}
             </span>
           </div>
         </div>
@@ -69,7 +72,7 @@ export function VisitDetailDrawer({
         {/* Products & Samples */}
         <div className="panel">
           <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
-            PRODUCTS & SAMPLES
+            {t('visits.detail.productsEyebrow')}
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
             {visit.productsPresented.map((product) => (
@@ -94,14 +97,14 @@ export function VisitDetailDrawer({
             ))}
           </div>
           <div style={{ fontSize: '13px', color: 'var(--muted-text)' }}>
-            <strong>Samples Delivered:</strong> {visit.samplesQuantity} units transferred
+            <strong>{t('visits.detail.samplesDelivered')}</strong> {t('visits.detail.unitsTransferred', { qty: visit.samplesQuantity })}
           </div>
         </div>
 
         {/* Physician Reaction */}
         <div className="panel">
           <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
-            PHYSICIAN REACTION
+            {t('visits.detail.reactionEyebrow')}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '24px' }} role="img" aria-label="Reaction">
@@ -116,7 +119,7 @@ export function VisitDetailDrawer({
         {/* Field Notes */}
         <div className="panel">
           <span className="eyebrow" style={{ display: 'block', marginBottom: '8px' }}>
-            ENGAGEMENT NOTES
+            {t('visits.detail.notesEyebrow')}
           </span>
           <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--card-text)', margin: 0 }}>
             {visit.notes}
@@ -138,7 +141,7 @@ export function VisitDetailDrawer({
           <Calendar style={{ width: '20px', height: '20px', color: 'var(--ocean)' }} />
           <div>
             <span style={{ fontSize: '11px', color: 'var(--muted-text)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700, display: 'block' }}>
-              Next Follow-Up Visit
+              {t('visits.detail.nextFollowUp')}
             </span>
             <strong style={{ fontSize: '14px', color: 'var(--heading-text)' }}>
               {visit.nextVisitDate}

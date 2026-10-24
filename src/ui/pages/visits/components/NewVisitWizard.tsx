@@ -21,6 +21,7 @@ import { productsStore, stockProductsStore } from '@/data/mock/products'
 import { stockMovementsStore, addStockMovement } from '@/data/mock/stock-movements'
 import { visitsStore, addVisit, type StoredVisit } from '@/data/mock/visits'
 import { useStore } from '@/data/mock/store'
+import { useT } from '@/lib/i18n'
 
 export interface NewVisitWizardProps {
   isOpen?: boolean
@@ -67,10 +68,17 @@ export function NewVisitWizard({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: NewVisitWizardProps) {
+  const { t } = useT()
   const allCustomers = useStore(customersStore)
   const catalogProducts = useStore(productsStore)
   const stockMovements = useStore(stockMovementsStore)
   const stockProducts = useStore(stockProductsStore)
+
+  const reactionOptions = [
+    { id: 'interested', emoji: '😍', label: t('visits.new.interested') },
+    { id: 'neutral', emoji: '😐', label: t('visits.new.neutral') },
+    { id: 'not-interested', emoji: '👎', label: t('visits.new.notInterested') },
+  ] as const
 
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedClientId, setSelectedClientId] = useState<string | null>(initialClientId)
@@ -158,11 +166,11 @@ export function NewVisitWizard({
   }
 
   const steps = [
-    { number: 1, label: 'Client' },
-    { number: 2, label: 'Products' },
-    { number: 3, label: 'Samples' },
-    { number: 4, label: 'Notes' },
-    { number: 5, label: 'Saved' },
+    { number: 1, label: t('visits.new.stepClient') },
+    { number: 2, label: t('visits.new.stepProducts') },
+    { number: 3, label: t('visits.new.stepSamples') },
+    { number: 4, label: t('visits.new.stepNotes') },
+    { number: 5, label: t('visits.new.stepSaved') },
   ]
 
   const handleStepClick = (step: number) => {
@@ -176,13 +184,13 @@ export function NewVisitWizard({
     setErrorMsg(null)
     if (currentStep === 1) {
       if (!selectedClientId) {
-        setErrorMsg('Please select a client to proceed.')
+        setErrorMsg(t('visits.new.selectClient'))
         return
       }
       setCurrentStep(2)
     } else if (currentStep === 2) {
       if (selectedProducts.length === 0) {
-        setErrorMsg('Please select at least one product discussed.')
+        setErrorMsg(t('visits.new.selectProduct'))
         return
       }
       setCurrentStep(3)
@@ -202,7 +210,7 @@ export function NewVisitWizard({
 
   const executeSave = () => {
     if (!selectedClient) {
-      setErrorMsg('No client selected. Please go back to Step 1.')
+      setErrorMsg(t('visits.new.noClientSelected'))
       return
     }
 
@@ -216,7 +224,7 @@ export function NewVisitWizard({
       // Primary reaction
       const firstProduct = selectedProducts[0] || ''
       const firstReactionKey = reactions[firstProduct] || 'interested'
-      const matchedReaction = REACTION_OPTIONS.find((r) => r.id === firstReactionKey) || REACTION_OPTIONS[0]
+      const matchedReaction = reactionOptions.find((r) => r.id === firstReactionKey) || reactionOptions[0]
 
       // 1. Add visit to visitsStore
       const newVisit: StoredVisit = addVisit({
@@ -225,13 +233,13 @@ export function NewVisitWizard({
         repName: currentUserName,
         date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        detail: `${selectedProducts.slice(0, 2).join(' & ')} presentation`,
+        detail: t('visits.new.presentation', { products: selectedProducts.slice(0, 2).join(' & ') }),
         status: 'Completed',
         productsPresented: selectedProducts,
         samplesQuantity: totalSamples,
         reactionEmoji: matchedReaction.emoji,
         reactionLabel: matchedReaction.label,
-        notes: notes.trim() || 'Routine scientific visit and product update.',
+        notes: notes.trim() || t('visits.new.defaultNote'),
         nextVisitDate: formatDisplayDate(nextVisitDate || addDaysToDate(14)),
         gpsVerified: true,
       })
@@ -274,7 +282,7 @@ export function NewVisitWizard({
       setCurrentStep(5)
       onSave?.()
     } catch {
-      setErrorMsg('Failed to save visit. You can retry without losing your draft.')
+      setErrorMsg(t('visits.new.saveFailed'))
     } finally {
       setIsSaving(false)
     }
@@ -296,8 +304,8 @@ export function NewVisitWizard({
 
   return (
     <Drawer
-      title="New visit"
-      kicker={currentStep === 5 ? 'COMPLETED' : `STEP ${currentStep} OF 5`}
+      title={t('visits.new.title')}
+      kicker={currentStep === 5 ? t('visits.new.completed') : t('visits.new.stepOf', { step: currentStep })}
       onClose={onClose}
     >
       <div style={{ padding: '0 24px', display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -330,7 +338,7 @@ export function NewVisitWizard({
                 onClick={executeSave}
                 style={{ height: '26px', padding: '0 8px', fontSize: '12px' }}
               >
-                <RefreshCw size={12} style={{ marginRight: '4px' }} /> Retry
+                <RefreshCw size={12} style={{ marginRight: '4px' }} /> {t('visits.new.retry')}
               </Button>
             )}
           </div>
@@ -347,7 +355,7 @@ export function NewVisitWizard({
               <input
                 value={clientSearch}
                 onChange={(e) => setClientSearch(e.target.value)}
-                placeholder="Search active doctors & pharmacies..."
+                placeholder={t('visits.new.searchPlaceholder')}
                 style={{ width: '100%', paddingLeft: '38px', height: '40px' }}
               />
             </div>
@@ -400,7 +408,7 @@ export function NewVisitWizard({
                             {c.specialty} · {c.region} · {c.classification}
                           </div>
                           <div style={{ fontSize: '11px', color: 'var(--muted-text)', marginTop: '2px' }}>
-                            Last visit: {c.last_visit_date ? formatDisplayDate(c.last_visit_date) : 'No recent visits'}
+                            {c.last_visit_date ? t('visits.new.lastVisit', { date: formatDisplayDate(c.last_visit_date) }) : t('visits.new.noRecentVisits')}
                           </div>
                         </div>
                       </div>
@@ -418,7 +426,7 @@ export function NewVisitWizard({
                 })
               ) : (
                 <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)', fontSize: '13px' }}>
-                  No active customers match your search.
+                  {t('visits.new.noActiveMatch')}
                 </div>
               )}
             </div>
@@ -430,7 +438,7 @@ export function NewVisitWizard({
           <div style={{ flex: 1, overflowY: 'auto', maxHeight: '60vh', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <span style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                Select products presented (multi-select) *
+                {t('visits.new.selectProductsLabel')}
               </span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {productOptions.map((p) => {
@@ -474,7 +482,7 @@ export function NewVisitWizard({
             {selectedProducts.length > 0 && (
               <div style={{ marginTop: '8px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                  Physician reaction per product
+                  {t('visits.new.reactionLabel')}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {selectedProducts.map((p) => {
@@ -495,7 +503,7 @@ export function NewVisitWizard({
                       >
                         <strong style={{ fontSize: '13px' }}>{p}</strong>
                         <div style={{ display: 'flex', gap: '6px' }}>
-                          {REACTION_OPTIONS.map((opt) => {
+                          {reactionOptions.map((opt) => {
                             const isChosen = currentReaction === opt.id
                             return (
                               <button
@@ -536,7 +544,7 @@ export function NewVisitWizard({
         {currentStep === 3 && (
           <div style={{ flex: 1, overflowY: 'auto', maxHeight: '60vh', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <span style={{ fontSize: '13px', color: 'var(--muted-text)' }}>
-              Specify sample units handed over during this visit. Units are deducted from your buffer.
+              {t('visits.new.samplesHint')}
             </span>
 
             {selectedProducts.map((p) => {
@@ -558,7 +566,7 @@ export function NewVisitWizard({
                   <div>
                     <strong style={{ fontSize: '14px', display: 'block' }}>{p}</strong>
                     <span style={{ fontSize: '12px', color: availableStock <= 5 ? 'var(--rose-text)' : 'var(--muted-text)' }}>
-                      Left with you: {availableStock} units
+                      {t('visits.new.leftWithYou', { count: availableStock })}
                     </span>
                   </div>
 
@@ -631,14 +639,14 @@ export function NewVisitWizard({
                 }}
               >
                 <MapPin size={16} />
-                <span>GPS Location Verified · Cairo Medical Hub (30.0444° N, 31.2357° E)</span>
+                <span>{t('visits.new.gpsVerified')}</span>
               </div>
             )}
 
             {/* Next visit date */}
             <div>
               <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                Next visit scheduled date
+                {t('visits.new.nextVisitDate')}
               </label>
               <div style={{ position: 'relative' }}>
                 <Calendar
@@ -653,19 +661,19 @@ export function NewVisitWizard({
                 />
               </div>
               <span style={{ fontSize: '11px', color: 'var(--muted-text)', marginTop: '4px', display: 'block' }}>
-                Defaulted according to {selectedClient?.classification || 'Class A'} cycle
+                {t('visits.new.defaultedCycle', { classification: selectedClient?.classification || 'Class A' })}
               </span>
             </div>
 
             {/* Notes */}
             <div>
               <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                Visit notes & clinical discussion
+                {t('visits.new.notesLabel')}
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Doctor's clinical feedback, patient profile, sample restocking needs..."
+                placeholder={t('visits.new.notesPlaceholder')}
                 rows={4}
                 style={{ width: '100%' }}
               />
@@ -703,10 +711,10 @@ export function NewVisitWizard({
             </div>
 
             <h3 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 700 }}>
-              Visit Successfully Saved!
+              {t('visits.new.successTitle')}
             </h3>
             <p style={{ margin: '0 0 20px', color: 'var(--muted-text)', fontSize: '14px' }}>
-              Samples deducted, client profile updated, and visit logged to system.
+              {t('visits.new.successMessage')}
             </p>
 
             <div
@@ -723,20 +731,20 @@ export function NewVisitWizard({
               }}
             >
               <div>
-                <strong>Client:</strong> {selectedClient?.name} ({selectedClient?.specialty})
+                <strong>{t('visits.new.summaryClient')}</strong> {selectedClient?.name} ({selectedClient?.specialty})
               </div>
               <div>
-                <strong>Products:</strong> {selectedProducts.join(', ')}
+                <strong>{t('visits.new.summaryProducts')}</strong> {selectedProducts.join(', ')}
               </div>
               <div>
-                <strong>Samples given:</strong>{' '}
-                {Object.values(samples).reduce((a, b) => a + b, 0)} units total
+                <strong>{t('visits.new.summarySamples')}</strong>{' '}
+                {t('visits.new.summaryUnitsTotal', { count: Object.values(samples).reduce((a, b) => a + b, 0) })}
               </div>
               <div>
-                <strong>Next visit:</strong> {formatDisplayDate(nextVisitDate)}
+                <strong>{t('visits.new.summaryNextVisit')}</strong> {formatDisplayDate(nextVisitDate)}
               </div>
               <div>
-                <strong>GPS Status:</strong> Verified
+                <strong>{t('visits.new.summaryGps')}</strong> {t('visits.new.verified')}
               </div>
             </div>
 
@@ -746,7 +754,7 @@ export function NewVisitWizard({
                 onClick={handleResetForAnother}
                 style={{ flex: 1, height: '42px' }}
               >
-                + Add another
+                {t('visits.new.addAnother')}
               </Button>
               <Button
                 variant="primary"
@@ -756,7 +764,7 @@ export function NewVisitWizard({
                 }}
                 style={{ flex: 1, height: '42px' }}
               >
-                View visit
+                {t('visits.new.viewVisit')}
               </Button>
             </div>
           </div>
@@ -780,11 +788,11 @@ export function NewVisitWizard({
           >
             {currentStep > 1 ? (
               <Button variant="secondary" type="button" onClick={handleBack}>
-                <ChevronLeft size={16} style={{ marginRight: '4px' }} /> Back
+                <ChevronLeft size={16} style={{ marginRight: '4px' }} /> {t('common.back')}
               </Button>
             ) : (
               <Button variant="secondary" type="button" onClick={onClose}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             )}
 
@@ -796,11 +804,11 @@ export function NewVisitWizard({
             >
               {currentStep === 4 ? (
                 <>
-                  <Check size={16} style={{ marginRight: '6px' }} /> Save visit
+                  <Check size={16} style={{ marginRight: '6px' }} /> {t('visits.new.saveVisit')}
                 </>
               ) : (
                 <>
-                  Continue <ChevronRight size={16} style={{ marginLeft: '4px' }} />
+                  {t('visits.new.continue')} <ChevronRight size={16} style={{ marginLeft: '4px' }} />
                 </>
               )}
             </Button>

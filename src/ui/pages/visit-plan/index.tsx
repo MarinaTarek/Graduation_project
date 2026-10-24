@@ -1,19 +1,22 @@
 import { CalendarDays } from 'lucide-react'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
+import { useT } from '@/lib/i18n'
 import { PlanCalendar } from './components/PlanCalendar'
 import { RouteStops } from './components/RouteStops'
 
 export default function VisitPlanPage() {
+  const { t } = useT()
+
   return (
     <section className="content">
       <div className="page-intro">
         <div>
           <span className="eyebrow">
-            <CalendarDays /> TERRITORY ROUTING
+            <CalendarDays /> {t('visitPlan.eyebrow')}
           </span>
-          <h1>Visit Plan</h1>
+          <h1>{t('visitPlan.title')}</h1>
           <p className="story">
-            Optimized route sequencing, appointment slots, and travel pacing.
+            {t('visitPlan.subtitle')}
           </p>
         </div>
       </div>
@@ -23,7 +26,7 @@ export default function VisitPlanPage() {
         <RouteStops />
       </div>
 
-      <EmptyState message="Route and travel pacing synced with Google Maps GPS" />
+      <EmptyState message={t('visitPlan.emptyState')} />
     </section>
   )
 }

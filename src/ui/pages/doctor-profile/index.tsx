@@ -8,6 +8,7 @@ import { EditCustomerDrawer } from '@/ui/pages/clients/components/EditCustomerDr
 import { customersStore, updateCustomer, type Customer } from '@/data/mock/customers'
 import { useStore } from '@/data/mock/store'
 import { visitsStore } from '@/data/mock/visits'
+import { useT } from '@/lib/i18n'
 
 export interface DoctorProfilePageProps {
   customerId?: string | null
@@ -26,6 +27,7 @@ export default function DoctorProfilePage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: DoctorProfilePageProps) {
+  const { t } = useT()
   const allCustomers = useStore(customersStore)
   const allVisits = useStore(visitsStore)
   const [isEditing, setIsEditing] = useState(false)
@@ -51,9 +53,9 @@ export default function DoctorProfilePage({
 
   if (!customer) {
     return (
-      <Drawer title="Customer Profile" kicker="DETAILS" onClose={onClose}>
+      <Drawer title="Customer Profile" kicker={t('doctor.profileKicker')} onClose={onClose}>
         <div style={{ padding: '24px', textAlign: 'center', color: 'var(--muted-text)' }}>
-          Customer not found or deleted.
+          {t('doctor.notFound')}
         </div>
       </Drawer>
     )
@@ -74,11 +76,11 @@ export default function DoctorProfilePage({
   const timelineEvents = customerVisits.length > 0
     ? customerVisits.slice(0, 5).map((v) => ({
         date: v.date.split(',')[0],
-        detail: `Visit completed · ${v.productsPresented.join(', ')}`,
+        detail: t('doctor.visitCompleted', { products: v.productsPresented.join(', ') }),
       }))
     : [
-        { date: 'Oct 18', detail: 'Visit completed · Bevato discussed' },
-        { date: 'Sep 26', detail: 'Sample delivery · 24 units' },
+        { date: 'Oct 18', detail: t('doctor.visitCompleted', { products: 'Bevato discussed' }) },
+        { date: 'Sep 26', detail: t('doctor.sampleDelivery', { units: 24 }) },
       ]
 
   return (
@@ -91,14 +93,14 @@ export default function DoctorProfilePage({
         <DoctorHero
           initials={initials}
           region={customer.region || 'North region'}
-          assignedRep={`${customer.repName || 'Alex Morgan'} · assigned rep`}
+          assignedRep={t('doctor.assignedRep', { name: customer.repName || 'Alex Morgan' })}
         />
         <div style={{ padding: '0 24px 16px' }}>
           <div style={{ fontSize: '13px', color: 'var(--muted-text)', marginBottom: '4px' }}>
-            <strong>Phone:</strong> {customer.phone || '01012345678'}
+            <strong>{t('doctor.phone')}</strong> {customer.phone || '01012345678'}
           </div>
           <div style={{ fontSize: '13px', color: 'var(--muted-text)', marginBottom: '4px' }}>
-            <strong>Address:</strong> {customer.address || 'Cairo Medical Plaza'}
+            <strong>{t('doctor.address')}</strong> {customer.address || 'Cairo Medical Plaza'}
           </div>
           {customer.notes && (
             <div style={{ fontSize: '13px', color: 'var(--muted-text)', marginTop: '8px', fontStyle: 'italic' }}>
@@ -109,7 +111,7 @@ export default function DoctorProfilePage({
         <DoctorTimeline events={timelineEvents} />
         <div className="sheet-actions">
           <Button variant="secondary" onClick={onNewVisit}>
-            + New visit
+            {t('doctor.newVisit')}
           </Button>
           <Button
             variant="primary"
@@ -118,7 +120,7 @@ export default function DoctorProfilePage({
               onSave?.()
             }}
           >
-            Edit doctor
+            {t('doctor.editDoctor')}
           </Button>
         </div>
       </Drawer>
@@ -130,14 +132,14 @@ export default function DoctorProfilePage({
         role={role}
         currentUserName={currentUserName}
         onSave={(updated, previous) => {
-          showUndoToast(`Saved changes for ${updated.name}`, () => {
+          showUndoToast(t('clients.savedChanges', { name: updated.name }), () => {
             if (previous.id) {
               updateCustomer(previous.id, previous)
             }
           })
         }}
         onDelete={(deleted) => {
-          showUndoToast(`Deleted ${deleted.name}`, () => {
+          showUndoToast(t('clients.deleted', { name: deleted.name }), () => {
             if (deleted.id) {
               updateCustomer(deleted.id, { deleted_at: null })
             }
