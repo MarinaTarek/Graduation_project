@@ -1,6 +1,7 @@
 'use client'
 
 import { Bell, Moon, Search, Sun, UserCheck, Shield } from 'lucide-react'
+import { useGreeting } from '@/lib/useGreeting'
 
 export interface HeaderProps {
   onOpenSearch: () => void
@@ -20,17 +21,24 @@ export function Header({
   onToggleDark,
   dark,
   role = 'admin',
-  greetingName = 'User',
+  greetingName = '',
   userInitials,
   onOpenProfile,
 }: HeaderProps) {
   const displayInitials = userInitials || (greetingName ? greetingName.slice(0, 2).toUpperCase() : 'U')
+  const { greeting, dateLabel } = useGreeting()
+  const headingText = greetingName ? `${greeting}, ${greetingName}!` : `${greeting}!`
 
   return (
     <header className="page-header">
       {/* Left: Greeting */}
       <div className="header-left">
-        <h1 className="header-greeting">Welcome {greetingName}!</h1>
+        <h1 className="header-greeting">{headingText}</h1>
+        {dateLabel && (
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)', fontWeight: 400, marginTop: '2px' }}>
+            {dateLabel}
+          </p>
+        )}
       </div>
 
       {/* Right: Controls */}
