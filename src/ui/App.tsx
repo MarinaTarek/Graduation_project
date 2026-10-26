@@ -37,11 +37,13 @@ import { LanguageProvider, useT } from '@/lib/i18n'
 
 function AppContent() {
   const { user, role, signOut, isLoading } = useAuth()
+  const { t } = useT()
   const [active, setActive] = useState('Home')
   const [range, setRange] = useState('Month')
   const [overlay, setOverlay] = useState<string | null>(null)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>('c-1')
   const [selectedStockProduct, setSelectedStockProduct] = useState<string>('Bevato')
+  const [selectedInvoiceName, setSelectedInvoiceName] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
   const [dark, setDark] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -79,9 +81,16 @@ function AppContent() {
 
   const open = (name: string) => setOverlay(name)
 
+  // Opens invoice review; without a name it falls back to the first
+  // pending invoice in the store (Home hero entry point).
+  const openInvoiceDetail = (invoiceName?: string | null) => {
+    setSelectedInvoiceName(invoiceName ?? null)
+    open('invoice detail')
+  }
+
   const save = (msg?: string) => {
     setOverlay(null)
-    action(typeof msg === 'string' && msg ? msg : 'Saved successfully')
+    action(typeof msg === 'string' && msg ? msg : t('app.toastSaved'))
   }
 
   // Shared navigation state with optional page filter and overlay intent.
@@ -110,7 +119,7 @@ function AppContent() {
 
   const navigateTo = (page: string, options?: { filter?: string; overlay?: string }) => {
     if (!canAccessPage(page, role, user)) {
-      action("You don't have access to that page")
+      action(t('app.toastNoPageAccess'))
       setActive('Home')
       return
     }
@@ -161,7 +170,7 @@ function AppContent() {
   if (!user || active === 'Login') {
     return (
       <div className={`app-shell ${dark ? 'dark-mode' : ''}`}>
-        <LoginPage onLogin={() => { setActive('Home'); action('Signed in successfully'); }} />
+        <LoginPage onLogin={() => { setActive('Home'); action(t('app.toastSignedIn')); }} />
         {notice && <Toast message={notice} />}
       </div>
     )
@@ -209,7 +218,7 @@ function AppContent() {
           {active === 'Home' && (
             <HomePage
               onAction={action}
-              onOpen={open}
+              onOpen={(name) => (name === 'invoice detail' ? openInvoiceDetail() : open(name))}
               range={range}
               setRange={setRange}
               setActive={setActive}
@@ -233,7 +242,7 @@ function AppContent() {
           {active === 'Invoices' && (
             <InvoicesPage
               onAdd={() => open('upload invoice')}
-              onItem={() => open('invoice detail')}
+              onItem={(invoice) => openInvoiceDetail(invoice.name)}
               filter={pageFilter['Invoices']}
               onClearFilter={() => clearPageFilter('Invoices')}
               role={role}
@@ -251,7 +260,7 @@ function AppContent() {
               currentUserName={currentUserName}
             />
           )}
-          {active === 'Sell-in' && <SellInPage />}
+          {active === 'Sell-in' && <SellInPage onAction={action} />}
           {active === 'Sell-out' && <SellOutPage />}
           {active === 'Targets' && <TargetsPage />}
           {active === 'Visits' && (
@@ -324,7 +333,7 @@ function AppContent() {
           open('logout')
         }}
         userName={currentUserName}
-        accountType={role === 'admin' ? 'Admin account' : 'Medical Representative'}
+        accountType={role === 'admin' ? t('app.adminAccount') : t('app.repAccount')}
       />
 
       {/* Mobile Bottom Navigation (<768px) */}
@@ -356,7 +365,7 @@ function AppContent() {
           signOut()
           setNavStack([])
           setActive('Login')
-          action('You have been logged out')
+          action(t('app.toastLoggedOut'))
         }}
       />
 
@@ -389,6 +398,7 @@ function AppContent() {
       {/* Invoice Review Detail */}
       {overlay === 'invoice detail' && (
         <InvoiceReviewPage
+          invoiceName={selectedInvoiceName}
           onClose={() => setOverlay(null)}
           onAction={action}
         />
@@ -423,7 +433,7 @@ function AppContent() {
         role={role}
         currentUserName={currentUserName}
         onClose={() => setOverlay(null)}
-        onSave={() => action('Visit saved')}
+        onSave={() => action(t('app.toastVisitSaved'))}
         onViewVisit={(_visitId) => {
           setOverlay(null)
           navigateTo('Visits')

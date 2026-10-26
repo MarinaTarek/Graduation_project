@@ -1,8 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { X, Check, AlertCircle, ArrowDownLeft, Sliders, Send, ShoppingBag } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
-import { clientsMockData } from '@/ui/pages/clients/mock-data'
 import {
   batchesStore,
   stockMovementsStore,
@@ -11,6 +10,8 @@ import {
   deriveProductStock,
   type MovementType,
 } from '@/data/mock/stockDerived'
+import { productsStore } from '@/data/mock/products'
+import { customersStore } from '@/data/mock/customers'
 import { addAuditLog } from '@/data/mock/audit'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
@@ -35,204 +36,250 @@ export function StockActionModal({
   const { t } = useT()
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
+  const catalogProducts = useStore(productsStore)
+  const customers = useStore(customersStore)
 
-  const productOptions = ['Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
+  const productOptions = useMemo(
+    () => catalogProducts.map((p) => p.name),
+    [catalogProducts],
+  )
 
-  const [productName, setProductName] = useState(productOptions[0])
+  const [productName, setProductName] = useState(productOptions[0] ?? '')
   const [batchNo, setBatchNo] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
   const [qty, setQty] = useState<number>(100)
   const [reason, setReason] = useState('')
   const [targetRep, setTargetRep] = useState(ALL_MOCK_REPS[0].name)
-  const [targetCustomer, setTargetCustomer] = useState(clientsMockData[1].name) // Pharmacy default
+  const [targetCustomer, setTargetCustomer] = useState('')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   // Derived stock for the selected product
   const currentDerived = useMemo(() => {
     return deriveProductStock(productName, movements, batches, role, currentUserName)
   }, [productName, movements, batches, role, currentUserName])
 
-  // Batches for the selected product
-  const productBatches = useMemo(() => {
-    return batches.filter((b) => b.productName.toLowerCase() === productName.toLowerCase())
-  }, [batches, productName])
+  // FEFO-sorted derived batches drive the batch pickers and validation
+  const fefoBatches = currentDerived.batches
+  const firstStockedBatch = fefoBatches.find((b) => !b.is_expired && b.qty_remaining > 0)
+
+  // Keep the product selection valid when the catalog changes
+  useEffect(() => {
+    if (productOptions.length > 0 && !productOptions.includes(productName)) {
+      setProductName(productOptions[0])
+    }
+  }, [productOptions, productName])
 
   if (!actionType) return null
 
   const handleExecute = () => {
-    setErrorMsg(null)
+    if (saving) return
+    setSaving(true)
+    try {
+      setErrorMsg(null)
 
-    if (qty <= 0 && actionType !== 'adjustment') {
-      setErrorMsg(t('stock.modal.errQtyZero'))
-      return
-    }
-
-    const today = new Date().toISOString().split('T')[0]
-
-    // 1. RECEIVE STOCK
-    if (actionType === 'receive') {
-      if (!batchNo.trim()) {
-        setErrorMsg(t('stock.modal.errBatchRequired'))
+      if (qty <= 0 && actionType !== 'adjustment') {
+        setErrorMsg(t('stock.modal.errQtyZero'))
         return
       }
-      if (!expiryDate) {
-        setErrorMsg(t('stock.modal.errExpiryRequired'))
+      if (!Number.isInteger(qty)) {
+        setErrorMsg(t('stock.modal.errQtyInteger'))
         return
       }
 
-      // Check if batch exists or add it
-      const existingBatch = batches.find(
-        (b) => b.batch_no.toLowerCase() === batchNo.trim().toLowerCase() && b.productName === productName
-      )
+      const today = new Date().toISOString().split('T')[0]
 
-      if (!existingBatch) {
-        addBatch({
-          batch_no: batchNo.trim().toUpperCase(),
+      // 1. RECEIVE STOCK
+      if (actionType === 'receive') {
+        if (!batchNo.trim()) {
+          setErrorMsg(t('stock.modal.errBatchRequired'))
+          return
+        }
+        if (!expiryDate) {
+          setErrorMsg(t('stock.modal.errExpiryRequired'))
+          return
+        }
+
+        // Check if batch exists or add it
+        const existingBatch = batches.find(
+          (b) => b.batch_no.toLowerCase() === batchNo.trim().toLowerCase() && b.productName === productName
+        )
+
+        if (!existingBatch) {
+          addBatch({
+            batch_no: batchNo.trim().toUpperCase(),
+            productName,
+            expiry_date: expiryDate,
+            initial_qty: qty,
+          })
+        }
+
+        addStockMovement({
           productName,
-          expiry_date: expiryDate,
-          initial_qty: qty,
+          batchNumber: batchNo.trim().toUpperCase(),
+          quantity: qty,
+          type: 'receipt',
+          date: today,
+          notes: 'Warehouse stock receipt',
         })
-      }
 
-      addStockMovement({
-        productName,
-        batchNumber: batchNo.trim().toUpperCase(),
-        quantity: qty,
-        type: 'receipt',
-        date: today,
-        notes: 'Warehouse stock receipt',
-      })
+        addAuditLog({
+          action: 'Stock Received',
+          actor: currentUserName,
+          time: 'Just now',
+          details: `Received ${qty} units of ${productName} (Batch ${batchNo.trim().toUpperCase()})`,
+        })
 
-      addAuditLog({
-        action: 'Stock Received',
-        actor: currentUserName,
-        time: 'Just now',
-        details: `Received ${qty} units of ${productName} (Batch ${batchNo.trim().toUpperCase()})`,
-      })
-
-      onSuccess(t('stock.modal.receivedSuccess', { qty, product: productName }))
-      onClose()
-      return
-    }
-
-    // 2. ADJUSTMENT (Admin only)
-    if (actionType === 'adjustment') {
-      if (role !== 'admin') {
-        setErrorMsg(t('stock.modal.errAdminOnly'))
-        return
-      }
-      if (!reason.trim()) {
-        setErrorMsg(t('stock.modal.errReasonRequired'))
+        onSuccess(t('stock.modal.receivedSuccess', { qty, product: productName }))
+        onClose()
         return
       }
 
-      // Prevent negative stock: if negative adjustment, check warehouse stock
-      if (qty < 0 && Math.abs(qty) > currentDerived.in_warehouse) {
-        setErrorMsg(
-          t('stock.modal.errCannotDeduct', {
-            qty: Math.abs(qty),
-            warehouse: currentDerived.in_warehouse,
-          })
-        )
+      // 2. ADJUSTMENT (Admin only)
+      if (actionType === 'adjustment') {
+        if (role !== 'admin') {
+          setErrorMsg(t('stock.modal.errAdminOnly'))
+          return
+        }
+        if (!reason.trim()) {
+          setErrorMsg(t('stock.modal.errReasonRequired'))
+          return
+        }
+
+        // Prevent negative stock: if negative adjustment, check warehouse stock
+        if (qty < 0 && Math.abs(qty) > currentDerived.in_warehouse) {
+          setErrorMsg(
+            t('stock.modal.errCannotDeduct', {
+              qty: Math.abs(qty),
+              warehouse: currentDerived.in_warehouse,
+            })
+          )
+          return
+        }
+
+        // Negative adjustments are bounded by the selected batch remainder
+        const chosenBatch = batchNo
+          ? fefoBatches.find((b) => b.batch_no === batchNo)
+          : firstStockedBatch
+        if (!chosenBatch) {
+          setErrorMsg(t('stock.modal.errNoStock', { product: productName }))
+          return
+        }
+        if (qty < 0 && Math.abs(qty) > chosenBatch.qty_remaining) {
+          setErrorMsg(t('stock.modal.errNoBatchStock', { count: chosenBatch.qty_remaining }))
+          return
+        }
+
+        addStockMovement({
+          productName,
+          batchNumber: chosenBatch.batch_no,
+          quantity: qty,
+          type: 'adjustment',
+          date: today,
+          reason: reason.trim(),
+        })
+
+        addAuditLog({
+          action: 'Stock Adjustment',
+          actor: currentUserName,
+          time: 'Just now',
+          details: `Adjusted ${qty > 0 ? `+${qty}` : qty} units of ${productName} (${chosenBatch.batch_no}). Reason: ${reason.trim()}`,
+        })
+
+        onSuccess(t('stock.modal.adjustedSuccess', { qty: qty > 0 ? `+${qty}` : qty, product: productName }))
+        onClose()
         return
       }
 
-      const selectedBatchNo = batchNo || (productBatches[0] ? productBatches[0].batch_no : 'BV-2401')
+      // 3. TRANSFER TO REP
+      if (actionType === 'transfer') {
+        // Prevent negative warehouse stock
+        if (qty > currentDerived.in_warehouse) {
+          setErrorMsg(
+            t('stock.modal.errCannotTransfer', {
+              qty,
+              warehouse: currentDerived.in_warehouse,
+            })
+          )
+          return
+        }
 
-      addStockMovement({
-        productName,
-        batchNumber: selectedBatchNo,
-        quantity: qty,
-        type: 'adjustment',
-        date: today,
-        reason: reason.trim(),
-      })
+        // Explicit batch must cover the quantity; auto picks the first
+        // FEFO batch that covers it (derived, non-expired).
+        const chosenBatch = batchNo
+          ? fefoBatches.find((b) => b.batch_no === batchNo)
+          : fefoBatches.find((b) => !b.is_expired && b.qty_remaining >= qty)
+        if (!chosenBatch) {
+          setErrorMsg(t('stock.modal.errNoBatchStock', { count: firstStockedBatch?.qty_remaining ?? 0 }))
+          return
+        }
 
-      addAuditLog({
-        action: 'Stock Adjustment',
-        actor: currentUserName,
-        time: 'Just now',
-        details: `Adjusted ${qty > 0 ? `+${qty}` : qty} units of ${productName} (${selectedBatchNo}). Reason: ${reason.trim()}`,
-      })
+        const repObj = ALL_MOCK_REPS.find((r) => r.name === targetRep)
 
-      onSuccess(t('stock.modal.adjustedSuccess', { qty: qty > 0 ? `+${qty}` : qty, product: productName }))
-      onClose()
-      return
-    }
+        addStockMovement({
+          productName,
+          batchNumber: chosenBatch.batch_no,
+          quantity: qty,
+          type: 'transfer_rep',
+          date: today,
+          rep_id: repObj?.id || 'rep-alex',
+          repName: targetRep,
+          notes: `Buffer transfer to rep ${targetRep}`,
+        })
 
-    // 3. TRANSFER TO REP
-    if (actionType === 'transfer') {
-      // Prevent negative warehouse stock
-      if (qty > currentDerived.in_warehouse) {
-        setErrorMsg(
-          t('stock.modal.errCannotTransfer', {
-            qty,
-            warehouse: currentDerived.in_warehouse,
-          })
-        )
+        addAuditLog({
+          action: 'Rep Transfer',
+          actor: currentUserName,
+          time: 'Just now',
+          details: `Transferred ${qty} units of ${productName} to ${targetRep}`,
+        })
+
+        onSuccess(t('stock.modal.transferredSuccess', { qty, product: productName, rep: targetRep }))
+        onClose()
         return
       }
 
-      const repObj = ALL_MOCK_REPS.find((r) => r.name === targetRep)
-      const selectedBatchNo = batchNo || (productBatches[0] ? productBatches[0].batch_no : 'BV-2401')
+      // 4. RECORD SELL-OUT
+      if (actionType === 'sell_out') {
+        if (!targetCustomer) {
+          setErrorMsg(t('stock.modal.errCustomerRequired'))
+          return
+        }
+        if (qty > currentDerived.in_market) {
+          setErrorMsg(
+            t('stock.modal.errCannotSellOut', {
+              qty,
+              market: currentDerived.in_market,
+            })
+          )
+          return
+        }
 
-      addStockMovement({
-        productName,
-        batchNumber: selectedBatchNo,
-        quantity: qty,
-        type: 'transfer_rep',
-        date: today,
-        rep_id: repObj?.id || 'rep-alex',
-        repName: targetRep,
-        notes: `Buffer transfer to rep ${targetRep}`,
-      })
+        // sell_out is informational at batch level (market-side movement);
+        // tag it with the FEFO batch when one exists.
+        addStockMovement({
+          productName,
+          batchNumber: firstStockedBatch?.batch_no,
+          quantity: qty,
+          type: 'sell_out',
+          date: today,
+          customerName: targetCustomer,
+          notes: `Consumer sell-out from ${targetCustomer}`,
+        })
 
-      addAuditLog({
-        action: 'Rep Transfer',
-        actor: currentUserName,
-        time: 'Just now',
-        details: `Transferred ${qty} units of ${productName} to ${targetRep}`,
-      })
+        addAuditLog({
+          action: 'Sell-out Recorded',
+          actor: currentUserName,
+          time: 'Just now',
+          details: `Recorded sell-out of ${qty} units of ${productName} from ${targetCustomer}`,
+        })
 
-      onSuccess(t('stock.modal.transferredSuccess', { qty, product: productName, rep: targetRep }))
-      onClose()
-      return
-    }
-
-    // 4. RECORD SELL-OUT
-    if (actionType === 'sell_out') {
-      if (qty > currentDerived.in_market) {
-        setErrorMsg(
-          t('stock.modal.errCannotSellOut', {
-            qty,
-            market: currentDerived.in_market,
-          })
-        )
+        onSuccess(t('stock.modal.sellOutSuccess', { qty, customer: targetCustomer }))
+        onClose()
         return
       }
-
-      const selectedBatchNo = batchNo || (productBatches[0] ? productBatches[0].batch_no : 'BV-2401')
-
-      addStockMovement({
-        productName,
-        batchNumber: selectedBatchNo,
-        quantity: qty,
-        type: 'sell_out',
-        date: today,
-        customerName: targetCustomer,
-        notes: `Consumer sell-out from ${targetCustomer}`,
-      })
-
-      addAuditLog({
-        action: 'Sell-out Recorded',
-        actor: currentUserName,
-        time: 'Just now',
-        details: `Recorded sell-out of ${qty} units of ${productName} from ${targetCustomer}`,
-      })
-
-      onSuccess(t('stock.modal.sellOutSuccess', { qty, customer: targetCustomer }))
-      onClose()
-      return
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -268,7 +315,7 @@ export function StockActionModal({
           </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 24px' }}>
           {errorMsg && (
             <div
               style={{
@@ -312,10 +359,13 @@ export function StockActionModal({
                 fontSize: '12px',
                 display: 'flex',
                 justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '4px 12px',
+                minWidth: 0,
               }}
             >
-              <span>{t('stock.modal.warehouseStock', { count: currentDerived.in_warehouse.toLocaleString() })}</span>
-              <span>{t('stock.modal.inMarket', { count: currentDerived.in_market.toLocaleString() })}</span>
+              <span style={{ minWidth: 0 }}>{t('stock.modal.warehouseStock', { count: currentDerived.in_warehouse.toLocaleString() })}</span>
+              <span style={{ minWidth: 0 }}>{t('stock.modal.inMarket', { count: currentDerived.in_market.toLocaleString() })}</span>
             </div>
 
             {/* RECEIVE SPECIFICS */}
@@ -356,9 +406,9 @@ export function StockActionModal({
                   {t('stock.modal.batchLabel')}
                   <select value={batchNo} onChange={(e) => setBatchNo(e.target.value)}>
                     <option value="">{t('stock.modal.selectBatch')}</option>
-                    {productBatches.map((b) => (
+                    {fefoBatches.map((b) => (
                       <option key={b.id} value={b.batch_no}>
-                        {b.batch_no} (Exp: {b.expiry_date})
+                        {b.batch_no} · {b.qty_remaining.toLocaleString()} (Exp: {b.expiry_date})
                       </option>
                     ))}
                   </select>
@@ -401,9 +451,9 @@ export function StockActionModal({
                   {t('stock.modal.batchLabel')}
                   <select value={batchNo} onChange={(e) => setBatchNo(e.target.value)}>
                     <option value="">{t('stock.modal.earliestFefo')}</option>
-                    {productBatches.map((b) => (
+                    {fefoBatches.map((b) => (
                       <option key={b.id} value={b.batch_no}>
-                        {b.batch_no}
+                        {b.batch_no} · {b.qty_remaining.toLocaleString()} (Exp: {b.expiry_date})
                       </option>
                     ))}
                   </select>
@@ -426,11 +476,14 @@ export function StockActionModal({
                 <label className="full">
                   {t('stock.modal.customerLabel')}
                   <select value={targetCustomer} onChange={(e) => setTargetCustomer(e.target.value)}>
-                    {clientsMockData.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name} ({c.specialty})
-                      </option>
-                    ))}
+                    <option value="">{t('stock.modal.selectCustomer')}</option>
+                    {customers
+                      .filter((c) => !c.deleted_at && c.active !== false)
+                      .map((c) => (
+                        <option key={c.id || c.name} value={c.name}>
+                          {c.name} ({c.specialty})
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <label className="full">
@@ -464,7 +517,7 @@ export function StockActionModal({
           <Button variant="secondary" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant="primary" onClick={handleExecute}>
+          <Button variant="primary" onClick={handleExecute} loading={saving} disabled={saving}>
             <Check size={16} style={{ marginRight: '6px' }} /> {t('stock.modal.confirmAction')}
           </Button>
         </div>

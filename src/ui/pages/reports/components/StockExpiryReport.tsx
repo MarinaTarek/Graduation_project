@@ -1,7 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
 import { AlertTriangle, Clock, Package, ShieldCheck, Sparkles } from 'lucide-react'
-import { STOCK_EXPIRY_MOCK } from '../mock-data'
 import { useT } from '@/lib/i18n'
 import type { ReportFiltersState } from './ReportFilters'
 import { useStore } from '@/data/mock/store'
@@ -33,6 +33,24 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
     .reduce((sum, b) => sum + b.qty_remaining, 0)
   const criticalCount = batches.filter((b) => b.status === 'critical').length
   const expiredCount = batches.filter((b) => b.is_expired).length
+
+  // Per-product available-stock share for the chart, from the same
+  // derived batches (non-expired only), largest holding first.
+  const productShares = useMemo(() => {
+    const byProduct = new Map<string, number>()
+    batches.forEach((b) => {
+      if (b.is_expired) return
+      byProduct.set(b.productName, (byProduct.get(b.productName) ?? 0) + b.qty_remaining)
+    })
+    const total = [...byProduct.values()].reduce((sum, value) => sum + value, 0)
+    return [...byProduct.entries()]
+      .map(([product, units]) => ({
+        product,
+        units,
+        pct: total > 0 ? Math.round((units / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.units - a.units)
+  }, [batches])
 
   const summary = [
     {
@@ -202,7 +220,12 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
 
         {/* Horizontal Stacked Bars */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {STOCK_EXPIRY_MOCK.productShare.map((prod) => (
+          {productShares.length === 0 ? (
+            <div style={{ padding: '16px 0', textAlign: 'center', fontSize: '13px', color: 'var(--muted-text)' }}>
+              {t('reports.stock.chartEmpty')}
+            </div>
+          ) : (
+            productShares.map((prod) => (
             <div key={prod.product}>
               <div
                 style={{
@@ -238,7 +261,8 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
                 />
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -268,7 +292,7 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px', fontSize: '13px' }}>
             <thead>
-              <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
+              <tr style={{ color: 'var(--muted-text)', textAlign: 'start', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ padding: '8px 12px' }}>{t('reports.stock.thBatchNo')}</th>
                 <th style={{ padding: '8px 12px' }}>{t('reports.stock.thProduct')}</th>
                 <th style={{ padding: '8px 12px', textAlign: 'right' }}>{t('reports.stock.thOnHand')}</th>

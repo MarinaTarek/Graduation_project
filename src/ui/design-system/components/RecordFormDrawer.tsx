@@ -34,7 +34,7 @@ export function RecordFormDrawer({
   role = 'admin',
   currentUser,
 }: RecordFormDrawerProps) {
-  const { lang } = useT()
+  const { t, lang } = useT()
   // Common states
   const isDoctor = title === 'Add doctor'
   const isProduct = title === 'Add product'
@@ -289,7 +289,7 @@ export function RecordFormDrawer({
                       {selectedRep.name}
                     </span>
                     <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
-                      Auto-assigned (You)
+                      {t('salesOrders.autoAssignedYou')}
                     </span>
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export function RecordFormDrawer({
                       border: '1px solid var(--border-soft)',
                       background: 'var(--surface)',
                       cursor: 'pointer',
-                      textAlign: 'left',
+                      textAlign: 'start',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -394,7 +394,7 @@ export function RecordFormDrawer({
                                   border: 'none',
                                   background: isSelected ? 'var(--surface-raised)' : 'transparent',
                                   cursor: 'pointer',
-                                  textAlign: 'left',
+                                  textAlign: 'start',
                                   width: '100%',
                                 }}
                               >

@@ -219,7 +219,7 @@ export function VisitCoverageReport({ filters }: VisitCoverageReportProps) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px', fontSize: '13px' }}>
             <thead>
-              <tr style={{ color: 'var(--muted-text)', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>
+              <tr style={{ color: 'var(--muted-text)', textAlign: 'start', fontSize: '11px', textTransform: 'uppercase' }}>
                 <th style={{ padding: '8px 12px' }}>{t('reports.coverage.thDoctor')}</th>
                 <th style={{ padding: '8px 12px' }}>{t('reports.coverage.thSpecialty')}</th>
                 <th style={{ padding: '8px 12px' }}>{t('reports.coverage.thTerritory')}</th>

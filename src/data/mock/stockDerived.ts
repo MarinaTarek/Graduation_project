@@ -12,6 +12,7 @@ export type MovementType =
 
 export interface StockMovement {
   id: string
+  order_id?: string
   product_id?: string
   productName: string
   batch_id?: string
@@ -254,6 +255,61 @@ export function deriveBatches(
   }
 
   return results
+}
+
+// ── FEFO Allocation (shared by order approval & sample delivery) ─────────────
+export interface FefoAllocation {
+  productName: string
+  batchId: string
+  batchNumber: string
+  quantity: number
+}
+
+// Greedily allocates `quantity` of a product across its non-expired batches,
+// earliest expiry first. Throws when the quantity cannot be covered, so
+// callers never persist movements for an unallocatable amount.
+export function allocateFefo(
+  productName: string,
+  quantity: number,
+  batches: BatchRecord[],
+  movements: StockMovement[],
+): FefoAllocation[] {
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error(`Invalid quantity for ${productName}.`)
+  }
+
+  const allocations: FefoAllocation[] = []
+  const remainingByBatch = new Map<string, number>()
+  let needed = quantity
+
+  for (const batch of deriveBatches(batches, movements, productName)) {
+    if (batch.is_expired || batch.qty_remaining <= 0) continue
+    if (!remainingByBatch.has(batch.id)) {
+      remainingByBatch.set(batch.id, batch.qty_remaining)
+    }
+
+    const remaining = remainingByBatch.get(batch.id) ?? 0
+    const take = Math.min(needed, remaining)
+    if (take <= 0) continue
+
+    allocations.push({
+      productName,
+      batchId: batch.id,
+      batchNumber: batch.batch_no,
+      quantity: take,
+    })
+
+    remainingByBatch.set(batch.id, remaining - take)
+    needed -= take
+
+    if (needed === 0) break
+  }
+
+  if (needed > 0) {
+    throw new Error(`Insufficient unexpired stock for ${productName}.`)
+  }
+
+  return allocations
 }
 
 // ── Derived Product Metrics ──────────────────────────────────────────────────

@@ -210,7 +210,7 @@ export function HomeFilters({
                 fontSize: '13px',
                 fontWeight: draftMonth === m ? 700 : 500,
                 cursor: 'pointer',
-                textAlign: 'left',
+                textAlign: 'start',
               }}
             >
               <span>{lang === 'ar' ? (MONTH_NAMES_AR[m] || m) : m}</span>

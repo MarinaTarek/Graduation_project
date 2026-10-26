@@ -17,17 +17,24 @@ export interface EditCustomerDrawerProps {
   currentUserName?: string
 }
 
-export function EditCustomerDrawer({
+export function EditCustomerDrawer(props: EditCustomerDrawerProps) {
+  // Hooks-free guard: the form's hooks below assume an open drawer with a
+  // selected customer. Mounting the form only then keeps hook order stable on
+  // every render (the previous early-return-before-useState violated the
+  // Rules of Hooks). Keying by customer resets form state when the record
+  // changes, matching the previous unmount-on-close behaviour.
+  if (!props.isOpen || !props.customer) return null
+  return <EditCustomerDrawerInner {...props} customer={props.customer} key={props.customer.id ?? props.customer.name} />
+}
+
+function EditCustomerDrawerInner({
   customer,
-  isOpen,
   onClose,
   onSave,
   onDelete,
   role = 'admin',
   currentUserName = 'Alex Morgan',
-}: EditCustomerDrawerProps) {
-  if (!isOpen || !customer) return null
-
+}: EditCustomerDrawerProps & { customer: Customer }) {
   // Role permissions
   const isRep = role === 'rep'
   const isOwnCustomer = !isRep || (
@@ -360,13 +367,13 @@ export function EditCustomerDrawer({
                   <div style={{ position: 'relative', marginBottom: '8px' }}>
                     <Search
                       size={14}
-                      style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--muted-text)' }}
+                      style={{ position: 'absolute', insetInlineStart: '10px', top: '10px', color: 'var(--muted-text)' }}
                     />
                     <input
                       value={repSearch}
                       onChange={(e) => setRepSearch(e.target.value)}
                       placeholder={t('clients.edit.searchReps')}
-                      style={{ width: '100%', paddingLeft: '32px', height: '34px', fontSize: '13px' }}
+                      style={{ width: '100%', paddingInlineStart: '32px', height: '34px', fontSize: '13px' }}
                       autoFocus
                     />
                   </div>
@@ -392,7 +399,7 @@ export function EditCustomerDrawer({
                       >
                         <div>
                           <strong>{rep.name}</strong>
-                          <span style={{ fontSize: '11px', color: 'var(--muted-text)', marginLeft: '8px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--muted-text)', marginInlineStart: '8px' }}>
                             {rep.region}
                           </span>
                         </div>
@@ -443,7 +450,7 @@ export function EditCustomerDrawer({
                   disabled={!isOwnCustomer}
                   style={{ width: '18px', height: '18px', accentColor: 'var(--ocean)' }}
                 />
-                <span style={{ marginLeft: '8px', fontSize: '13px', fontWeight: 600 }}>
+                <span style={{ marginInlineStart: '8px', fontSize: '13px', fontWeight: 600 }}>
                   {active ? t('clients.edit.active') : t('clients.edit.inactive')}
                 </span>
               </label>

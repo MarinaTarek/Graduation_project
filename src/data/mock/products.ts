@@ -7,7 +7,7 @@ import { createStore } from './store'
 
 export const productsStore = createStore<CatalogProduct[]>('products', adminProductsMockData)
 export const stockProductsStore = createStore<StockProductRecord[]>('stock_products', stockProductsMockData)
-export const sharedProductsStore = createStore<Product[]>('shared_products', sharedProducts)
+const sharedProductsStore = createStore<Product[]>('shared_products', sharedProducts)
 
 const now = () => new Date().toISOString()
 

@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
 import {
   Stethoscope, TrendingUp, FileText, Package,
-  ChevronRight, X, AlertTriangle
+  ChevronRight, X, AlertTriangle, RotateCcw
 } from 'lucide-react'
 import { Skeleton } from '@/ui/design-system/components/Skeleton'
 import { customersStore, type Customer } from '@/data/mock/customers'
 import { stockMovementsStore, batchesStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
 import { useStore } from '@/data/mock/store'
-import { useT } from '@/lib/i18n'
+import { useT, type TranslationKey } from '@/lib/i18n'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import {
   VISIT_INTERVAL_DAYS,
@@ -54,6 +54,7 @@ function pill(label: string, color: string, textColor = '#fff') {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700,
         background: color, color: textColor, whiteSpace: 'nowrap',
+        unicodeBidi: 'plaintext',
       }}
     >
       {label}
@@ -162,7 +163,7 @@ export function KpiStrip({
             boxShadow: 'var(--card-shadow)',
             borderRadius: '16px',
             padding: '16px',
-            textAlign: 'left',
+            textAlign: 'start',
             cursor: 'pointer',
             display: 'flex', flexDirection: 'column', gap: '4px',
           }}
@@ -209,7 +210,7 @@ export function VisitCoverageByClass({
         <button
           key={cls}
           onClick={() => onNav?.('Clients', { filter: `Class ${cls}` })}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'start', padding: 0 }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>{t('home.pharma.class', { cls })}</span>
@@ -327,7 +328,7 @@ export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId
             <button
               key={b.id || b.batch_no}
               onClick={() => onOpenDetail?.(b.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '8px 0', borderBottom: '1px solid var(--border-soft)' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'start', padding: '8px 0', borderBottom: '1px solid var(--border-soft)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
@@ -376,7 +377,7 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
           <button
             key={r.region}
             onClick={() => onNav?.('Reports', { filter: r.region })}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'start', padding: 0 }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)' }}>
@@ -485,40 +486,70 @@ export function ReceivablesPanel() {
 }
 
 // ── 7. Returns Panel ────────────────────────────────────────────────────────
-const REASON_NAMES_AR: Record<string, string> = {
-  'Near expiry': 'قرب انتهاء الصلاحية',
-  'Customer rejected': 'رفض العميل',
-  'Damaged packaging': 'تلف العبوة',
+// Reason labels resolve through i18n; unknown reasons fall back to the raw
+// mock-data string.
+const REASON_KEYS: Record<string, TranslationKey> = {
+  'Near expiry': 'home.returns.reasons.nearExpiry',
+  'Customer rejected': 'home.returns.reasons.customerRejected',
+  'Damaged packaging': 'home.returns.reasons.damagedPackaging',
 }
 
 export function ReturnsPanel({ repId }: { repId?: string }) {
-  const { t, lang } = useT()
+  const { t } = useT()
   const entries = repId ? homeReturns.filter(r => r.rep_id === repId) : homeReturns
   const totalUnits = entries.reduce((s, r) => s + r.units_returned, 0)
   const totalSold = 12840 + 8620 + 7290 + 5410 + 4110
   const returnRate = ((totalUnits / totalSold) * 100).toFixed(1)
 
+  // Compact breakdown of the recorded return reasons (real mock-data source).
   const reasonCounts: Record<string, number> = {}
   entries.forEach(r => { reasonCounts[r.reason] = (reasonCounts[r.reason] ?? 0) + r.units_returned })
-  const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
-  const topReasonDisplay = lang === 'ar' ? (REASON_NAMES_AR[topReason] || topReason) : topReason
+  const reasonList = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])
+  const maxReason = reasonList[0]?.[1] ?? 1
 
   return (
-    <CardShell style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-      <div style={{ flex: '1 1 80px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.title')}</div>
-        <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--heading-text)', lineHeight: 1.1 }}>{totalUnits}</div>
-        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.returns.unitsThisMonth')}</div>
+    <CardShell>
+      <CardTitle icon={RotateCcw} label={t('home.returns.title')} />
+      <div className="returns-metrics">
+        <div className="returns-metric">
+          <span className="returns-metric__label">{t('home.returns.title')}</span>
+          <span className="returns-metric__value">{totalUnits}</span>
+          <span className="returns-metric__sub">{t('home.returns.unitsThisMonth')}</span>
+        </div>
+        <div className="returns-metric">
+          <span className="returns-metric__label">{t('home.returns.rateTitle')}</span>
+          <span
+            className="returns-metric__value"
+            style={{ color: parseFloat(returnRate) > 2 ? 'var(--rose-text)' : 'var(--green-text, #16a34a)' }}
+          >
+            {returnRate}%
+          </span>
+          <span className="returns-metric__sub">{t('home.returns.ofTotal')}</span>
+        </div>
       </div>
-      <div style={{ flex: '1 1 80px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.rateTitle')}</div>
-        <div style={{ fontSize: '28px', fontWeight: 800, color: parseFloat(returnRate) > 2 ? 'var(--rose-text)' : '#16a34a', lineHeight: 1.1 }}>{returnRate}%</div>
-        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.returns.ofTotal')}</div>
-      </div>
-      <div style={{ flex: '2 1 160px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.topReason')}</div>
-        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--heading-text)', marginTop: '4px' }}>{topReasonDisplay}</div>
-      </div>
+      {reasonList.length > 0 && (
+        <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>
+            {t('home.returns.topReason')}
+          </span>
+          <div className="returns-reasons">
+            {reasonList.slice(0, 3).map(([reason, qty]) => {
+              const key = REASON_KEYS[reason]
+              return (
+                <div key={reason}>
+                  <div className="returns-reason-row">
+                    <span>{key ? t(key) : reason}</span>
+                    <span>{t('home.samples.units', { qty })}</span>
+                  </div>
+                  <div className="returns-reason-bar">
+                    <div style={{ width: `${Math.round((qty / maxReason) * 100)}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </CardShell>
   )
 }

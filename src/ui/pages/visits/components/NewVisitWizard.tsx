@@ -17,8 +17,13 @@ import { Button } from '@/ui/design-system/components/Button'
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { Stepper } from '@/ui/design-system/components/Stepper'
 import { customersStore, updateCustomer, type Customer } from '@/data/mock/customers'
-import { productsStore, stockProductsStore } from '@/data/mock/products'
-import { stockMovementsStore, addStockMovement } from '@/data/mock/stock-movements'
+import { productsStore } from '@/data/mock/products'
+import {
+  batchesStore,
+  stockMovementsStore,
+  addStockMovement,
+  allocateFefo,
+} from '@/data/mock/stock-movements'
 import { visitsStore, addVisit, type StoredVisit } from '@/data/mock/visits'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
@@ -72,7 +77,6 @@ export function NewVisitWizard({
   const allCustomers = useStore(customersStore)
   const catalogProducts = useStore(productsStore)
   const stockMovements = useStore(stockMovementsStore)
-  const stockProducts = useStore(stockProductsStore)
 
   const reactionOptions = [
     { id: 'interested', emoji: '😍', label: t('visits.new.interested') },
@@ -220,13 +224,23 @@ export function NewVisitWizard({
     try {
       const now = new Date()
       const totalSamples = Object.values(samples).reduce((a, b) => a + b, 0)
+      const today = now.toISOString().split('T')[0]
 
       // Primary reaction
       const firstProduct = selectedProducts[0] || ''
       const firstReactionKey = reactions[firstProduct] || 'interested'
       const matchedReaction = reactionOptions.find((r) => r.id === firstReactionKey) || reactionOptions[0]
 
-      // 1. Add visit to visitsStore
+      // 1. Allocate every sample quantity up front (pure computation, no
+      // writes). If any product lacks unexpired stock the save fails
+      // cleanly with nothing persisted, so retrying is always safe.
+      const sampleAllocations = selectedProducts.flatMap((p) => {
+        const qty = samples[p] || 0
+        if (qty <= 0) return []
+        return allocateFefo(p, qty, batchesStore.get(), stockMovementsStore.get())
+      })
+
+      // 2. Add visit to visitsStore
       const newVisit: StoredVisit = addVisit({
         clientName: selectedClient.name,
         clientName_ar: selectedClient.name_ar,
@@ -244,33 +258,21 @@ export function NewVisitWizard({
         gpsVerified: true,
       })
 
-      // 2. Deduct samples via stock movement
-      selectedProducts.forEach((p) => {
-        const qty = samples[p] || 0
-        if (qty > 0) {
-          addStockMovement({
-            productName: p,
-            quantity: qty,
-            type: 'sample',
-            date: now.toISOString().split('T')[0],
-          })
-        }
-      })
-
-      // 3. Update stock products store units left
-      stockProductsStore.update((list) =>
-        list.map((sp) => {
-          const qty = samples[sp.name] || 0
-          if (qty <= 0) return sp
-          const currentLeft = parseInt(sp.left.replace(/,/g, ''), 10) || 0
-          const updatedLeft = Math.max(0, currentLeft - qty)
-          return {
-            ...sp,
-            left: updatedLeft.toLocaleString(),
-            meta: `${updatedLeft.toLocaleString()} units left`,
-          }
+      // 3. Record the pre-allocated sample movements, FEFO-allocated across
+      // each product's non-expired batches (single source of derived stock).
+      sampleAllocations.forEach((allocation) => {
+        addStockMovement({
+          productName: allocation.productName,
+          batch_id: allocation.batchId,
+          batchNumber: allocation.batchNumber,
+          quantity: allocation.quantity,
+          type: 'sample',
+          date: today,
+          customer_id: selectedClient.id ?? undefined,
+          customerName: selectedClient.name,
+          repName: currentUserName,
         })
-      )
+      })
 
       // 4. Update client's last visit date and status
       updateCustomer(selectedClient.id!, {
@@ -350,13 +352,13 @@ export function NewVisitWizard({
             <div style={{ position: 'relative' }}>
               <Search
                 size={16}
-                style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--muted-text)' }}
+                style={{ position: 'absolute', insetInlineStart: '12px', top: '12px', color: 'var(--muted-text)' }}
               />
               <input
                 value={clientSearch}
                 onChange={(e) => setClientSearch(e.target.value)}
                 placeholder={t('visits.new.searchPlaceholder')}
-                style={{ width: '100%', paddingLeft: '38px', height: '40px' }}
+                style={{ width: '100%', paddingInlineStart: '38px', height: '40px' }}
               />
             </div>
 
@@ -651,13 +653,13 @@ export function NewVisitWizard({
               <div style={{ position: 'relative' }}>
                 <Calendar
                   size={16}
-                  style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--muted-text)' }}
+                  style={{ position: 'absolute', insetInlineStart: '12px', top: '12px', color: 'var(--muted-text)' }}
                 />
                 <input
                   type="date"
                   value={nextVisitDate}
                   onChange={(e) => setNextVisitDate(e.target.value)}
-                  style={{ width: '100%', paddingLeft: '38px', height: '40px' }}
+                  style={{ width: '100%', paddingInlineStart: '38px', height: '40px' }}
                 />
               </div>
               <span style={{ fontSize: '11px', color: 'var(--muted-text)', marginTop: '4px', display: 'block' }}>
@@ -720,7 +722,7 @@ export function NewVisitWizard({
             <div
               style={{
                 width: '100%',
-                textAlign: 'left',
+                textAlign: 'start',
                 padding: '16px',
                 borderRadius: '10px',
                 background: 'var(--surface-raised, rgba(0,0,0,0.02))',
@@ -808,7 +810,7 @@ export function NewVisitWizard({
                 </>
               ) : (
                 <>
-                  {t('visits.new.continue')} <ChevronRight size={16} style={{ marginLeft: '4px' }} />
+                  {t('visits.new.continue')} <ChevronRight size={16} style={{ marginInlineStart: '4px' }} />
                 </>
               )}
             </Button>

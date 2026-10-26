@@ -152,7 +152,7 @@ export function VisitDetailDrawer({
               {visit.nextVisitDate}
             </strong>
           </div>
-          <CheckCircle2 style={{ marginLeft: 'auto', width: '18px', height: '18px', color: 'var(--green-text)' }} />
+          <CheckCircle2 style={{ marginInlineStart: 'auto', width: '18px', height: '18px', color: 'var(--green-text)' }} />
         </div>
       </div>
     </Drawer>

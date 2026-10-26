@@ -435,10 +435,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
   // ─── Screens ────────────────────────────────────────────
 
-  // LOGIN SCREEN
+  // LOGIN + SIGNUP SCREENS — the signup form is wider so its fields can sit
+  // in a balanced two-column grid on desktop (single column on mobile).
   if (screen === 'login' || screen === 'signup') {
     return (
-      <div className="panel" style={{ maxWidth: '420px', margin: '40px auto 0' }}>
+      <div className="panel" style={{ maxWidth: screen === 'signup' ? '600px' : '420px', margin: '40px auto 0' }}>
         <SegmentedTabs active={screen} onChange={(v) => { setScreen(v); setError(null); setSignupError(null) }} />
 
         {screen === 'login' ? (
@@ -529,7 +530,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 background: 'var(--input-bg)',
                 fontSize: '11px',
                 color: 'var(--muted-text)',
-                textAlign: 'left',
+                textAlign: 'start',
                 lineHeight: 1.5,
               }}
             >
@@ -547,8 +548,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
             </h2>
             <form
               onSubmit={handleSignup}
-              className="form-grid"
-              style={{ gridTemplateColumns: '1fr' }}
+              className="form-grid signup-grid"
               noValidate
             >
               <label>
@@ -585,7 +585,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 {signupErrors.email && <span style={fieldErrorStyle}>{signupErrors.email}</span>}
               </label>
 
-              <label>
+              <label className="full">
                 Phone <span style={{ color: 'var(--muted-text)', fontWeight: 400 }}>(optional)</span>
                 <input
                   type="tel"
@@ -623,7 +623,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 {signupErrors.confirm && <span style={fieldErrorStyle}>{signupErrors.confirm}</span>}
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+              <label className="full" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13px', flexDirection: 'row' }}>
                 <input
                   type="checkbox"
                   checked={signupAgree}
@@ -635,11 +635,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 />
                 <span>I agree to the terms and conditions</span>
               </label>
-              {signupErrors.agree && <span style={fieldErrorStyle}>{signupErrors.agree}</span>}
+              {signupErrors.agree && <span style={fieldErrorStyle} className="full">{signupErrors.agree}</span>}
 
               {signupError && <FieldError message={signupError} />}
 
-              <div style={{ marginTop: '8px' }}>
+              <div className="full" style={{ marginTop: '8px' }}>
                 <Button variant="primary" className="full-button" type="submit" loading={signupLoading}>
                   Create account
                 </Button>

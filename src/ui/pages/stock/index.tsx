@@ -186,9 +186,12 @@ export default function StockPage({
             </Button>
           )}
 
-          <Button variant="primary" onClick={onAdd}>
-            <Plus data-icon="inline-start" /> {t('stock.actions.addProduct')}
-          </Button>
+          {/* Only admins can add products (enforced by productService) */}
+          {role === 'admin' && (
+            <Button variant="primary" onClick={onAdd}>
+              <Plus data-icon="inline-start" /> {t('stock.actions.addProduct')}
+            </Button>
+          )}
         </div>
       </div>
 

@@ -1,15 +1,5 @@
-import { useState, useMemo } from 'react'
-import {
-  ClipboardCheck,
-  AlertTriangle,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Sparkles,
-  Calendar,
-  User,
-  Building,
-  Filter,
-} from 'lucide-react'
+import { useState, useMemo, type CSSProperties } from 'react'
+import { ClipboardCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { formatCurrency } from '@/lib/format'
@@ -19,8 +9,6 @@ import {
   batchesStore,
   stockMovementsStore,
   deriveProductStock,
-  deriveBatches,
-  type MovementType,
 } from '@/data/mock/stockDerived'
 import { useT } from '@/lib/i18n'
 
@@ -31,6 +19,22 @@ export interface StockDetailSheetProps {
   productName?: string
   role?: 'admin' | 'rep'
   currentUserName?: string
+}
+
+// Restrained, consistent expiry-status colors shared by every batch card.
+const STATUS_PILL: Record<string, { background: string; color: string }> = {
+  expired: { background: '#64748b', color: '#ffffff' },
+  critical: { background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose-text, #ef4444)' },
+  warning: { background: 'rgba(217, 119, 6, 0.15)', color: '#d97706' },
+  ok: { background: 'rgba(22, 163, 74, 0.15)', color: 'var(--green-text, #16a34a)' },
+}
+
+const MOVEMENT_CHIP: Record<string, { background: string; color: string }> = {
+  receipt: { background: 'rgba(22, 163, 74, 0.15)', color: 'var(--green-text)' },
+  sell_in: { background: 'rgba(2, 132, 199, 0.15)', color: 'var(--ocean)' },
+  sell_out: { background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' },
+  sample: { background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' },
+  other: { background: 'rgba(100, 116, 139, 0.15)', color: '#64748b' },
 }
 
 export function StockDetailSheet({
@@ -144,41 +148,43 @@ export function StockDetailSheet({
 
   if (!isOpen) return null
 
+  const statusPill = (status: string, label: string) => {
+    const tone = STATUS_PILL[status] ?? STATUS_PILL.ok
+    return (
+      <em className="stock-status-pill" style={{ background: tone.background, color: tone.color }}>
+        {label}
+      </em>
+    )
+  }
+
   return (
     <Drawer title={productName} kicker={t('stock.detail.kicker')} onClose={onClose}>
-      {/* Top Banner */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          background: 'var(--surface-raised)',
-          borderRadius: '12px',
-          marginBottom: '16px',
-          border: '1px solid var(--border-soft)',
-        }}
-      >
-        <div>
-          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', display: 'block' }}>
-            {t('stock.detail.unitPrice')}
-          </span>
-          <strong style={{ fontSize: '18px', color: 'var(--heading-text)' }}>
-            {formatCurrency(price)}
-          </strong>
+      {/* Hero metrics + Stock count action */}
+      <div className="stock-detail-hero">
+        <div className="stock-stat">
+          <span className="stock-stat__label">{t('stock.detail.unitPrice')}</span>
+          <strong className="stock-stat__value">{formatCurrency(price)}</strong>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', display: 'block' }}>
-            {t('stock.detail.available')}
-          </span>
-          <strong style={{ fontSize: '18px', color: 'var(--ocean)' }}>
+        <div className="stock-stat">
+          <span className="stock-stat__label">{t('stock.detail.available')}</span>
+          <strong className="stock-stat__value" style={{ color: 'var(--ocean)' }}>
             {t('stock.detail.unitsCount', { count: derived.available_qty.toLocaleString() })}
           </strong>
+        </div>
+        <div className="stock-detail-count">
+          <Button
+            variant="secondary"
+            onClick={onOpenStockCount}
+            style={{ fontSize: '12px', padding: '9px 14px', whiteSpace: 'nowrap' }}
+          >
+            <ClipboardCheck size={15} style={{ marginInlineEnd: '6px' }} />
+            {t('stock.detail.stockCount')}
+          </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="stock-tabs" style={{ display: 'flex', gap: '4px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="stock-tabs" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
         <button className={tab === 'warehouse' ? 'active' : ''} onClick={() => setTab('warehouse')}>
           {t('stock.detail.tabWarehouse', { count: derived.in_warehouse.toLocaleString() })}
         </button>
@@ -196,108 +202,68 @@ export function StockDetailSheet({
       {/* Tab: Warehouse */}
       {tab === 'warehouse' && (
         <div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '8px',
-              marginBottom: '14px',
-              fontSize: '12px',
-            }}
-          >
-            <div style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
-              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.detail.inWarehouse')}</span>
-              <strong>{derived.in_warehouse.toLocaleString()}</strong>
+          <div className="stock-metrics-3" style={{ marginTop: '14px' }}>
+            <div className="stock-stat">
+              <span className="stock-stat__label">{t('stock.detail.inWarehouse')}</span>
+              <strong className="stock-stat__value">{derived.in_warehouse.toLocaleString()}</strong>
             </div>
-            <div style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
-              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.detail.expiring90d')}</span>
-              <strong style={{ color: derived.expiring_90d_qty > 0 ? 'var(--rose-text)' : 'inherit' }}>
+            <div className="stock-stat">
+              <span className="stock-stat__label">{t('stock.detail.expiring90d')}</span>
+              <strong
+                className="stock-stat__value"
+                style={{ color: derived.expiring_90d_qty > 0 ? 'var(--rose-text)' : 'inherit' }}
+              >
                 {derived.expiring_90d_qty.toLocaleString()}
               </strong>
             </div>
-            <div style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
-              <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.detail.expiredRisk')}</span>
-              <strong style={{ color: derived.expired_qty > 0 ? '#64748b' : 'inherit' }}>
+            <div className="stock-stat">
+              <span className="stock-stat__label">{t('stock.detail.expiredRisk')}</span>
+              <strong
+                className="stock-stat__value"
+                style={{ color: derived.expired_qty > 0 ? '#64748b' : 'inherit' }}
+              >
                 {derived.expired_qty.toLocaleString()}
               </strong>
             </div>
           </div>
 
-          <div className="batch-list">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {productBatches.map((b) => (
-              <div
-                key={b.id || b.batch_no}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px',
-                  borderBottom: '1px solid var(--border-soft)',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ fontSize: '14px' }}>{b.batch_no}</strong>
-                    {b.is_fefo_first && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '99px',
-                          background: 'rgba(2, 132, 199, 0.15)',
-                          color: 'var(--ocean)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                        }}
-                      >
-                        <Sparkles size={10} /> {t('stock.detail.sellFirst')}
-                      </span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '12px', color: 'var(--muted-text)', display: 'block', marginTop: '2px' }}>
-                    {t('stock.detail.unitsRemaining', { remaining: b.qty_remaining.toLocaleString(), exp: b.expiry_date })}
-                  </span>
+              <div key={b.id || b.batch_no} className="stock-batch-card">
+                <div className="stock-batch-card__top">
+                  <span className="stock-batch-card__no">{b.batch_no}</span>
+                  {b.is_fefo_first && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '99px',
+                        background: 'rgba(2, 132, 199, 0.15)',
+                        color: 'var(--ocean)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <Sparkles size={10} /> {t('stock.detail.sellFirst')}
+                    </span>
+                  )}
                 </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <em
-                    className={
-                      b.status === 'expired'
-                        ? 'grey'
-                        : b.status === 'critical'
-                        ? 'rose'
-                        : b.status === 'warning'
-                        ? 'amber'
-                        : 'green'
-                    }
-                    style={{
-                      fontStyle: 'normal',
-                      padding: '3px 8px',
-                      borderRadius: '99px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      background:
-                        b.status === 'expired'
-                          ? '#64748b'
-                          : b.status === 'critical'
-                          ? 'rgba(239, 68, 68, 0.15)'
-                          : b.status === 'warning'
-                          ? 'rgba(217, 119, 6, 0.15)'
-                          : 'rgba(22, 163, 74, 0.15)',
-                      color:
-                        b.status === 'expired'
-                          ? '#ffffff'
-                          : b.status === 'critical'
-                          ? 'var(--rose-text, #ef4444)'
-                          : b.status === 'warning'
-                          ? '#d97706'
-                          : 'var(--green-text, #16a34a)',
-                    }}
-                  >
-                    {b.status_label}
-                  </em>
+                <div className="stock-batch-card__info">
+                  <div className="stock-batch-card__cell">
+                    <span className="stock-cell-label">{t('stock.detail.remainingLabel')}</span>
+                    <span className="stock-cell-value">{b.qty_remaining.toLocaleString()}</span>
+                  </div>
+                  <div className="stock-batch-card__cell">
+                    <span className="stock-cell-label">{t('stock.detail.expiryLabel')}</span>
+                    <span className="stock-cell-value" style={{ unicodeBidi: 'plaintext' }}>{b.expiry_date}</span>
+                  </div>
+                  <div className="stock-batch-card__cell">
+                    <span className="stock-cell-label">{t('stock.detail.statusLabel')}</span>
+                    {statusPill(b.status, b.status_label)}
+                  </div>
                 </div>
               </div>
             ))}
@@ -307,23 +273,18 @@ export function StockDetailSheet({
 
       {/* Tab: Reps */}
       {tab === 'reps' && (
-        <div className="batch-list">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '14px' }}>
           {repsBreakdown.map((r) => (
-            <div key={r.rep} style={{ padding: '12px', borderBottom: '1px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong style={{ fontSize: '14px', display: 'block' }}>{r.rep}</strong>
-                <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
+            <div key={r.rep} className="stock-row-card">
+              <div className="stock-row-card__body">
+                <div className="stock-row-card__title">{r.rep}</div>
+                <div className="stock-row-card__meta">
                   {r.territory} · {r.qty}
-                </span>
+                </div>
               </div>
               <em
-                className={r.status === 'Low buffer' ? 'rose' : 'green'}
+                className="stock-status-pill stock-row-card__pill"
                 style={{
-                  fontStyle: 'normal',
-                  padding: '3px 8px',
-                  borderRadius: '99px',
-                  fontSize: '11px',
-                  fontWeight: 700,
                   background: r.status === 'Low buffer' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(22, 163, 74, 0.15)',
                   color: r.status === 'Low buffer' ? 'var(--rose-text)' : 'var(--green-text)',
                 }}
@@ -337,25 +298,18 @@ export function StockDetailSheet({
 
       {/* Tab: Pharmacies */}
       {tab === 'pharmacies' && (
-        <div className="batch-list">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '14px' }}>
           {pharmaciesBreakdown.map((p) => (
-            <div key={p.pharmacy} style={{ padding: '12px', borderBottom: '1px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong style={{ fontSize: '14px', display: 'block' }}>{p.pharmacy}</strong>
-                <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
+            <div key={p.pharmacy} className="stock-row-card">
+              <div className="stock-row-card__body">
+                <div className="stock-row-card__title">{p.pharmacy}</div>
+                <div className="stock-row-card__meta">
                   {p.qty} · {p.meta}
-                </span>
+                </div>
               </div>
               <em
-                style={{
-                  fontStyle: 'normal',
-                  padding: '3px 8px',
-                  borderRadius: '99px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  background: 'rgba(22, 163, 74, 0.15)',
-                  color: 'var(--green-text)',
-                }}
+                className="stock-status-pill stock-row-card__pill"
+                style={{ background: 'rgba(22, 163, 74, 0.15)', color: 'var(--green-text)' }}
               >
                 {p.status}
               </em>
@@ -366,91 +320,52 @@ export function StockDetailSheet({
 
       {/* Tab: Movements */}
       {tab === 'movements' && (
-        <div>
-          {/* Filter pills */}
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
+        <div style={{ marginTop: '14px' }}>
+          {/* Filter chips wrap instead of scrolling horizontally */}
+          <div className="stock-chip-row">
             {['all', 'receipt', 'sell_in', 'sell_out', 'sample', 'transfer_rep', 'adjustment', 'return'].map((type) => (
               <button
                 key={type}
                 type="button"
+                className={movementFilter === type ? 'active' : ''}
                 onClick={() => setMovementFilter(type)}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '99px',
-                  border: '1px solid var(--border-soft)',
-                  background: movementFilter === type ? 'var(--ocean)' : 'var(--surface)',
-                  color: movementFilter === type ? '#ffffff' : 'inherit',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
               >
                 {type === 'all' ? t('stock.detail.filterAll') : type.replace('_', '-')}
               </button>
             ))}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '50vh', overflowY: 'auto' }}>
+          <div className="stock-move-list">
             {productMovements.length > 0 ? (
               productMovements.map((m) => {
                 const isPositive = m.type === 'receipt' || m.type === 'return' || (m.type === 'adjustment' && m.quantity > 0)
+                const chip = MOVEMENT_CHIP[m.type] ?? MOVEMENT_CHIP.other
+                const chipStyle: CSSProperties = {
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  textTransform: 'uppercase',
+                  background: chip.background,
+                  color: chip.color,
+                  whiteSpace: 'nowrap',
+                }
                 return (
-                  <div
-                    key={m.id}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-soft)',
-                      background: 'var(--surface-raised, rgba(0,0,0,0.02))',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '12px',
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span
-                          style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                            background:
-                              m.type === 'receipt'
-                                ? 'rgba(22, 163, 74, 0.15)'
-                                : m.type === 'sell_in'
-                                ? 'rgba(2, 132, 199, 0.15)'
-                                : m.type === 'sell_out'
-                                ? 'rgba(168, 85, 247, 0.15)'
-                                : m.type === 'sample'
-                                ? 'rgba(245, 158, 11, 0.15)'
-                                : 'rgba(100, 116, 139, 0.15)',
-                            color:
-                              m.type === 'receipt'
-                                ? 'var(--green-text)'
-                                : m.type === 'sell_in'
-                                ? 'var(--ocean)'
-                                : m.type === 'sell_out'
-                                ? '#a855f7'
-                                : m.type === 'sample'
-                                ? '#d97706'
-                                : '#64748b',
-                          }}
-                        >
-                          {m.type.replace('_', ' ')}
-                        </span>
+                  <div key={m.id} className="stock-move-row">
+                    <div className="stock-move-row__body">
+                      <div className="stock-move-row__head">
+                        <span style={chipStyle}>{m.type.replace('_', ' ')}</span>
                         <strong>{m.batchNumber || 'Batch General'}</strong>
                       </div>
-                      <div style={{ color: 'var(--muted-text)', marginTop: '2px', fontSize: '11px' }}>
-                        {m.date} {m.customerName ? `· ${m.customerName}` : ''} {m.repName ? `· Rep: ${m.repName}` : ''}
+                      <div className="stock-move-row__meta" style={{ unicodeBidi: 'plaintext' }}>
+                        {m.date}
+                        {m.customerName ? ` · ${m.customerName}` : ''}
+                        {m.repName ? ` · Rep: ${m.repName}` : ''}
                         {m.reason ? ` · Reason: ${m.reason}` : ''}
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
+                    <div className="stock-move-row__qty">
                       <strong style={{ fontSize: '13px', color: isPositive ? 'var(--green-text)' : 'inherit' }}>
                         {isPositive ? '+' : '-'}
                         {Math.abs(m.quantity).toLocaleString()}
@@ -467,12 +382,6 @@ export function StockDetailSheet({
           </div>
         </div>
       )}
-
-      <div style={{ marginTop: '16px' }}>
-        <Button variant="primary" className="full-button" onClick={onOpenStockCount}>
-          <ClipboardCheck data-icon="inline-start" /> {t('stock.detail.stockCount')}
-        </Button>
-      </div>
     </Drawer>
   )
 }

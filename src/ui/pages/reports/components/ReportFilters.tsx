@@ -169,7 +169,7 @@ export function ReportFilters({
               fontSize: '13px',
               fontWeight: draftMonth === m ? 700 : 500,
               cursor: 'pointer',
-              textAlign: 'left',
+              textAlign: 'start',
             }}
           >
             <span>{m}</span>

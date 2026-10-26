@@ -5,13 +5,13 @@ import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { InvoiceToolbar, type InvoiceFiltersState, STATUS_KEYS, DATE_KEYS, SOURCE_KEYS } from './components/InvoiceToolbar'
 import { InvoiceListItem } from './components/InvoiceListItem'
-import { invoicesStore } from '@/data/mock/invoices'
+import { invoicesStore, type StoredInvoice } from '@/data/mock/invoices'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
 
 export interface InvoicesPageProps {
   onAdd: () => void
-  onItem: () => void
+  onItem: (invoice: StoredInvoice) => void
   filter?: string | null
   onClearFilter?: () => void
   role?: 'admin' | 'rep'
@@ -194,7 +194,7 @@ export default function InvoicesPage({
       >
         {sortedInvoices.length > 0 ? (
           sortedInvoices.map((invoice) => (
-            <InvoiceListItem key={invoice.name} item={invoice} onClick={onItem} />
+            <InvoiceListItem key={invoice.name} item={invoice} onClick={() => onItem(invoice)} />
           ))
         ) : (
           <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>

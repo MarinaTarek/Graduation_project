@@ -22,7 +22,7 @@ export interface InvoiceToolbarProps {
 
 const STATUSES = ['All statuses', 'Pending', 'Approved', 'Rejected']
 const DATE_RANGES = ['All time', 'Today', 'Last 7 days', 'This month', 'Last month']
-const SOURCES = ['All sources', 'Telegram', 'Web upload']
+const SOURCES = ['All sources', 'Telegram', 'Web upload', 'Sales order']
 
 export const STATUS_KEYS: Record<string, string> = {
   'All statuses': 'invoices.toolbar.allStatuses',
@@ -43,6 +43,7 @@ export const SOURCE_KEYS: Record<string, string> = {
   'All sources': 'invoices.toolbar.allSources',
   'Telegram': 'invoices.toolbar.telegram',
   'Web upload': 'invoices.toolbar.webUpload',
+  'Sales order': 'invoices.toolbar.salesOrder',
 }
 
 export function InvoiceToolbar({

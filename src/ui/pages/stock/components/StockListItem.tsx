@@ -50,7 +50,7 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
           </div>
           <div>
             <strong style={{ fontSize: '15px' }}>{item.name}</strong>
-            <span style={{ fontSize: '12px', color: 'var(--muted-text)', marginLeft: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--muted-text)', marginInlineStart: '8px' }}>
               {item.category} {item.price ? `· ${formatCurrency(item.price)}` : ''}
             </span>
           </div>

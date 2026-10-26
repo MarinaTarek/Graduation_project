@@ -812,7 +812,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                     {t('admin.users.activeAccount')}
                   </span>
                 </label>
-                <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted-text)', marginLeft: '26px' }}>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted-text)', marginInlineStart: '26px' }}>
                   {t('admin.users.deactivatedDesc')}
                 </span>
               </div>

@@ -30,7 +30,7 @@ export function ClientListItem({ item, onClick, onEdit, canEdit = true }: Client
       onClick={onClick}
       role="button"
       tabIndex={0}
-      style={{ cursor: 'pointer', textAlign: 'left' }}
+      style={{ cursor: 'pointer', textAlign: 'start' }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()

@@ -4,7 +4,7 @@ export interface InvoiceRecord {
   meta: string
   meta_ar?: string
   status: string
-  source: 'Telegram' | 'Web upload'
+  source: 'Telegram' | 'Web upload' | 'Sales order'
   dateRange: 'Today' | 'Last 7 days' | 'This month' | 'Last month'
   repName: string
 }
