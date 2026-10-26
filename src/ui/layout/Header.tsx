@@ -37,7 +37,7 @@ export function Header({
 }: HeaderProps) {
   const { t, lang } = useT()
   const displayInitials = userInitials || (greetingName ? greetingName.slice(0, 2).toUpperCase() : 'U')
-  const { greeting, dateLabel } = useGreeting()
+  const { greeting, dateLabel } = useGreeting(lang)
 
   const nowHour = new Date().getHours()
   const isMorning = nowHour >= 5 && nowHour < 12

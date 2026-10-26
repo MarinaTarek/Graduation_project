@@ -3,6 +3,7 @@
 import { CheckCircle2, Clock, FileText, XCircle } from 'lucide-react'
 import { INVOICES_APPROVALS_MOCK, type RejectionReasonStat } from '../mock-data'
 import { useT } from '@/lib/i18n'
+import { formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface InvoicesApprovalsReportProps {
@@ -10,7 +11,7 @@ export interface InvoicesApprovalsReportProps {
 }
 
 export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const reasons = INVOICES_APPROVALS_MOCK.rejectionReasons
   const timeline = INVOICES_APPROVALS_MOCK.statusTimeline
 
@@ -35,7 +36,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
             }}
           >
             <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-              {stat.label}
+              {formatReportTerm(stat.label, lang)}
             </span>
             <div
               style={{
@@ -46,7 +47,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {stat.value}
+              {formatMetricValue(stat.value, lang)}
             </div>
             <div
               style={{
@@ -55,7 +56,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
                 color: stat.isPositive ? 'var(--story-em, #3e9a78)' : 'var(--rose-text)',
               }}
             >
-              {stat.change}
+              {formatMetricValue(stat.change, lang)}
             </div>
           </div>
         ))}

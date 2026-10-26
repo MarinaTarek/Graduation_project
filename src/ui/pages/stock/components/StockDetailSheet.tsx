@@ -49,8 +49,6 @@ export function StockDetailSheet({
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
 
-  if (!isOpen) return null
-
   const product = stockProductsMockData.find((p) => p.name.toLowerCase() === productName.toLowerCase())
   const price = product?.price ?? 240
 
@@ -143,6 +141,8 @@ export function StockDetailSheet({
       .filter((m) => (movementFilter === 'all' ? true : m.type === movementFilter))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }, [movements, productName, movementFilter])
+
+  if (!isOpen) return null
 
   return (
     <Drawer title={productName} kicker={t('stock.detail.kicker')} onClose={onClose}>

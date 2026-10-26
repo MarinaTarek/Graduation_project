@@ -8,6 +8,7 @@ import { VisitDetailDrawer } from './components/VisitDetailDrawer'
 import { visitsStore } from '@/data/mock/visits'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
+import { formatRepName } from '@/lib/format'
 import { type VisitRecord } from './mock-data'
 
 export interface VisitsPageProps {
@@ -25,7 +26,7 @@ export default function VisitsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: VisitsPageProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const visitsMockData = useStore(visitsStore)
   const [selectedVisit, setSelectedVisit] = useState<VisitRecord | null>(null)
 
@@ -63,7 +64,7 @@ export default function VisitsPage({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
           <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('visits.filteredByRep')}</span>
           <Chip active onClick={onClearFilter} title={t('visits.clearFilter')}>
-            {filterRep} &times;
+            {formatRepName(filterRep, lang)} &times;
           </Chip>
         </div>
       )}

@@ -2,6 +2,7 @@ import { Calendar, CheckCircle2, Clock, MapPin, Package, Stethoscope, User } fro
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { useT } from '@/lib/i18n'
+import { formatProductName } from '@/lib/format'
 import type { VisitRecord } from '../mock-data'
 
 export interface VisitDetailDrawerProps {
@@ -15,13 +16,17 @@ export function VisitDetailDrawer({
   onClose,
   visit,
 }: VisitDetailDrawerProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
 
   if (!isOpen || !visit) return null
 
+  const clientName = lang === 'ar' ? (visit.clientName_ar || visit.clientName) : visit.clientName
+  const repName = lang === 'ar' ? (visit.repName_ar || visit.repName) : visit.repName
+  const date = lang === 'ar' ? (visit.date_ar || visit.date) : visit.date
+
   return (
     <Drawer
-      title={visit.clientName}
+      title={clientName}
       kicker={t('visits.detail.kicker', { id: visit.id })}
       onClose={onClose}
     >
@@ -52,19 +57,19 @@ export function VisitDetailDrawer({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Clock style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
             <span style={{ fontSize: '13px', color: 'var(--card-text)' }}>
-              <strong>{t('visits.detail.dateTime')}</strong> {visit.date} at {visit.time}
+              <strong>{t('visits.detail.dateTime')}</strong> {date} at {visit.time}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <User style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
             <span style={{ fontSize: '13px', color: 'var(--card-text)' }}>
-              <strong>{t('visits.detail.representative')}</strong> {visit.repName}
+              <strong>{t('visits.detail.representative')}</strong> {repName}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Stethoscope style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
             <span style={{ fontSize: '13px', color: 'var(--card-text)' }}>
-              <strong>{t('visits.detail.doctorClinic')}</strong> {visit.clientName}
+              <strong>{t('visits.detail.doctorClinic')}</strong> {clientName}
             </span>
           </div>
         </div>
@@ -92,7 +97,7 @@ export function VisitDetailDrawer({
                 }}
               >
                 <Package style={{ width: '14px', height: '14px', color: 'var(--ocean)' }} />
-                {product}
+                {formatProductName(product, lang)}
               </span>
             ))}
           </div>

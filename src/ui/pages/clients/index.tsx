@@ -10,6 +10,7 @@ import { EditCustomerDrawer } from './components/EditCustomerDrawer'
 import { customersStore, updateCustomer, type Customer } from '@/data/mock/customers'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
+import { SPECIALTY_AR, CLASSIFICATION_AR, CLIENT_REGION_AR } from './mock-data'
 
 export interface ClientsPageProps {
   onAdd: () => void
@@ -28,7 +29,7 @@ export default function ClientsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: ClientsPageProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const customers = useStore(customersStore).filter((c) => !c.deleted_at)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
@@ -170,17 +171,17 @@ export default function ClientsPage({
           )}
           {activeFilters.specialty !== 'All specialties' && (
             <Chip active onClick={removeSpecialty} title={t('clients.clearSpecialty')}>
-              {activeFilters.specialty} &times;
+              {lang === 'ar' ? (SPECIALTY_AR[activeFilters.specialty] || activeFilters.specialty) : activeFilters.specialty} &times;
             </Chip>
           )}
           {activeFilters.classification !== 'All classes' && (
             <Chip active onClick={removeClassification} title={t('clients.clearClassification')}>
-              {activeFilters.classification} &times;
+              {lang === 'ar' ? (CLASSIFICATION_AR[activeFilters.classification] || activeFilters.classification) : activeFilters.classification} &times;
             </Chip>
           )}
           {activeFilters.region !== 'All regions' && (
             <Chip active onClick={removeRegion} title={t('clients.clearRegion')}>
-              {activeFilters.region} &times;
+              {lang === 'ar' ? (CLIENT_REGION_AR[activeFilters.region] || activeFilters.region) : activeFilters.region} &times;
             </Chip>
           )}
         </div>

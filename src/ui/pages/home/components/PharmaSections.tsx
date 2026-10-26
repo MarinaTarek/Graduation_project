@@ -8,6 +8,7 @@ import { customersStore, type Customer } from '@/data/mock/customers'
 import { stockMovementsStore, batchesStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
+import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import {
   VISIT_INTERVAL_DAYS,
   homeCustomers,
@@ -304,16 +305,24 @@ function expiryTone(isoDate: string): { label: string; bg: string } {
 }
 
 export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId: string) => void }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
   const expiring = getBatchesNearExpiry(movements, batches, 90)
+
+  const STATUS_LABELS_AR: Record<string, string> = {
+    Critical: 'حرج',
+    'Expiring soon': 'قارب على الانتهاء',
+    Healthy: 'سليم',
+    Expired: 'منتهي',
+  }
 
   return (
     <CardShell>
       <CardTitle icon={AlertTriangle} label={t('home.batches.title')} />
       {expiring.length > 0 ? (
         expiring.slice(0, 4).map((b) => {
+          const statusText = lang === 'ar' ? (STATUS_LABELS_AR[b.status_label] || b.status_label) : b.status_label
           return (
             <button
               key={b.id || b.batch_no}
@@ -326,7 +335,7 @@ export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId
                   <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.batches.remaining', { batchNo: b.batch_no, qty: b.qty_remaining.toLocaleString() })}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {pill(b.status_label, b.status_color === 'rose' ? '#ef4444' : '#d97706')}
+                  {pill(statusText, b.status_color === 'rose' ? '#ef4444' : '#d97706')}
                   <ChevronRight style={{ width: '14px', height: '14px', color: 'var(--muted-text)' }} />
                 </div>
               </div>
@@ -343,8 +352,18 @@ export function ExpiringBatchesPanel({ onOpenDetail }: { onOpenDetail?: (batchId
 }
 
 // ── 5. Regions Panel (Admin only) ───────────────────────────────────────────
+const REGION_NAMES_AR: Record<string, string> = {
+  'North region': 'المنطقة الشمالية',
+  'West region': 'المنطقة الغربية',
+  'Central region': 'المنطقة الوسطى',
+  'East region': 'المنطقة الشرقية',
+  'Tanta': 'طنطا',
+  'El Mahalla El Kubra': 'المحلة الكبرى',
+  'Assiut': 'أسيوط',
+}
+
 export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter?: string }) => void }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const sorted = [...homeRegions].sort((a, b) => (b.sales_amount / b.target_amount) - (a.sales_amount / a.target_amount))
   const maxTarget = Math.max(...sorted.map(r => r.target_amount))
 
@@ -360,7 +379,9 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
             style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)' }}>{r.region}</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)' }}>
+                {lang === 'ar' ? (REGION_NAMES_AR[r.region] || r.region) : r.region}
+              </span>
               <span style={{ fontSize: '12px', fontWeight: 700, color: pct >= 90 ? 'var(--green-text,#16a34a)' : pct >= 75 ? '#d97706' : 'var(--rose-text)' }}>
                 {pct}%
               </span>
@@ -381,7 +402,7 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
 
 // ── 6. Receivables Panel (Admin only) ───────────────────────────────────────
 export function ReceivablesPanel() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [open, setOpen] = useState(false)
   const totalOutstanding = homeReceivables.reduce((s, r) => s + r.outstanding_amount, 0)
   const totalOverdue = homeReceivables.reduce((s, r) => s + r.overdue_amount, 0)
@@ -394,13 +415,13 @@ export function ReceivablesPanel() {
         <div style={{ display: 'flex', gap: '24px' }}>
           <div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--heading-text)' }}>
-              EGP {(totalOutstanding / 1000).toFixed(0)}K
+              {formatCurrencyCompact(totalOutstanding, 'EGP', lang)}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.receivables.outstanding')}</div>
           </div>
           <div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--rose-text)' }}>
-              EGP {(totalOverdue / 1000).toFixed(0)}K
+              {formatCurrencyCompact(totalOverdue, 'EGP', lang)}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{t('home.receivables.overdue')}</div>
           </div>
@@ -443,7 +464,9 @@ export function ReceivablesPanel() {
                       <div style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{r.rep_name}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--heading-text)' }}>EGP {r.outstanding_amount.toLocaleString()}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--heading-text)' }}>
+                        {formatCurrency(r.outstanding_amount, 'EGP', lang)}
+                      </div>
                       {r.overdue_amount > 0 && (
                         <div style={{ fontSize: '12px', color: 'var(--rose-text)', fontWeight: 600 }}>
                           {t('home.receivables.overdueDetail', { amount: r.overdue_amount.toLocaleString(), days: r.days_overdue })}
@@ -462,8 +485,14 @@ export function ReceivablesPanel() {
 }
 
 // ── 7. Returns Panel ────────────────────────────────────────────────────────
+const REASON_NAMES_AR: Record<string, string> = {
+  'Near expiry': 'قرب انتهاء الصلاحية',
+  'Customer rejected': 'رفض العميل',
+  'Damaged packaging': 'تلف العبوة',
+}
+
 export function ReturnsPanel({ repId }: { repId?: string }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const entries = repId ? homeReturns.filter(r => r.rep_id === repId) : homeReturns
   const totalUnits = entries.reduce((s, r) => s + r.units_returned, 0)
   const totalSold = 12840 + 8620 + 7290 + 5410 + 4110
@@ -472,6 +501,7 @@ export function ReturnsPanel({ repId }: { repId?: string }) {
   const reasonCounts: Record<string, number> = {}
   entries.forEach(r => { reasonCounts[r.reason] = (reasonCounts[r.reason] ?? 0) + r.units_returned })
   const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
+  const topReasonDisplay = lang === 'ar' ? (REASON_NAMES_AR[topReason] || topReason) : topReason
 
   return (
     <CardShell style={{ flexDirection: 'row', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
@@ -487,7 +517,7 @@ export function ReturnsPanel({ repId }: { repId?: string }) {
       </div>
       <div style={{ flex: '2 1 160px' }}>
         <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>{t('home.returns.topReason')}</div>
-        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--heading-text)', marginTop: '4px' }}>{topReason}</div>
+        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--heading-text)', marginTop: '4px' }}>{topReasonDisplay}</div>
       </div>
     </CardShell>
   )

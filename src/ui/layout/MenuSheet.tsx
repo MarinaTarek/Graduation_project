@@ -1,4 +1,5 @@
 import { Languages, LogOut, Moon, Sun } from 'lucide-react'
+import { useT } from '@/lib/i18n'
 
 export interface MenuSheetProps {
   isOpen: boolean
@@ -17,24 +18,32 @@ export function MenuSheet({
   userName = 'User',
   accountType = 'Admin account',
 }: MenuSheetProps) {
+  const { t, lang, setLang } = useT()
   if (!isOpen) return null
+
+  const displayAccountType =
+    lang === 'ar'
+      ? accountType === 'Admin account'
+        ? 'حساب المدير'
+        : 'مندوب دعاية طبية'
+      : accountType
 
   return (
     <div className="profile-menu">
       <strong>{userName}</strong>
-      <span>{accountType}</span>
+      <span>{displayAccountType}</span>
       <button onClick={onToggleDark}>
         {dark ? <Sun /> : <Moon />}
-        {dark ? 'Light mode' : 'Dark mode'}
-        <b>{dark ? 'On' : 'Off'}</b>
+        {dark ? (lang === 'ar' ? 'الوضع الفاتح' : 'Light mode') : (lang === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
+        <b>{dark ? (lang === 'ar' ? 'مفعل' : 'On') : (lang === 'ar' ? 'معطل' : 'Off')}</b>
       </button>
-      <button>
+      <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}>
         <Languages />
-        Language <b>English</b>
+        {lang === 'ar' ? 'اللغة' : 'Language'} <b>{lang === 'ar' ? 'العربية' : 'English'}</b>
       </button>
       <button onClick={onOpenLogout}>
         <LogOut />
-        Log out
+        {t('nav.logout')}
       </button>
     </div>
   )

@@ -1,12 +1,12 @@
 export function getCurrentLang(): 'en' | 'ar' {
-  if (typeof document !== 'undefined') {
-    return document.documentElement.lang === 'ar' ? 'ar' : 'en'
-  }
   if (typeof localStorage !== 'undefined') {
     try {
       const saved = localStorage.getItem('navigen_lang')
-      if (saved === 'ar') return 'ar'
+      if (saved === 'ar' || saved === 'en') return saved
     } catch {}
+  }
+  if (typeof document !== 'undefined') {
+    return document.documentElement.lang === 'ar' ? 'ar' : 'en'
   }
   return 'en'
 }
@@ -75,3 +75,119 @@ export function formatRelative(date: string | Date, lang?: 'en' | 'ar'): string 
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num)
 }
+
+export const REP_NAMES_AR: Record<string, string> = {
+  'Alex Morgan': 'أليكس مورجان',
+  'Maya Patel': 'مايا باتيل',
+  'Olivia Martin': 'أوليفيا مارتن',
+  'James Wilson': 'جيمس ويلسون',
+  'Sofia Chen': 'صوفيا تشن',
+}
+
+export function formatRepName(name: string, lang?: 'en' | 'ar'): string {
+  const currentLang = lang || getCurrentLang()
+  if (currentLang === 'ar') {
+    return REP_NAMES_AR[name] || name
+  }
+  return name
+}
+
+export const PRODUCT_NAMES_AR: Record<string, string> = {
+  Bevato: 'بيفاتو',
+  'Naviro D3 50,000 IU': 'نافيرو د3 50,000',
+  'Naviro D3 10,000 IU': 'نافيرو د3 10,000',
+  'Naviro D3 Drops': 'نافيرو د3 نقط',
+  'Navigen Product 5': 'نافيجين منتج 5',
+}
+
+export const REPORT_TERMS_AR: Record<string, string> = {
+  'Total Revenue': 'إجمالي الإيرادات',
+  'Quota Achievement': 'نسبة تحقيق المستهدف',
+  'Average Rep Velocity': 'متوسط سرعة المندوب',
+  'Total Sell-In': 'إجمالي المبيعات المباشرة (Sell-In)',
+  'Total Sell-Out': 'إجمالي المبيعات للجمهور (Sell-Out)',
+  'Sell-Through Ratio': 'معدل التصريف',
+  'Target Coverage': 'تغطية المستهدف',
+  'Overdue Doctors': 'أطباء متأخرو الزيارة',
+  'Total Visits Logged': 'إجمالي الزيارات المسجلة',
+  'Invoices Processed': 'الفواتير المعالجة',
+  'Avg Approval Time': 'متوسط وقت الموافقة',
+  'Rejection Rate': 'معدل الرفض',
+  'Total Stock Value': 'إجمالي قيمة المخزون',
+}
+
+export function formatReportTerm(term: string, lang?: 'en' | 'ar'): string {
+  const currentLang = lang || getCurrentLang()
+  if (currentLang === 'ar') {
+    return REPORT_TERMS_AR[term] || term
+  }
+  return term
+}
+
+export function formatMetricValue(val: string, lang?: 'en' | 'ar'): string {
+  const currentLang = lang || getCurrentLang()
+  if (currentLang === 'ar') {
+    return val
+      .replace(/EGP\s*([\d,]+(\.\d+)?)/g, '$1 ج.م')
+      .replace(/Goal:\s*EGP\s*([\d,]+)/g, 'الهدف: $1 ج.م')
+      .replace(/(\d+)\s*active field reps/g, '$1 مندوبين نشطين')
+      .replace(/(\d+)\s*of\s*(\d+)\s*doctors reached/g, 'تم الوصول إلى $1 من أصل $2 طبيب')
+      .replace(/Exceeding cycle interval/g, 'تجاوز الفاصل الزمني للدورة')
+      .replace(/(\+?\d+%?)\s*vs prior month/g, '$1 مقارنة بالشهر السابق')
+      .replace(/(\+?\d+(\.\d+)?%?)\s*vs target/g, '$1 مقارنة بالمستهدف')
+      .replace(/([\d,]+)\s*packs ordered/g, 'تم طلب $1 عبوة')
+      .replace(/([\d,]+)\s*packs dispensed/g, 'تم صرف $1 عبوة')
+      .replace(/Optimal threshold:\s*([\d%+]+)/g, 'الحد الأمثل: $1')
+      .replace(/([\d,]+)\s*claims/g, '$1 مطالبة')
+      .replace(/([\d,]+)\s*units in custody/g, '$1 وحدة في العهدة')
+      .replace(/Reduced from\s*([\d.]+h)/g, 'انخفاضاً من $1')
+      .replace(/(\d+)\s*total rejected/g, 'إجمالي المرفوض $1')
+      .replace(/(\d+)\s*accounts/g, '$1 حسابات')
+      .replace(/(\d+)\s*visits/g, '$1 زيارة')
+      .replace(/([\d.]+)\s*hours/g, '$1 ساعة')
+  }
+  return val
+}
+
+export function formatProductName(product: string, lang?: 'en' | 'ar'): string {
+  const currentLang = lang || getCurrentLang()
+  if (currentLang === 'ar') {
+    return PRODUCT_NAMES_AR[product] || product
+  }
+  return product
+}
+
+export const MONTH_NAMES_AR: Record<string, string> = {
+  Jan: 'يناير',
+  January: 'يناير',
+  Feb: 'فبراير',
+  February: 'فبراير',
+  Mar: 'مارس',
+  March: 'مارس',
+  Apr: 'أبريل',
+  April: 'أبريل',
+  May: 'مايو',
+  Jun: 'يونيو',
+  June: 'يونيو',
+  Jul: 'يوليو',
+  July: 'يوليو',
+  Aug: 'أغسطس',
+  August: 'أغسطس',
+  Sep: 'سبتمبر',
+  September: 'سبتمبر',
+  Oct: 'أكتوبر',
+  October: 'أكتوبر',
+  Nov: 'نوفمبر',
+  November: 'نوفمبر',
+  Dec: 'ديسمبر',
+  December: 'ديسمبر',
+}
+
+export function formatMonth(month: string, lang?: 'en' | 'ar'): string {
+  const currentLang = lang || getCurrentLang()
+  if (currentLang === 'ar') {
+    return MONTH_NAMES_AR[month] || month
+  }
+  return month
+}
+

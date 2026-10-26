@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react'
 import { SELL_IN_OUT_MOCK, type ProductSellThrough } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { useT } from '@/lib/i18n'
+import { formatCurrencyCompact, formatMonth, formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface SellInVsSellOutReportProps {
@@ -11,7 +12,7 @@ export interface SellInVsSellOutReportProps {
 }
 
 export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const products = SELL_IN_OUT_MOCK.products.filter((p) => {
     if (filters.products.length > 0 && !filters.products.includes(p.product)) return false
     return true
@@ -64,7 +65,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
             }}
           >
             <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-              {stat.label}
+              {formatReportTerm(stat.label, lang)}
             </span>
             <div
               style={{
@@ -75,7 +76,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {stat.value}
+              {formatMetricValue(stat.value, lang)}
             </div>
             <div
               style={{
@@ -84,7 +85,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                 color: stat.isPositive ? 'var(--story-em, #3e9a78)' : 'var(--rose-text)',
               }}
             >
-              {stat.change}
+              {formatMetricValue(stat.change, lang)}
             </div>
           </div>
         ))}
@@ -154,7 +155,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                   <g key={val}>
                     <line x1={padLeft} y1={y} x2={width - padRight} y2={y} stroke="var(--border-subtle)" strokeDasharray="3 3" />
                     <text x={padLeft - 10} y={y + 4} textAnchor="end" fontSize="10" fill="var(--muted-text)">
-                      EGP {val / 1000}k
+                      {formatCurrencyCompact(val, 'EGP', lang)}
                     </text>
                   </g>
                 )
@@ -178,7 +179,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
                     <circle cx={x} cy={yIn} r="4" fill="var(--ocean)" stroke="var(--card-bg)" strokeWidth="1.5" />
                     <circle cx={x} cy={yOut} r="4" fill="var(--story-em, #3e9a78)" stroke="var(--card-bg)" strokeWidth="1.5" />
                     <text x={x} y={height - 8} textAnchor="middle" fontSize="11" fill="var(--muted-text)">
-                      {m.month}
+                      {formatMonth(m.month, lang)}
                     </text>
                   </g>
                 )

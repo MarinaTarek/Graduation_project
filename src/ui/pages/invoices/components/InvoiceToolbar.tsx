@@ -24,14 +24,14 @@ const STATUSES = ['All statuses', 'Pending', 'Approved', 'Rejected']
 const DATE_RANGES = ['All time', 'Today', 'Last 7 days', 'This month', 'Last month']
 const SOURCES = ['All sources', 'Telegram', 'Web upload']
 
-const STATUS_KEYS: Record<string, string> = {
+export const STATUS_KEYS: Record<string, string> = {
   'All statuses': 'invoices.toolbar.allStatuses',
   'Pending': 'invoices.toolbar.pending',
   'Approved': 'invoices.toolbar.approved',
   'Rejected': 'invoices.toolbar.rejected',
 }
 
-const DATE_KEYS: Record<string, string> = {
+export const DATE_KEYS: Record<string, string> = {
   'All time': 'invoices.toolbar.allTime',
   'Today': 'invoices.toolbar.today',
   'Last 7 days': 'invoices.toolbar.last7Days',
@@ -39,7 +39,7 @@ const DATE_KEYS: Record<string, string> = {
   'Last month': 'invoices.toolbar.lastMonth',
 }
 
-const SOURCE_KEYS: Record<string, string> = {
+export const SOURCE_KEYS: Record<string, string> = {
   'All sources': 'invoices.toolbar.allSources',
   'Telegram': 'invoices.toolbar.telegram',
   'Web upload': 'invoices.toolbar.webUpload',

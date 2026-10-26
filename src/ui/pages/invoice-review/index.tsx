@@ -6,6 +6,7 @@ import { invoiceReviewMockData } from './mock-data'
 import { useUndo } from '@/lib/useUndo'
 import { addStockMovement, stockMovementsStore } from '@/data/mock/stockDerived'
 import { useT } from '@/lib/i18n'
+import { formatCurrency } from '@/lib/format'
 
 export interface InvoiceReviewPageProps {
   onClose: () => void
@@ -16,7 +17,7 @@ export default function InvoiceReviewPage({
   onClose,
   onAction,
 }: InvoiceReviewPageProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const data = invoiceReviewMockData
   const [loadingAction, setLoadingAction] = useState<'approve' | 'reject' | null>(null)
   const { trigger } = useUndo(8000)
@@ -69,12 +70,17 @@ export default function InvoiceReviewPage({
     }, 400)
   }
 
+  const kicker = lang === 'ar' ? data.kicker_ar : data.kicker
+  const client = lang === 'ar' ? data.client_ar : data.client
+  const amount = formatCurrency(data.amount, 'EGP', lang)
+  const meta = lang === 'ar' ? data.meta_ar : data.meta
+
   return (
-    <Drawer title={data.id} kicker={data.kicker} onClose={onClose}>
+    <Drawer title={data.id} kicker={kicker} onClose={onClose}>
       <InvoiceDetailCard
-        client={data.client}
-        amount={data.amount}
-        meta={data.meta}
+        client={client}
+        amount={amount}
+        meta={meta}
       />
       <InvoiceReviewActions
         onReject={handleReject}

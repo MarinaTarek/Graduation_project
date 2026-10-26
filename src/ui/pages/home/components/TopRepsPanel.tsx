@@ -10,12 +10,22 @@ export interface TopRepsPanelProps {
   onSelectRep?: (repName: string) => void
 }
 
+const REGION_NAMES_AR: Record<string, string> = {
+  'North region': 'المنطقة الشمالية',
+  'West region': 'المنطقة الغربية',
+  'Central region': 'المنطقة الوسطى',
+  'East region': 'المنطقة الشرقية',
+  'Tanta': 'طنطا',
+  'El Mahalla El Kubra': 'المحلة الكبرى',
+  'Assiut': 'أسيوط',
+}
+
 export function TopRepsPanel({
   onNavigateMore,
   onAction,
   onSelectRep,
 }: TopRepsPanelProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
 
   return (
     <section className="panel reps-panel">
@@ -51,9 +61,9 @@ export function TopRepsPanel({
             />
             <div className="rep-name">
               <strong>{name}</strong>
-              <span>{region}</span>
+              <span>{lang === 'ar' ? (REGION_NAMES_AR[region] || region) : region}</span>
             </div>
-            <b>{sales}</b>
+            <b>{lang === 'ar' ? sales.replace(/^EGP\s*/i, '').replace(/k/i, 'K') + ' ج.م' : sales}</b>
             <span className="rep-goal">{goal}</span>
             <ChevronRight />
           </button>

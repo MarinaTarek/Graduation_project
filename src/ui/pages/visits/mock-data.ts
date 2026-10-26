@@ -5,8 +5,10 @@ export interface VisitRecord {
   repName: string
   repName_ar?: string
   date: string
+  date_ar?: string
   time: string
   detail: string
+  detail_ar?: string
   status: string
   productsPresented: string[]
   samplesQuantity: number
@@ -25,8 +27,10 @@ export const visitsMockData: VisitRecord[] = [
     repName: 'Alex Morgan',
     repName_ar: 'أليكس مورجان',
     date: 'Oct 24, 2026',
+    date_ar: '24 أكتوبر 2026',
     time: '10:30 AM',
     detail: 'Bevato clinical presentation',
+    detail_ar: 'عرض إكلينيكي لدواء بيفاتو',
     status: 'Completed',
     productsPresented: ['Bevato', 'Naviro D3 50,000 IU'],
     samplesQuantity: 15,
@@ -43,8 +47,10 @@ export const visitsMockData: VisitRecord[] = [
     repName: 'Alex Morgan',
     repName_ar: 'أليكس مورجان',
     date: 'Oct 21, 2026',
+    date_ar: '21 أكتوبر 2026',
     time: '02:15 PM',
     detail: 'Quarterly review & sample restock',
+    detail_ar: 'مراجعة ربع سنوية وتزويد العينات',
     status: 'Completed',
     productsPresented: ['Naviro D3 50,000 IU', 'Naviro D3 10,000 IU'],
     samplesQuantity: 20,
@@ -61,8 +67,10 @@ export const visitsMockData: VisitRecord[] = [
     repName: 'Olivia Martin',
     repName_ar: 'أوليفيا مارتن',
     date: 'Oct 18, 2026',
+    date_ar: '18 أكتوبر 2026',
     time: '11:00 AM',
     detail: 'Bevato clinical presentation',
+    detail_ar: 'عرض إكلينيكي لدواء بيفاتو',
     status: 'Completed',
     productsPresented: ['Bevato'],
     samplesQuantity: 10,
@@ -79,8 +87,10 @@ export const visitsMockData: VisitRecord[] = [
     repName: 'Maya Patel',
     repName_ar: 'مايا باتيل',
     date: 'Oct 15, 2026',
+    date_ar: '15 أكتوبر 2026',
     time: '09:45 AM',
     detail: 'Stock verification & sample delivery',
+    detail_ar: 'التحقق من المخزون وتسليم العينات',
     status: 'Completed',
     productsPresented: ['Naviro D3 Drops', 'Bevato'],
     samplesQuantity: 25,
@@ -97,8 +107,10 @@ export const visitsMockData: VisitRecord[] = [
     repName: 'James Wilson',
     repName_ar: 'جيمس ويلسون',
     date: 'Oct 12, 2026',
+    date_ar: '12 أكتوبر 2026',
     time: '03:30 PM',
     detail: 'Introductory discussion on Naviro D3 50,000 IU',
+    detail_ar: 'جلسة تعريفية حول نافيرو D3 50,000 IU',
     status: 'Completed',
     productsPresented: ['Naviro D3 50,000 IU'],
     samplesQuantity: 8,

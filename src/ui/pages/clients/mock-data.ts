@@ -17,6 +17,58 @@ export interface ClientRecord {
   type?: 'doctor' | 'pharmacy'
 }
 
+export const SPECIALTY_AR: Record<string, string> = {
+  'All specialties': 'جميع التخصصات',
+  'Cardiology': 'أمراض القلب',
+  'Pharmacy': 'صيدلية',
+  'Pediatrics': 'طب الأطفال',
+  'General Medicine': 'طب عام',
+}
+
+export const CLASSIFICATION_AR: Record<string, string> = {
+  'All classes': 'جميع الفئات',
+  'Class A': 'فئة A',
+  'Class B': 'فئة B',
+  'Class C': 'فئة C',
+}
+
+export const CLIENT_REGION_AR: Record<string, string> = {
+  'All regions': 'جميع المناطق',
+  'North region': 'المنطقة الشمالية',
+  'West region': 'المنطقة الغربية',
+  'Central region': 'المنطقة الوسطى',
+  'East region': 'المنطقة الشرقية',
+  'South region': 'المنطقة الجنوبية',
+  'Tanta': 'طنطا',
+  'El Mahalla El Kubra': 'المحلة الكبرى',
+  'Assiut': 'أسيوط',
+  'Cairo': 'القاهرة',
+  'Giza': 'الجيزة',
+  'Alexandria': 'الإسكندرية',
+  'Alex': 'الإسكندرية',
+  'Gharbia': 'الغربية',
+  'Mansoura (Dakahlia)': 'المنصورة (الدقهلية)',
+  'Zagazig (Sharqia)': 'الزقازيق (الشرقية)',
+  'Damanhur (Beheira)': 'دمنهور (البحيرة)',
+  'Kafr El Sheikh': 'كفر الشيخ',
+  'Damietta': 'دمياط',
+  'Port Said': 'بورسعيد',
+  'Ismailia': 'الإسماعيلية',
+  'Suez': 'السويس',
+  'Fayoum': 'الفيوم',
+  'Beni Suef': 'بني سويف',
+  'Minya': 'المنيا',
+  'Sohag': 'سوهاج',
+  'Qena': 'قنا',
+  'Luxor': 'الأقصر',
+  'Aswan': 'أسوان',
+  'Hurghada (Red Sea)': 'الغردقة (البحر الأحمر)',
+  'Sharm El Sheikh (South Sinai)': 'شرم الشيخ (جنوب سيناء)',
+  'Marsa Matrouh': 'مرسى مطروح',
+  'Delta': 'الدلتا',
+  'Upper Egypt': 'الصعيد',
+}
+
 export const clientsMockData: ClientRecord[] = [
   { id: 'c-1', name: 'Dr. Sarah Kim', name_ar: 'د. سارة كيم', meta: 'Cardiology · North region · Class A', status: 'Active', specialty: 'Cardiology', classification: 'Class A', region: 'North region', repName: 'Alex Morgan', rep_id: 'u-admin-1', phone: '01012345678', address: '12 Medical Plaza, North District', notes: 'Key opinion leader in hypertension.', active: true, last_visit_date: '2026-10-18', type: 'doctor' },
   { id: 'c-2', name: 'Green Cross Pharmacy', name_ar: 'صيدلية جرين كروس', meta: 'Pharmacy · West region · Class A', status: 'Active', specialty: 'Pharmacy', classification: 'Class A', region: 'West region', repName: 'Maya Patel', rep_id: 'rep-maya', phone: '01123456789', address: '44 El Tahrir St, West District', notes: 'High volume prescription fulfillment.', active: true, last_visit_date: '2026-10-15', type: 'pharmacy' },

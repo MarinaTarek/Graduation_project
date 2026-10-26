@@ -19,9 +19,58 @@ export interface HomeFiltersProps {
 }
 
 const ALL_MONTHS = ['October 2026', 'September 2026', 'August 2026', 'July 2026']
-const ALL_REGIONS = ['North region', 'West region', 'Central region', 'East region']
+const ALL_REGIONS = [
+  'North region',
+  'West region',
+  'Central region',
+  'East region',
+  'Tanta',
+  'El Mahalla El Kubra',
+  'Assiut',
+  'Alexandria',
+  'Cairo',
+  'Giza',
+  'Mansoura (Dakahlia)',
+]
 const ALL_REPS = ['Olivia Martin', 'Maya Patel', 'James Wilson', 'Sofia Chen']
 const ALL_PRODUCTS = ['Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
+
+const MONTH_NAMES_AR: Record<string, string> = {
+  'October 2026': 'أكتوبر 2026',
+  'September 2026': 'سبتمبر 2026',
+  'August 2026': 'أغسطس 2026',
+  'July 2026': 'يوليو 2026',
+  October: 'أكتوبر',
+  September: 'سبتمبر',
+  August: 'أغسطس',
+  July: 'يوليو',
+}
+
+const REGION_NAMES_AR: Record<string, string> = {
+  'North region': 'المنطقة الشمالية',
+  'West region': 'المنطقة الغربية',
+  'Central region': 'المنطقة الوسطى',
+  'East region': 'المنطقة الشرقية',
+  'Tanta': 'طنطا',
+  'El Mahalla El Kubra': 'المحلة الكبرى',
+  'Assiut': 'أسيوط',
+  'Alexandria': 'الإسكندرية',
+  'Cairo': 'القاهرة',
+  'Giza': 'الجيزة',
+  'Mansoura (Dakahlia)': 'المنصورة (الدقهلية)',
+  North: 'الشمالية',
+  West: 'الغربية',
+  Central: 'الوسطى',
+  East: 'الشرقية',
+}
+
+const PRODUCT_NAMES_AR: Record<string, string> = {
+  Bevato: 'بيفاتو',
+  'Naviro D3 50,000 IU': 'نافيرو د3 50,000',
+  'Naviro D3 10,000 IU': 'نافيرو د3 10,000',
+  'Naviro D3 Drops': 'نافيرو د3 نقط',
+  'Navigen Product 5': 'نافيجين منتج 5',
+}
 
 export function HomeFilters({
   range,
@@ -29,7 +78,7 @@ export function HomeFilters({
   filters,
   onChangeFilters,
 }: HomeFiltersProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [openDropdown, setOpenDropdown] = useState<'month' | 'region' | 'rep' | 'product' | null>(null)
 
   // Local draft states before clicking "Apply"
@@ -105,11 +154,14 @@ export function HomeFilters({
   }
 
   // Chip label formatters
-  const monthLabel = filters.month.split(' ')[0]
+  const rawMonth = filters.month.split(' ')[0]
+  const monthLabel = lang === 'ar' ? (MONTH_NAMES_AR[rawMonth] || rawMonth) : rawMonth
+
+  const rawRegion = filters.regions.length === 1 ? filters.regions[0].replace(' region', '') : ''
   const regionLabel = filters.regions.length === 0
     ? t('home.filters.allRegions')
     : filters.regions.length === 1
-    ? filters.regions[0].replace(' region', '')
+    ? (lang === 'ar' ? (REGION_NAMES_AR[rawRegion] || rawRegion) : rawRegion)
     : t('home.filters.regionsCount', { count: filters.regions.length })
 
   const repLabel = filters.reps.length === 0
@@ -118,10 +170,11 @@ export function HomeFilters({
     ? filters.reps[0].split(' ')[0]
     : t('home.filters.repsCount', { count: filters.reps.length })
 
+  const rawProduct = filters.products.length === 1 ? filters.products[0] : ''
   const productLabel = filters.products.length === 0
     ? t('home.filters.allProducts')
     : filters.products.length === 1
-    ? filters.products[0].split(' ')[0]
+    ? (lang === 'ar' ? (PRODUCT_NAMES_AR[rawProduct] || rawProduct.split(' ')[0]) : rawProduct.split(' ')[0])
     : t('home.filters.productsCount', { count: filters.products.length })
 
   return (
@@ -160,7 +213,7 @@ export function HomeFilters({
                 textAlign: 'left',
               }}
             >
-              <span>{m}</span>
+              <span>{lang === 'ar' ? (MONTH_NAMES_AR[m] || m) : m}</span>
               {draftMonth === m && <Check style={{ width: '14px', height: '14px' }} />}
             </button>
           ))}
@@ -202,7 +255,7 @@ export function HomeFilters({
                   onChange={() => toggleMultiSelect(reg, draftRegions, setDraftRegions)}
                   style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
                 />
-                <span>{reg}</span>
+                <span>{lang === 'ar' ? (REGION_NAMES_AR[reg] || reg) : reg}</span>
               </label>
             )
           })}
@@ -288,7 +341,7 @@ export function HomeFilters({
                   onChange={() => toggleMultiSelect(prod, draftProducts, setDraftProducts)}
                   style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
                 />
-                <span>{prod}</span>
+                <span>{lang === 'ar' ? (PRODUCT_NAMES_AR[prod] || prod) : prod}</span>
               </label>
             )
           })}

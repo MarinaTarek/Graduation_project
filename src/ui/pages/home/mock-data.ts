@@ -112,6 +112,9 @@ export const homeRegions: HomeRegionPerformance[] = [
   { region: 'West region',    region_ar: 'المنطقة الغربية',  lead_rep: 'Maya Patel',    sales_amount: 39400, target_amount: 43000 },
   { region: 'Central region', region_ar: 'المنطقة الوسطى',   lead_rep: 'James Wilson',  sales_amount: 35900, target_amount: 40000 },
   { region: 'East region',    region_ar: 'المنطقة الشرقية',  lead_rep: 'Sofia Chen',    sales_amount: 32600, target_amount: 42000 },
+  { region: 'Tanta',          region_ar: 'طنطا',             lead_rep: 'Olivia Martin', sales_amount: 28400, target_amount: 30000 },
+  { region: 'El Mahalla El Kubra', region_ar: 'المحلة الكبرى', lead_rep: 'Olivia Martin', sales_amount: 24200, target_amount: 26000 },
+  { region: 'Assiut',         region_ar: 'أسيوط',            lead_rep: 'James Wilson',  sales_amount: 26500, target_amount: 29000 },
 ]
 
 export interface HomeReceivable {

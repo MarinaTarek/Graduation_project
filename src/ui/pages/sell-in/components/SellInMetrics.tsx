@@ -3,7 +3,11 @@ import { useT } from '@/lib/i18n'
 import { sellInSummary } from '../mock-data'
 
 export function SellInMetrics() {
-  const { t } = useT()
+  const { t, lang } = useT()
+  const totalRev = lang === 'ar' ? sellInSummary.totalMonthlyRevenue_ar : sellInSummary.totalMonthlyRevenue
+  const compared = lang === 'ar' ? sellInSummary.comparedPeriod_ar : sellInSummary.comparedPeriod
+  const units = lang === 'ar' ? sellInSummary.totalUnitsMoved_ar : sellInSummary.totalUnitsMoved
+
   return (
     <div className="panel chart-panel">
       <div className="panel-head">
@@ -13,13 +17,13 @@ export function SellInMetrics() {
         </div>
       </div>
       <div className="chart-total">
-        <strong>{sellInSummary.totalMonthlyRevenue}</strong>
+        <strong>{totalRev}</strong>
         <span>
-          <ArrowUpRight /> {sellInSummary.growthPercent} <small>{sellInSummary.comparedPeriod}</small>
+          <ArrowUpRight /> {sellInSummary.growthPercent} <small>{compared}</small>
         </span>
       </div>
       <p style={{ marginTop: '12px', color: 'var(--muted-text)', fontSize: '13px' }}>
-        {t('sellIn.metrics.intakeLabel', { amount: sellInSummary.totalUnitsMoved })}
+        {t('sellIn.metrics.intakeLabel', { amount: units })}
       </p>
     </div>
   )

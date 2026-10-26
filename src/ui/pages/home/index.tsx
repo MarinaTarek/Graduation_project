@@ -6,6 +6,7 @@ import { storedUsersStore } from '@/lib/auth/mock-users'
 import { useStore } from '@/data/mock/store'
 import { batchesStore, stockMovementsStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
 import { useT, interpolate } from '@/lib/i18n'
+import { formatCurrencyCompact } from '@/lib/format'
 import { HomeFilters, type HomeFiltersState } from './components/HomeFilters'
 import { AttentionSection } from './components/AttentionSection'
 import { SellInChartPanel } from './components/SellInChartPanel'
@@ -24,13 +25,20 @@ import {
 } from './components/PharmaSections'
 import { homeAttentionItems, homeProducts, homeReps } from './mock-data'
 
-const REP_METRICS: Record<string, { amount: string; percent: string }> = {
-  'Ahmed Samir': { amount: 'EGP 42.8K', percent: '94%' },
-  'Sara Ali': { amount: 'EGP 38.2K', percent: '88%' },
-  'Olivia Martin': { amount: 'EGP 42.8K', percent: '98%' },
-  'Maya Patel': { amount: 'EGP 39.4K', percent: '91%' },
-  'James Wilson': { amount: 'EGP 35.9K', percent: '84%' },
-  'Sofia Chen': { amount: 'EGP 32.6K', percent: '79%' },
+const REP_METRICS: Record<string, { amount: number; percent: string }> = {
+  'Ahmed Samir': { amount: 42800, percent: '94%' },
+  'Sara Ali': { amount: 38200, percent: '88%' },
+  'Olivia Martin': { amount: 42800, percent: '98%' },
+  'Maya Patel': { amount: 39400, percent: '91%' },
+  'James Wilson': { amount: 35900, percent: '84%' },
+  'Sofia Chen': { amount: 32600, percent: '79%' },
+}
+
+const MONTH_NAMES_AR: Record<string, string> = {
+  October: 'أكتوبر',
+  September: 'سبتمبر',
+  August: 'أغسطس',
+  July: 'يوليو',
 }
 
 export interface HomePageProps {
@@ -53,7 +61,7 @@ export default function HomePage({
   onSelectRep,
 }: HomePageProps) {
   const { user, role } = useAuth()
-  const { t } = useT()
+  const { t, lang } = useT()
   const [daysRemaining, setDaysRemaining] = useState(12)
   const pendingCount = useStore(storedUsersStore).filter((u) => u.status === 'pending').length
 
@@ -86,22 +94,31 @@ export default function HomePage({
   })
 
   // Headline metrics reacting to filters
-  let headlineSales = 'EGP 240K'
+  let headlineSalesVal = 240000
   let headlineGrowth = '8%'
   let headlineDays = range === 'Week' ? t('home.hero.days', { count: 4 }) : t('home.hero.days', { count: daysRemaining })
 
   if (filters.reps.length === 1) {
-    headlineSales = filters.reps[0] === 'Olivia Martin' ? 'EGP 42.8K' : 'EGP 39.4K'
+    headlineSalesVal = filters.reps[0] === 'Olivia Martin' ? 42800 : 39400
     headlineGrowth = '12%'
   } else if (filters.reps.length > 1) {
-    headlineSales = `EGP ${filters.reps.length * 38}K`
+    headlineSalesVal = filters.reps.length * 38000
   } else if (filters.month !== 'October 2026') {
-    headlineSales = 'EGP 224K'
+    headlineSalesVal = 224000
     headlineGrowth = '6.4%'
     headlineDays = t('home.hero.completedPeriod')
   }
 
-  const repMetric = (user?.name && REP_METRICS[user.name]) || { amount: 'EGP 42.8K', percent: '94%' }
+  const headlineSales = formatCurrencyCompact(headlineSalesVal, 'EGP', lang)
+
+  const repMetricRaw = (user?.name && REP_METRICS[user.name]) || { amount: 42800, percent: '94%' }
+  const repMetric = {
+    amount: formatCurrencyCompact(repMetricRaw.amount, 'EGP', lang),
+    percent: repMetricRaw.percent,
+  }
+
+  const monthRaw = filters.month.split(' ')[0]
+  const monthDisplay = lang === 'ar' ? (MONTH_NAMES_AR[monthRaw] || monthRaw) : monthRaw
 
   const allBatches = useStore(batchesStore)
   const allMovements = useStore(stockMovementsStore)
@@ -161,7 +178,7 @@ export default function HomePage({
               }}
             >
               {interpolate(t('home.hero.storyManager'), {
-                month: filters.month.split(' ')[0],
+                month: monthDisplay,
                 amount: (
                   <button onClick={() => onOpen('invoice detail')}>
                     <b>{headlineSales}</b>

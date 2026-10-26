@@ -3,7 +3,9 @@ import { useT } from '@/lib/i18n'
 import { sellOutMockData } from '../mock-data'
 
 export function SellOutMetrics() {
-  const { t } = useT()
+  const { t, lang } = useT()
+  const dispensedStr = lang === 'ar' ? sellOutMockData.dispensedValue_ar : sellOutMockData.dispensedValue
+
   return (
     <div className="panel">
       <div className="panel-head">
@@ -14,7 +16,7 @@ export function SellOutMetrics() {
         <Activity />
       </div>
       <div className="chart-total">
-        <strong>{sellOutMockData.dispensedValue}</strong>
+        <strong>{dispensedStr}</strong>
         <span>{t('sellOut.metrics.acrossPharmacies', { count: sellOutMockData.pharmacyCount })}</span>
       </div>
     </div>

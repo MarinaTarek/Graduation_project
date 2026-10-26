@@ -4,6 +4,7 @@ import { SALES_PERFORMANCE_MOCK, type SalesRepBreakdown } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { useT } from '@/lib/i18n'
+import { formatCurrency, formatCurrencyCompact, formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface SalesPerformanceReportProps {
@@ -11,7 +12,7 @@ export interface SalesPerformanceReportProps {
 }
 
 export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   // Filter by reps and regions if selected
   const reps = SALES_PERFORMANCE_MOCK.byRep.filter((r) => {
     if (filters.reps.length > 0 && !filters.reps.includes(r.rep)) return false
@@ -40,7 +41,7 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
             }}
           >
             <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted-text)' }}>
-              {stat.label}
+              {formatReportTerm(stat.label, lang)}
             </span>
             <div
               style={{
@@ -51,7 +52,7 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {stat.value}
+              {formatMetricValue(stat.value, lang)}
             </div>
             <div
               style={{
@@ -60,7 +61,7 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
                 color: stat.isPositive ? 'var(--story-em, #3e9a78)' : 'var(--rose-text)',
               }}
             >
-              {stat.change}
+              {formatMetricValue(stat.change, lang)}
             </div>
           </div>
         ))}
@@ -124,7 +125,7 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
                   <g key={val}>
                     <line x1="50" y1={y} x2="630" y2={y} stroke="var(--border-subtle)" strokeDasharray="3 3" />
                     <text x="42" y={y + 4} textAnchor="end" fontSize="10" fill="var(--muted-text)">
-                      EGP {val / 1000}k
+                      {formatCurrencyCompact(val, 'EGP', lang)}
                     </text>
                   </g>
                 )
@@ -242,10 +243,10 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
                   </td>
                   <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{r.territory}</td>
                   <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    EGP {r.target.toLocaleString()}
+                    {formatCurrency(r.target, 'EGP', lang)}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
-                    EGP {r.actual.toLocaleString()}
+                    {formatCurrency(r.actual, 'EGP', lang)}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                     <span style={{ color: r.achievementRate >= 100 ? 'var(--story-em)' : 'var(--amber-text)' }}>

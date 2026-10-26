@@ -3,7 +3,7 @@ import { FileText, Plus } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
-import { InvoiceToolbar, type InvoiceFiltersState } from './components/InvoiceToolbar'
+import { InvoiceToolbar, type InvoiceFiltersState, STATUS_KEYS, DATE_KEYS, SOURCE_KEYS } from './components/InvoiceToolbar'
 import { InvoiceListItem } from './components/InvoiceListItem'
 import { invoicesStore } from '@/data/mock/invoices'
 import { useStore } from '@/data/mock/store'
@@ -149,17 +149,17 @@ export default function InvoicesPage({
           <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>{t('invoices.activeFilters')}</span>
           {effectiveStatus !== 'All statuses' && (
             <Chip active onClick={removeStatus} title={t('invoices.clearStatusFilter')}>
-              {effectiveStatus} &times;
+              {STATUS_KEYS[effectiveStatus] ? t(STATUS_KEYS[effectiveStatus] as any) : effectiveStatus} &times;
             </Chip>
           )}
           {activeFilters.dateRange !== 'All time' && (
             <Chip active onClick={removeDateRange} title={t('invoices.clearDateRangeFilter')}>
-              {activeFilters.dateRange} &times;
+              {DATE_KEYS[activeFilters.dateRange] ? t(DATE_KEYS[activeFilters.dateRange] as any) : activeFilters.dateRange} &times;
             </Chip>
           )}
           {activeFilters.source !== 'All sources' && (
             <Chip active onClick={removeSource} title={t('invoices.clearSourceFilter')}>
-              {activeFilters.source} &times;
+              {SOURCE_KEYS[activeFilters.source] ? t(SOURCE_KEYS[activeFilters.source] as any) : activeFilters.source} &times;
             </Chip>
           )}
         </div>

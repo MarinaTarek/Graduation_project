@@ -1,3 +1,5 @@
+import { useT } from '@/lib/i18n'
+
 export interface CapsuleProgressProps {
   name: string
   sold: string
@@ -37,6 +39,8 @@ export function CapsuleProgress({
   onClick,
   className = '',
 }: CapsuleProgressProps) {
+  const { lang } = useT()
+
   return (
     <button
       className={`product-capsule ${className}`}
@@ -63,9 +67,9 @@ export function CapsuleProgress({
           margin: '4px 0 6px',
         }}
       >
-        <div style={{ width: `${pctSold}%`, background: 'var(--green-text, #16a34a)' }} title={`Sold: ${sellOut || sold}`} />
-        <div style={{ width: `${pctMarket}%`, background: 'var(--ocean, #0284c7)' }} title={`In market: ${inMarket}`} />
-        <div style={{ width: `${pctWarehouse}%`, background: 'var(--amber-text, #d97706)' }} title={`Warehouse: ${inWarehouse || left}`} />
+        <div style={{ width: `${pctSold}%`, background: 'var(--green-text, #16a34a)' }} title={`${lang === 'ar' ? 'مباع:' : 'Sold:'} ${sellOut || sold}`} />
+        <div style={{ width: `${pctMarket}%`, background: 'var(--ocean, #0284c7)' }} title={`${lang === 'ar' ? 'في السوق:' : 'In market:'} ${inMarket}`} />
+        <div style={{ width: `${pctWarehouse}%`, background: 'var(--amber-text, #d97706)' }} title={`${lang === 'ar' ? 'في المستودع:' : 'Warehouse:'} ${inWarehouse || left}`} />
       </div>
 
       <div
@@ -75,17 +79,17 @@ export function CapsuleProgress({
           flexDirection: 'column',
           gap: '2px',
           fontSize: '10px',
-          textAlign: 'left',
+          textAlign: 'start',
           width: '100%',
           color: 'var(--muted-text)',
           lineHeight: 1.3,
         }}
       >
-        <div>Received: <b style={{ color: 'var(--heading-text)' }}>{received || qty}</b></div>
-        <div>Sold to customers (Sell-in): <b style={{ color: 'var(--ocean)' }}>{sellIn || qty}</b></div>
-        <div>Sold by customers (Sell-out): <b style={{ color: 'var(--green-text, #16a34a)' }}>{sellOut || sold}</b></div>
-        <div>In warehouse now: <b style={{ color: '#d97706' }}>{inWarehouse || left}</b></div>
-        {inMarket && <div>Still in market: <b style={{ color: 'var(--heading-text)' }}>{inMarket}</b></div>}
+        <div>{lang === 'ar' ? 'المستلم:' : 'Received:'} <b style={{ color: 'var(--heading-text)' }}>{received || qty}</b></div>
+        <div>{lang === 'ar' ? 'مبيعات مباشرة (Sell-in):' : 'Sold to customers (Sell-in):'} <b style={{ color: 'var(--ocean)' }}>{sellIn || qty}</b></div>
+        <div>{lang === 'ar' ? 'مبيعات صيدليات (Sell-out):' : 'Sold by customers (Sell-out):'} <b style={{ color: 'var(--green-text, #16a34a)' }}>{sellOut || sold}</b></div>
+        <div>{lang === 'ar' ? 'في المستودع الآن:' : 'In warehouse now:'} <b style={{ color: '#d97706' }}>{inWarehouse || left}</b></div>
+        {inMarket && <div>{lang === 'ar' ? 'لا يزال في السوق:' : 'Still in market:'} <b style={{ color: 'var(--heading-text)' }}>{inMarket}</b></div>}
       </div>
     </button>
   )

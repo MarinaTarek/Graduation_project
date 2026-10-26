@@ -3,6 +3,7 @@ import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Button } from '@/ui/design-system/components/Button'
 import { useT } from '@/lib/i18n'
 import type { ClientRecord } from '../mock-data'
+import { SPECIALTY_AR, CLASSIFICATION_AR, CLIENT_REGION_AR } from '../mock-data'
 
 export interface ClientListItemProps {
   item: ClientRecord
@@ -12,7 +13,16 @@ export interface ClientListItemProps {
 }
 
 export function ClientListItem({ item, onClick, onEdit, canEdit = true }: ClientListItemProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
+
+  const displayName = lang === 'ar' ? (item.name_ar || item.name) : item.name
+  let displayMeta = item.meta
+  if (lang === 'ar') {
+    const spec = (item.specialty && SPECIALTY_AR[item.specialty]) || item.specialty
+    const reg = (item.region && CLIENT_REGION_AR[item.region]) || item.region
+    const cls = (item.classification && CLASSIFICATION_AR[item.classification]) || item.classification
+    displayMeta = [spec, reg, cls].filter(Boolean).join(' · ')
+  }
 
   return (
     <div
@@ -32,8 +42,8 @@ export function ClientListItem({ item, onClick, onEdit, canEdit = true }: Client
         <Users />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <strong>{item.name}</strong>
-        <span>{item.meta}</span>
+        <strong>{displayName}</strong>
+        <span>{displayMeta}</span>
       </div>
       <StatusPill status={item.status} />
       {canEdit && onEdit && (

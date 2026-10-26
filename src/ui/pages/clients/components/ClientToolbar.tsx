@@ -3,6 +3,7 @@ import { Filter, LayoutGrid, List, Search, X } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { DropdownPortal } from '@/ui/design-system/components/DropdownPortal'
 import { useT } from '@/lib/i18n'
+import { SPECIALTY_AR, CLASSIFICATION_AR, CLIENT_REGION_AR } from '../mock-data'
 
 export interface ClientFiltersState {
   specialty: string
@@ -23,7 +24,26 @@ export interface ClientToolbarProps {
 
 const SPECIALTIES = ['All specialties', 'Cardiology', 'Pharmacy', 'Pediatrics', 'General Medicine']
 const CLASSIFICATIONS = ['All classes', 'Class A', 'Class B', 'Class C']
-const REGIONS = ['All regions', 'North region', 'West region', 'Central region', 'East region']
+const REGIONS = [
+  'All regions',
+  'North region',
+  'West region',
+  'Central region',
+  'East region',
+  'South region',
+  'Tanta',
+  'El Mahalla El Kubra',
+  'Assiut',
+  'Cairo',
+  'Giza',
+  'Alexandria',
+  'Mansoura (Dakahlia)',
+  'Zagazig (Sharqia)',
+  'Suez',
+  'Port Said',
+  'Ismailia',
+  'Aswan',
+]
 
 export function ClientToolbar({
   searchQuery,
@@ -34,7 +54,7 @@ export function ClientToolbar({
   onApplyFilters,
   onClearFilters,
 }: ClientToolbarProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [draft, setDraft] = useState<ClientFiltersState>(activeFilters)
   const filterBtnRef = useRef<HTMLDivElement>(null)
@@ -119,7 +139,7 @@ export function ClientToolbar({
                 }}
               >
                 {SPECIALTIES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>{lang === 'ar' ? (SPECIALTY_AR[s] || s) : s}</option>
                 ))}
               </select>
             </label>
@@ -139,7 +159,7 @@ export function ClientToolbar({
                 }}
               >
                 {CLASSIFICATIONS.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>{lang === 'ar' ? (CLASSIFICATION_AR[c] || c) : c}</option>
                 ))}
               </select>
             </label>
@@ -159,7 +179,7 @@ export function ClientToolbar({
                 }}
               >
                 {REGIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>{lang === 'ar' ? (CLIENT_REGION_AR[r] || r) : r}</option>
                 ))}
               </select>
             </label>

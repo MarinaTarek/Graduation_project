@@ -5,6 +5,8 @@ import { Avatar } from './Avatar'
 import { FieldError } from './FieldError'
 import { addCustomer } from '@/data/mock/customers'
 import { addProduct } from '@/lib/productService'
+import { useT } from '@/lib/i18n'
+import { EGYPT_REGIONS } from '@/data/regions'
 
 export interface RecordFormDrawerProps {
   title: string
@@ -32,6 +34,7 @@ export function RecordFormDrawer({
   role = 'admin',
   currentUser,
 }: RecordFormDrawerProps) {
+  const { lang } = useT()
   // Common states
   const isDoctor = title === 'Add doctor'
   const isProduct = title === 'Add product'
@@ -234,10 +237,11 @@ export function RecordFormDrawer({
             <label>
               Region
               <select value={docRegion} onChange={(e) => setDocRegion(e.target.value)}>
-                <option>North region</option>
-                <option>West region</option>
-                <option>Central region</option>
-                <option>East region</option>
+                {EGYPT_REGIONS.map((r) => (
+                  <option key={r.id} value={r.name_en}>
+                    {lang === 'ar' ? `${r.name_ar} (${r.governorate_ar})` : `${r.name_en} (${r.governorate_en})`}
+                  </option>
+                ))}
               </select>
             </label>
             <label>

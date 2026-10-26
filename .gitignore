@@ -1,3 +1,26 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Deployment
+.vercel/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Operating system
+.DS_Store
+Thumbs.db
+
 # v0 sandbox internal files
 __v0_runtime_loader.js
 __v0_devtools.tsx
@@ -5,12 +28,3 @@ __v0_jsx-dev-runtime.ts
 .snowflake/
 .design-cache/
 .v0-trash/
-.vercel/
-
-# Environment variables
-.env*.local
-
-# Common ignores
-node_modules
-.next/
-.DS_Store

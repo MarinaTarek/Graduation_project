@@ -17,6 +17,7 @@ import { REP_SCORECARD_MOCK, type RepScorecardProfile } from '../mock-data'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { useT } from '@/lib/i18n'
+import { formatCurrency } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface RepScorecardReportProps {
@@ -30,7 +31,7 @@ export function RepScorecardReport({
   role = 'admin',
   currentUserName = 'Alex Morgan',
 }: RepScorecardReportProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [selectedRepName, setSelectedRepName] = useState<string>(
     role === 'rep' ? currentUserName : filters.reps[0] || 'Alex Morgan'
   )
@@ -126,7 +127,7 @@ export function RepScorecardReport({
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            EGP {currentRep.sales.toLocaleString()}
+            {formatCurrency(currentRep.sales, 'EGP', lang)}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--story-em, #3e9a78)' }}>
             {t('reports.scorecard.quotaTarget', { target: currentRep.salesTarget.toLocaleString(), pct: currentRep.targetPct })}
@@ -358,7 +359,7 @@ export function RepScorecardReport({
                     </div>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    EGP {r.sales.toLocaleString()}
+                    {formatCurrency(r.sales, 'EGP', lang)}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {r.visitsLogged} / {r.visitsTarget}

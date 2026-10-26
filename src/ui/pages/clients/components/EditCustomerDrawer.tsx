@@ -4,6 +4,8 @@ import { Button } from '@/ui/design-system/components/Button'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
 import { updateCustomer, deleteCustomer, type Customer } from '@/data/mock/customers'
 import { useT } from '@/lib/i18n'
+import { CLIENT_REGION_AR } from '../mock-data'
+import { EGYPT_REGIONS } from '@/data/regions'
 
 export interface EditCustomerDrawerProps {
   customer: Customer | null
@@ -79,7 +81,7 @@ export function EditCustomerDrawer({
     )
   }, [repSearch])
 
-  const { t } = useT()
+  const { t, lang } = useT()
 
   const handleClose = () => {
     if (isDirty) {
@@ -264,10 +266,11 @@ export function EditCustomerDrawer({
                 onChange={(e) => setRegion(e.target.value)}
                 disabled={!isOwnCustomer}
               >
-                <option value="North region">North region</option>
-                <option value="West region">West region</option>
-                <option value="Central region">Central region</option>
-                <option value="East region">East region</option>
+                {EGYPT_REGIONS.map((r) => (
+                  <option key={r.id} value={r.name_en}>
+                    {lang === 'ar' ? `${r.name_ar} (${r.governorate_ar})` : `${r.name_en} (${r.governorate_en})`}
+                  </option>
+                ))}
               </select>
             </label>
 

@@ -2,6 +2,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { CapsuleProgress } from '@/ui/design-system/components/CapsuleProgress'
 import { useT } from '@/lib/i18n'
+import { localizedName } from '@/lib/i18n/names'
 import { homeProducts } from '../mock-data'
 import { useStore } from '@/data/mock/store'
 import {
@@ -19,7 +20,7 @@ export function ProductsPanel({
   onNavigateStock,
   onOpenStockDetail,
 }: ProductsPanelProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
 
@@ -45,7 +46,7 @@ export function ProductsPanel({
           return (
             <CapsuleProgress
               key={p.name}
-              name={p.name}
+              name={localizedName(p, lang)}
               sold={`${derived.sell_through_pct}%`}
               qty={derived.received.toLocaleString()}
               left={derived.in_warehouse.toLocaleString()}
