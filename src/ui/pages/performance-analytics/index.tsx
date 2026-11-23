@@ -23,6 +23,7 @@ import { stockMovementsStore } from '@/data/mock/stockDerived'
 import { productsStore } from '@/data/mock/products'
 import { useStore } from '@/data/mock/store'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
+import { getSystemCurrentYearMonth, getRecentMonthOptions } from '@/lib/dateUtils'
 
 export interface PerformanceAnalyticsPageProps {
   role?: 'admin' | 'rep'
@@ -38,12 +39,11 @@ const DEFAULT_PRICES: Record<string, number> = {
   'Navigen Product 5': 110,
 }
 
-// Fixed months for comparative trend tracking
-const TRACKED_MONTHS = [
-  { key: '2026-08', label: 'August 2026' },
-  { key: '2026-09', label: 'September 2026' },
-  { key: '2026-10', label: 'October 2026' },
-]
+// Dynamic rolling months for comparative trend tracking
+const getTrackedMonths = () =>
+  getRecentMonthOptions(3)
+    .reverse()
+    .map((o) => ({ key: o.key, label: o.labelEn }))
 
 export default function PerformanceAnalyticsPage({
   role = 'admin',
@@ -58,11 +58,11 @@ export default function PerformanceAnalyticsPage({
   const catalogProducts = useStore(productsStore)
 
   // Filter state
-  const [filters, setFilters] = useState<AnalyticsFiltersState>({
-    period: '2026-10', // Default to current period
+  const [filters, setFilters] = useState<AnalyticsFiltersState>(() => ({
+    period: getSystemCurrentYearMonth(),
     area: 'All Areas',
     rep: 'All Representatives',
-  })
+  }))
 
   // Drilldown state
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null)
@@ -76,9 +76,10 @@ export default function PerformanceAnalyticsPage({
     return map
   }, [catalogProducts])
 
-  // Available filter options derived from data
+  // Available filter options derived from data + current dynamic month
   const availablePeriods = useMemo(() => {
     const set = new Set<string>()
+    set.add(getSystemCurrentYearMonth())
     sellOutReports.forEach((r) => set.add(r.reportingMonth))
     return Array.from(set).sort().reverse()
   }, [sellOutReports])
@@ -187,7 +188,7 @@ export default function PerformanceAnalyticsPage({
 
   // 4. Monthly Trend Data (Comparing Financials vs Quantities)
   const monthlyComparisonData: MonthlyMetric[] = useMemo(() => {
-    return TRACKED_MONTHS.map((m) => {
+    return getTrackedMonths().map((m) => {
       // If specific period is selected and doesn't match this month, we still show the month or focus on it
       const monthReports = sellOutReports.filter((r) => {
         if (r.reportingMonth !== m.key) return false

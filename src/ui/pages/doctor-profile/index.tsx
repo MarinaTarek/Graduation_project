@@ -439,7 +439,6 @@ export default function DoctorProfilePage({
             variant="primary"
             onClick={() => {
               setIsEditing(true)
-              onSave?.()
             }}
           >
             {isHco ? (lang === 'ar' ? 'تعديل المؤسسة' : 'Edit Organization') : t('doctor.editDoctor')}

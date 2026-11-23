@@ -1,7 +1,13 @@
+import { useMemo } from 'react'
 import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { useT } from '@/lib/i18n'
+import { useStore } from '@/data/mock/store'
+import { usersStore } from '@/data/mock/users'
+import { invoicesStore } from '@/data/mock/invoices'
+import { targetsStore } from '@/data/mock/targets'
+import { getAuthoritativeRepScorecard } from '@/data/mock/reportingAnalytics'
 import { homeReps } from '../mock-data'
 
 export interface TopRepsPanelProps {
@@ -26,6 +32,33 @@ export function TopRepsPanel({
   onSelectRep,
 }: TopRepsPanelProps) {
   const { t, lang } = useT()
+  const users = useStore(usersStore)
+  const invoices = useStore(invoicesStore)
+  const targets = useStore(targetsStore)
+
+  const repList = useMemo(() => {
+    const liveReps = users.filter((u) => u.role === 'rep' && u.status !== 'disabled')
+    if (liveReps.length === 0) {
+      return homeReps.map(([name, region, sales, goal]) => ({
+        name,
+        region,
+        salesText: lang === 'ar' ? sales.replace(/^EGP\s*/i, '').replace(/k/i, 'K') + ' ج.م' : sales,
+        goal,
+      }))
+    }
+    return liveReps.map((r) => {
+      const card = getAuthoritativeRepScorecard(r.name)
+      const salesFormatted = card.sales >= 1000
+        ? `EGP ${(card.sales / 1000).toFixed(1)}k`
+        : `EGP ${card.sales}`
+      return {
+        name: r.name,
+        region: r.region || 'Central region',
+        salesText: lang === 'ar' ? salesFormatted.replace(/^EGP\s*/i, '').replace(/k/i, 'K') + ' ج.م' : salesFormatted,
+        goal: `${card.targetPct}%`,
+      }
+    })
+  }, [users, invoices, targets, lang])
 
   return (
     <section className="panel reps-panel">
@@ -39,7 +72,7 @@ export function TopRepsPanel({
         </Button>
       </div>
       <div className="rep-list">
-        {homeReps.map(([name, region, sales, goal], i) => (
+        {repList.map(({ name, region, salesText, goal }, i) => (
           <button
             className="rep-row"
             key={name}
@@ -63,7 +96,7 @@ export function TopRepsPanel({
               <strong>{name}</strong>
               <span>{lang === 'ar' ? (REGION_NAMES_AR[region] || region) : region}</span>
             </div>
-            <b>{lang === 'ar' ? sales.replace(/^EGP\s*/i, '').replace(/k/i, 'K') + ' ج.م' : sales}</b>
+            <b>{salesText}</b>
             <span className="rep-goal">{goal}</span>
             <ChevronRight />
           </button>
@@ -72,3 +105,4 @@ export function TopRepsPanel({
     </section>
   )
 }
+

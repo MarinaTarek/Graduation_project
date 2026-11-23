@@ -1,3 +1,11 @@
+export interface InvoiceLineItem {
+  productCode: string
+  productName: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
+
 export interface InvoiceRecord {
   name: string
   name_ar?: string
@@ -7,6 +15,7 @@ export interface InvoiceRecord {
   source: 'Telegram' | 'Web upload' | 'Sales order'
   dateRange: 'Today' | 'Last 7 days' | 'This month' | 'Last month'
   repName: string
+  repId?: string
   id?: string
   invoiceNumber?: string
   customerId?: string
@@ -18,6 +27,10 @@ export interface InvoiceRecord {
   issueDate?: string
   dueDate?: string
   originalAmount?: number
+  currency?: string
+  items?: InvoiceLineItem[]
+  attachmentFileName?: string
+  attachmentFileSize?: string
   notes?: string
 }
 

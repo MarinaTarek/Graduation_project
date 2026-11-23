@@ -301,64 +301,72 @@ export function StockExpiryReport({ filters }: StockExpiryReportProps) {
               </tr>
             </thead>
             <tbody>
-              {batches.map((b) => (
-                <tr
-                  key={b.id || b.batch_no}
-                  style={{
-                    background: 'var(--input-bg)',
-                    borderRadius: '14px',
-                  }}
-                >
-                  <td
-                    style={{
-                      padding: '12px 14px',
-                      fontWeight: 600,
-                      color: 'var(--heading-text)',
-                      fontFamily: 'monospace',
-                      borderTopLeftRadius: '14px',
-                      borderBottomLeftRadius: '14px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {b.batch_no}
-                      {b.is_fefo_first && (
-                        <span
-                          style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            padding: '1px 6px',
-                            borderRadius: '99px',
-                            background: 'rgba(2, 132, 199, 0.15)',
-                            color: 'var(--ocean)',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                          }}
-                        >
-                          <Sparkles size={10} /> {t('reports.stock.sellFirst')}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px', fontWeight: 500, color: 'var(--heading-text)' }}>{b.productName}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    {t('reports.stock.packsUnit', { count: b.qty_remaining.toLocaleString() })}
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
-                    {b.expiry_date}
-                  </td>
-                  <td
-                    style={{
-                      padding: '12px 14px',
-                      textAlign: 'center',
-                      borderTopRightRadius: '14px',
-                      borderBottomRightRadius: '14px',
-                    }}
-                  >
-                    {getExpiryPill(b)}
+              {batches.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted-text)' }}>
+                    {t('reports.stock.chartEmpty')}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                batches.map((b) => (
+                  <tr
+                    key={b.id || b.batch_no}
+                    style={{
+                      background: 'var(--input-bg)',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <td
+                      style={{
+                        padding: '12px 14px',
+                        fontWeight: 600,
+                        color: 'var(--heading-text)',
+                        fontFamily: 'monospace',
+                        borderTopLeftRadius: '14px',
+                        borderBottomLeftRadius: '14px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {b.batch_no}
+                        {b.is_fefo_first && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '99px',
+                              background: 'rgba(2, 132, 199, 0.15)',
+                              color: 'var(--ocean)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}
+                          >
+                            <Sparkles size={10} /> {t('reports.stock.sellFirst')}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', fontWeight: 500, color: 'var(--heading-text)' }}>{b.productName}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      {t('reports.stock.packsUnit', { count: b.qty_remaining.toLocaleString() })}
+                    </td>
+                    <td style={{ padding: '12px', color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
+                      {b.expiry_date}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 14px',
+                        textAlign: 'center',
+                        borderTopRightRadius: '14px',
+                        borderBottomRightRadius: '14px',
+                      }}
+                    >
+                      {getExpiryPill(b)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

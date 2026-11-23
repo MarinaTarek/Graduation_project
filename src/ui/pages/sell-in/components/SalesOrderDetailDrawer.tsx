@@ -14,6 +14,7 @@ import { productsStore } from '@/data/mock/products'
 import { auditStore } from '@/data/mock/audit'
 import {
   approveSalesOrder,
+  dispatchSalesOrder,
   rejectSalesOrder,
   salesOrdersStore,
   type SalesOrderStatus,
@@ -23,7 +24,9 @@ import { translateSalesOrderError } from './sales-order-errors'
 const STATUS_LABEL: Record<SalesOrderStatus, TranslationKey> = {
   Pending: 'salesOrders.pending',
   Approved: 'salesOrders.approved',
+  Dispatched: 'salesOrders.dispatched',
   Rejected: 'salesOrders.rejected',
+  Cancelled: 'salesOrders.cancelled',
 }
 
 const rowStyle: CSSProperties = {
@@ -60,7 +63,7 @@ export function SalesOrderDetailDrawer({
   // approvals and honours per-user overrides. Frontend-only, not security.
   const canReview = canPerformAction('canApproveInvoices', user)
 
-  const [busy, setBusy] = useState<'approve' | 'reject' | null>(null)
+  const [busy, setBusy] = useState<'approve' | 'reject' | 'dispatch' | null>(null)
   const [confirmApprove, setConfirmApprove] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [reason, setReason] = useState('')
@@ -115,6 +118,19 @@ export function SalesOrderDetailDrawer({
       onAction(t('salesOrders.rejectSuccess'))
     } catch (err) {
       setReasonError(translateSalesOrderError(err instanceof Error ? err.message : String(err), t))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleDispatch = () => {
+    if (busy) return
+    setBusy('dispatch')
+    try {
+      dispatchSalesOrder(order.id, user?.name || 'Warehouse Staff')
+      onAction(t('salesOrders.dispatchSuccess'))
+    } catch (err) {
+      setError(translateSalesOrderError(err instanceof Error ? err.message : String(err), t))
     } finally {
       setBusy(null)
     }
@@ -232,6 +248,19 @@ export function SalesOrderDetailDrawer({
             disabled={busy !== null}
           >
             <Check data-icon="inline-start" /> {t('salesOrders.approve')}
+          </Button>
+        </div>
+      )}
+
+      {order.status === 'Approved' && (
+        <div className="sheet-actions">
+          <Button
+            variant="primary"
+            onClick={handleDispatch}
+            loading={busy === 'dispatch'}
+            disabled={busy !== null}
+          >
+            <Check data-icon="inline-start" /> {t('salesOrders.dispatch')}
           </Button>
         </div>
       )}

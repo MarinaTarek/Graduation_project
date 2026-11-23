@@ -5,8 +5,17 @@ import { useAuth, canAccessPage } from '@/lib/auth'
 import { storedUsersStore } from '@/lib/auth/mock-users'
 import { useStore } from '@/data/mock/store'
 import { batchesStore, stockMovementsStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
+import { invoicesStore } from '@/data/mock/invoices'
+import { targetsStore } from '@/data/mock/targets'
+import { getAuthoritativeRepScorecard } from '@/data/mock/reportingAnalytics'
 import { useT, interpolate } from '@/lib/i18n'
 import { formatCurrencyCompact } from '@/lib/format'
+import {
+  getCurrentMonthYearLabel,
+  getSystemCurrentYearMonth,
+  monthLabelToYearMonth,
+  MONTH_NAMES_AR,
+} from '@/lib/dateUtils'
 import { HomeFilters, type HomeFiltersState } from './components/HomeFilters'
 import { AttentionSection } from './components/AttentionSection'
 import { SellInChartPanel } from './components/SellInChartPanel'
@@ -24,22 +33,6 @@ import {
   ReturnsPanel,
 } from './components/PharmaSections'
 import { homeAttentionItems, homeProducts, homeReps } from './mock-data'
-
-const REP_METRICS: Record<string, { amount: number; percent: string }> = {
-  'Ahmed Samir': { amount: 42800, percent: '94%' },
-  'Sara Ali': { amount: 38200, percent: '88%' },
-  'Olivia Martin': { amount: 42800, percent: '98%' },
-  'Maya Patel': { amount: 39400, percent: '91%' },
-  'James Wilson': { amount: 35900, percent: '84%' },
-  'Sofia Chen': { amount: 32600, percent: '79%' },
-}
-
-const MONTH_NAMES_AR: Record<string, string> = {
-  October: 'أكتوبر',
-  September: 'سبتمبر',
-  August: 'أغسطس',
-  July: 'يوليو',
-}
 
 export interface HomePageProps {
   onAction: (s: string) => void
@@ -64,6 +57,8 @@ export default function HomePage({
   const { t, lang } = useT()
   const [daysRemaining, setDaysRemaining] = useState(12)
   const pendingCount = useStore(storedUsersStore).filter((u) => u.status === 'pending').length
+  const allInvoices = useStore(invoicesStore)
+  const allTargets = useStore(targetsStore)
 
   useEffect(() => {
     const now = new Date()
@@ -74,12 +69,12 @@ export default function HomePage({
   // Rep ID for role-scoped pharma data
   const repId = role === 'rep' ? (user?.id ?? undefined) : undefined
 
-  const [filters, setFilters] = useState<HomeFiltersState>({
-    month: 'October 2026',
+  const [filters, setFilters] = useState<HomeFiltersState>(() => ({
+    month: getCurrentMonthYearLabel('en'),
     regions: [],
     reps: [],
     products: [],
-  })
+  }))
 
   // Dynamic products filtering reacting to Product filter
   const displayedProducts = filters.products.length > 0
@@ -93,28 +88,54 @@ export default function HomePage({
     return matchesRep && matchesRegion
   })
 
-  // Headline metrics reacting to filters
-  let headlineSalesVal = 240000
+  const currentMonthLabel = getCurrentMonthYearLabel('en')
+  const currentYM = getSystemCurrentYearMonth()
+
+  // Headline metrics reacting to filters and live data
+  const headlineSalesVal = useMemo(() => {
+    if (filters.reps.length === 1) {
+      const card = getAuthoritativeRepScorecard(filters.reps[0])
+      return card.sales > 0 ? card.sales : (filters.reps[0] === 'Olivia Martin' ? 42800 : 39400)
+    }
+    if (filters.reps.length > 1) {
+      return filters.reps.reduce((sum, r) => sum + getAuthoritativeRepScorecard(r).sales, 0)
+    }
+    const ym = monthLabelToYearMonth(filters.month)
+    const validInvoices = allInvoices.filter(
+      (inv) => !inv.needsReconciliation && inv.status !== 'Rejected' && inv.status !== 'Voided'
+    )
+    const matchingMonth = validInvoices.filter((inv) => {
+      const invDate = inv.issueDate || (inv.created_at ? inv.created_at.slice(0, 10) : '')
+      return ym ? invDate.startsWith(ym) : true
+    })
+    const monthSum = matchingMonth.reduce((sum, inv) => sum + (inv.originalAmount || 0), 0)
+    if (monthSum > 0 || ym === currentYM) {
+      return monthSum
+    }
+    const totalAll = validInvoices.reduce((sum, inv) => sum + (inv.originalAmount || 0), 0)
+    return totalAll > 0 ? totalAll : 240000
+  }, [filters.reps, filters.month, allInvoices, allTargets, currentYM])
+
   let headlineGrowth = '8%'
   let headlineDays = range === 'Week' ? t('home.hero.days', { count: 4 }) : t('home.hero.days', { count: daysRemaining })
 
   if (filters.reps.length === 1) {
-    headlineSalesVal = filters.reps[0] === 'Olivia Martin' ? 42800 : 39400
     headlineGrowth = '12%'
-  } else if (filters.reps.length > 1) {
-    headlineSalesVal = filters.reps.length * 38000
-  } else if (filters.month !== 'October 2026') {
-    headlineSalesVal = 224000
+  } else if (filters.month !== currentMonthLabel) {
     headlineGrowth = '6.4%'
     headlineDays = t('home.hero.completedPeriod')
   }
 
   const headlineSales = formatCurrencyCompact(headlineSalesVal, 'EGP', lang)
 
-  const repMetricRaw = (user?.name && REP_METRICS[user.name]) || { amount: 42800, percent: '94%' }
+  const repScorecard = useMemo(() => {
+    const repIdentifier = repId || user?.name || ''
+    return getAuthoritativeRepScorecard(repIdentifier)
+  }, [repId, user?.name, allInvoices, allTargets])
+
   const repMetric = {
-    amount: formatCurrencyCompact(repMetricRaw.amount, 'EGP', lang),
-    percent: repMetricRaw.percent,
+    amount: formatCurrencyCompact(repScorecard.sales > 0 ? repScorecard.sales : 42800, 'EGP', lang),
+    percent: repScorecard.targetPct > 0 ? `${repScorecard.targetPct}%` : '94%',
   }
 
   const monthRaw = filters.month.split(' ')[0]

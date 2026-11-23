@@ -19,7 +19,6 @@ export default function AdminProductsPage() {
       <div style={{ marginTop: '36px' }}>
         <CatalogTable />
       </div>
-      <EmptyState message={t('admin.catalog.emptyState')} />
     </section>
   )
 }

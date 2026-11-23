@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Check } from 'lucide-react'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { FilterDropdown } from '@/ui/design-system/components/FilterDropdown'
 import { useT } from '@/lib/i18n'
+import { getRecentMonthOptions, MONTH_NAMES_AR, translateMonthYear } from '@/lib/dateUtils'
 
 export interface HomeFiltersState {
   month: string
@@ -18,7 +19,6 @@ export interface HomeFiltersProps {
   onChangeFilters: (f: HomeFiltersState) => void
 }
 
-const ALL_MONTHS = ['October 2026', 'September 2026', 'August 2026', 'July 2026']
 const ALL_REGIONS = [
   'North region',
   'West region',
@@ -34,17 +34,6 @@ const ALL_REGIONS = [
 ]
 const ALL_REPS = ['Olivia Martin', 'Maya Patel', 'James Wilson', 'Sofia Chen']
 const ALL_PRODUCTS = ['Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
-
-const MONTH_NAMES_AR: Record<string, string> = {
-  'October 2026': 'أكتوبر 2026',
-  'September 2026': 'سبتمبر 2026',
-  'August 2026': 'أغسطس 2026',
-  'July 2026': 'يوليو 2026',
-  October: 'أكتوبر',
-  September: 'سبتمبر',
-  August: 'أغسطس',
-  July: 'يوليو',
-}
 
 const REGION_NAMES_AR: Record<string, string> = {
   'North region': 'المنطقة الشمالية',
@@ -108,15 +97,17 @@ export function HomeFilters({
     }
   }
 
+  const availableMonths = useMemo(() => getRecentMonthOptions(6).map((o) => o.labelEn), [])
+  const currentMonthLabel = availableMonths[0] || 'November 2026'
+
   const handleApplyMonth = () => {
     onChangeFilters({ ...filters, month: draftMonth })
     setOpenDropdown(null)
   }
 
   const handleClearMonth = () => {
-    const defaultMonth = 'October 2026'
-    setDraftMonth(defaultMonth)
-    onChangeFilters({ ...filters, month: defaultMonth })
+    setDraftMonth(currentMonthLabel)
+    onChangeFilters({ ...filters, month: currentMonthLabel })
     setOpenDropdown(null)
   }
 
@@ -154,8 +145,7 @@ export function HomeFilters({
   }
 
   // Chip label formatters
-  const rawMonth = filters.month.split(' ')[0]
-  const monthLabel = lang === 'ar' ? (MONTH_NAMES_AR[rawMonth] || rawMonth) : rawMonth
+  const monthLabel = translateMonthYear(filters.month, lang)
 
   const rawRegion = filters.regions.length === 1 ? filters.regions[0].replace(' region', '') : ''
   const regionLabel = filters.regions.length === 0
@@ -183,7 +173,7 @@ export function HomeFilters({
         {/* 1. Month Filter */}
         <FilterDropdown
           label={monthLabel}
-          active={filters.month !== 'October 2026'}
+          active={filters.month !== currentMonthLabel}
           isOpen={openDropdown === 'month'}
           onToggle={() => openFilter('month')}
           onClose={() => setOpenDropdown(null)}
@@ -193,7 +183,7 @@ export function HomeFilters({
           resetLabel={t('home.filters.reset')}
           onApply={handleApplyMonth}
         >
-          {ALL_MONTHS.map((m) => (
+          {availableMonths.map((m) => (
             <button
               key={m}
               type="button"
@@ -213,7 +203,7 @@ export function HomeFilters({
                 textAlign: 'start',
               }}
             >
-              <span>{lang === 'ar' ? (MONTH_NAMES_AR[m] || m) : m}</span>
+              <span>{translateMonthYear(m, lang)}</span>
               {draftMonth === m && <Check style={{ width: '14px', height: '14px' }} />}
             </button>
           ))}

@@ -24,7 +24,6 @@ export default function AdminUsersPage({ initialTab }: AdminUsersPageProps) {
       <div style={{ marginTop: '36px' }}>
         <UserListTable initialTab={activeTab} />
       </div>
-      <EmptyState message={t('admin.users.emptyState')} />
     </section>
   )
 }

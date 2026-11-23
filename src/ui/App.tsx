@@ -249,6 +249,7 @@ function AppContent() {
           {active === 'Clients' && canAccessPage('Clients', role, user) && (
             <ClientsPage
               onAdd={() => open('add doctor')}
+              onAddPharmacy={() => open('add pharmacy')}
               onItem={(client) => {
                 if (client?.id) setSelectedCustomerId(client.id)
                 open('doctor profile')
@@ -387,6 +388,7 @@ function AppContent() {
             <MorePage
               onSelectPage={(page) => selectNav(page)}
               onAction={action}
+              role={role}
             />
           )}
         </div>
@@ -423,6 +425,7 @@ function AppContent() {
         isOpen={overlay === 'search'}
         onClose={() => setOverlay(null)}
         onAction={action}
+        onNavigate={navigateTo}
       />
 
       {/* Notifications Drawer */}

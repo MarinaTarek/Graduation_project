@@ -12,8 +12,8 @@ import {
   type PaymentMethod,
   type InvoiceAllocation,
   getInvoicePaymentSummary,
-  SYSTEM_CURRENT_DATE,
 } from '@/data/mock/cash-in'
+import { getSystemCurrentDate } from '@/lib/dateUtils'
 
 export interface RecordCollectionDrawerProps {
   isOpen: boolean
@@ -42,7 +42,7 @@ export function RecordCollectionDrawer({
 
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
-  const [paymentDate, setPaymentDate] = useState<string>(SYSTEM_CURRENT_DATE)
+  const [paymentDate, setPaymentDate] = useState<string>(getSystemCurrentDate())
   const [amountReceived, setAmountReceived] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash')
   const [referenceNumber, setReferenceNumber] = useState<string>('')
@@ -58,7 +58,7 @@ export function RecordCollectionDrawer({
     if (isOpen) {
       const initialCust = preselectedCustomerId || availableCustomers[0]?.id || ''
       setSelectedCustomerId(initialCust)
-      setPaymentDate(SYSTEM_CURRENT_DATE)
+      setPaymentDate(getSystemCurrentDate())
       setAmountReceived('')
       setPaymentMethod('Cash')
       setReferenceNumber('')

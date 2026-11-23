@@ -15,6 +15,7 @@ import { SPECIALTY_AR, CLASSIFICATION_AR, CLIENT_REGION_AR } from './mock-data'
 
 export interface ClientsPageProps {
   onAdd: () => void
+  onAddPharmacy?: () => void
   onItem: (client?: Customer) => void
   filter?: string | null
   onClearFilter?: () => void
@@ -24,6 +25,7 @@ export interface ClientsPageProps {
 
 export default function ClientsPage({
   onAdd,
+  onAddPharmacy,
   onItem,
   filter,
   onClearFilter,
@@ -186,9 +188,14 @@ export default function ClientsPage({
           <h1>{t('clients.title')}</h1>
           <p className="story">{t('clients.subtitle')}</p>
         </div>
-        <Button variant="primary" onClick={onAdd}>
-          <Plus data-icon="inline-start" /> {t('clients.addNew')}
-        </Button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <Button variant="secondary" onClick={onAddPharmacy || onAdd}>
+            <Building2 size={15} /> {lang === 'ar' ? 'إضافة صيدلية' : 'Add Pharmacy'}
+          </Button>
+          <Button variant="primary" onClick={onAdd}>
+            <Plus data-icon="inline-start" /> {lang === 'ar' ? 'إضافة طبيب' : 'Add Doctor'}
+          </Button>
+        </div>
       </div>
 
       {/* Quick Category Segmented Buttons */}
@@ -438,13 +445,9 @@ export default function ClientsPage({
             )
           })
         ) : (
-          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            {t('clients.noMatch')}
-          </div>
+          <EmptyState message={t('clients.noMatch')} />
         )}
       </div>
-
-      <EmptyState />
 
       {/* Edit Customer Drawer */}
       <EditCustomerDrawer

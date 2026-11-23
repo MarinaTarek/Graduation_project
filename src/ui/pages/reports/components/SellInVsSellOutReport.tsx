@@ -2,11 +2,15 @@
 
 import { useMemo } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { SELL_IN_OUT_MOCK, type ProductSellThrough } from '../mock-data'
+import type { ProductSellThrough } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { useT } from '@/lib/i18n'
 import { formatCurrencyCompact, formatMonth, formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
+import { useStore } from '@/data/mock/store'
+import { stockMovementsStore, batchesStore } from '@/data/mock/stockDerived'
+import { productsStore } from '@/data/mock/products'
+import { getAuthoritativeSellInOut } from '@/data/mock/reportingAnalytics'
 
 export interface SellInVsSellOutReportProps {
   filters: ReportFiltersState
@@ -14,53 +18,26 @@ export interface SellInVsSellOutReportProps {
 
 export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
   const { t, lang } = useT()
-  const products = SELL_IN_OUT_MOCK.products.filter((p) => {
-    if (filters.products.length > 0 && !filters.products.includes(p.product)) return false
-    return true
-  })
 
-  // Dynamic summary stats reflecting active product filter
-  const summaryStats = useMemo(() => {
-    if (products.length === 0) {
-      return [
-        { label: 'Total Sell-In', value: '0 units', change: '0 packs ordered', isPositive: false },
-        { label: 'Total Sell-Out', value: '0 units', change: '0 packs dispensed', isPositive: false },
-        { label: 'Sell-Through Ratio', value: '0.0%', change: 'Optimal threshold: 75%+', isPositive: false },
-      ]
-    }
-    const totalSellInUnits = products.reduce((sum, p) => sum + p.sellInUnits, 0)
-    const totalSellOutUnits = products.reduce((sum, p) => sum + p.sellOutUnits, 0)
-    const rate = totalSellInUnits > 0 ? ((totalSellOutUnits / totalSellInUnits) * 100).toFixed(1) : '0.0'
+  const movements = useStore(stockMovementsStore)
+  const batches = useStore(batchesStore)
+  const productCatalog = useStore(productsStore)
 
-    if (products.length === SELL_IN_OUT_MOCK.products.length) {
-      return SELL_IN_OUT_MOCK.summary
-    }
+  const authoritative = useMemo(
+    () => getAuthoritativeSellInOut(filters),
+    [filters, movements, batches, productCatalog]
+  )
 
-    return [
-      {
-        label: 'Total Sell-In',
-        value: `${totalSellInUnits.toLocaleString('en-US')} units`,
-        change: `${totalSellInUnits.toLocaleString('en-US')} packs ordered`,
-        isPositive: true,
-      },
-      {
-        label: 'Total Sell-Out',
-        value: `${totalSellOutUnits.toLocaleString('en-US')} units`,
-        change: `${totalSellOutUnits.toLocaleString('en-US')} packs dispensed`,
-        isPositive: true,
-      },
-      {
-        label: 'Sell-Through Ratio',
-        value: `${rate}%`,
-        change: 'Optimal threshold: 75%+',
-        isPositive: Number(rate) >= 75,
-      },
-    ]
-  }, [products])
+  const products = authoritative.products
+  const summaryStats = authoritative.summaryStats
+  const months = authoritative.monthlyTrend
 
   // SVG Area Chart points calculation
-  const months = SELL_IN_OUT_MOCK.monthlyTrend
-  const maxVal = 1000000
+  const maxVal = useMemo(() => {
+    const highest = Math.max(...months.map((m) => Math.max(m.sellIn, m.sellOut)), 1000)
+    return Math.ceil(highest / 100000) * 100000 || 1000000
+  }, [months])
+
   const width = 640
   const height = 220
   const padLeft = 60
@@ -71,7 +48,7 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
   const chartW = width - padLeft - padRight
   const chartH = height - padTop - padBottom
 
-  const getX = (idx: number) => padLeft + (idx / (months.length - 1)) * chartW
+  const getX = (idx: number) => padLeft + (idx / Math.max(months.length - 1, 1)) * chartW
   const getY = (val: number) => padTop + chartH - (val / maxVal) * chartH
 
   // Sell-in path
@@ -255,78 +232,86 @@ export function SellInVsSellOutReport({ filters }: SellInVsSellOutReportProps) {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
-                <tr
-                  key={p.id}
-                  style={{
-                    background: p.isLowSellThrough ? 'var(--rose-bg)' : 'var(--input-bg)',
-                    borderRadius: '14px',
-                    color: p.isLowSellThrough ? 'var(--rose-text)' : 'inherit',
-                  }}
-                >
-                  <td
-                    style={{
-                      padding: '12px 14px',
-                      fontWeight: 600,
-                      color: p.isLowSellThrough ? 'var(--rose-text)' : 'var(--heading-text)',
-                      borderTopLeftRadius: '14px',
-                      borderBottomLeftRadius: '14px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {p.isLowSellThrough && <AlertTriangle style={{ width: '15px', height: '15px', color: 'var(--rose-text)' }} />}
-                      <span>{p.product}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {p.sellInUnits.toLocaleString()}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {p.sellOutUnits.toLocaleString()}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    {p.sellThroughRate}%
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {t('reports.sellinout.monthsUnit', { months: p.monthsOnHand })}
-                  </td>
-                  <td
-                    style={{
-                      padding: '12px 14px',
-                      borderTopRightRadius: '14px',
-                      borderBottomRightRadius: '14px',
-                    }}
-                  >
-                    {p.isLowSellThrough ? (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          padding: '4px 8px',
-                          borderRadius: '8px',
-                          background: 'rgba(217, 121, 139, 0.2)',
-                          color: 'var(--rose-text)',
-                        }}
-                      >
-                        {t('reports.sellinout.lowRiskBadge', { notice: p.statusNotice || '' })}
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          padding: '4px 8px',
-                          borderRadius: '8px',
-                          background: 'var(--green-bg)',
-                          color: 'var(--green-text)',
-                        }}
-                      >
-                        {t('reports.sellinout.healthyBadge', { months: p.monthsOnHand })}
-                      </span>
-                    )}
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted-text)' }}>
+                    No product sell-through data available.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                products.map((p) => (
+                  <tr
+                    key={p.id}
+                    style={{
+                      background: p.isLowSellThrough ? 'var(--rose-bg)' : 'var(--input-bg)',
+                      borderRadius: '14px',
+                      color: p.isLowSellThrough ? 'var(--rose-text)' : 'inherit',
+                    }}
+                  >
+                    <td
+                      style={{
+                        padding: '12px 14px',
+                        fontWeight: 600,
+                        color: p.isLowSellThrough ? 'var(--rose-text)' : 'var(--heading-text)',
+                        borderTopLeftRadius: '14px',
+                        borderBottomLeftRadius: '14px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {p.isLowSellThrough && <AlertTriangle style={{ width: '15px', height: '15px', color: 'var(--rose-text)' }} />}
+                        <span>{p.product}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {p.sellInUnits.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {p.sellOutUnits.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      {p.sellThroughRate}%
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {t('reports.sellinout.monthsUnit', { months: p.monthsOnHand })}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 14px',
+                        borderTopRightRadius: '14px',
+                        borderBottomRightRadius: '14px',
+                      }}
+                    >
+                      {p.isLowSellThrough ? (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            padding: '4px 8px',
+                            borderRadius: '8px',
+                            background: 'rgba(217, 121, 139, 0.2)',
+                            color: 'var(--rose-text)',
+                          }}
+                        >
+                          {t('reports.sellinout.lowRiskBadge', { notice: p.statusNotice || '' })}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            padding: '4px 8px',
+                            borderRadius: '8px',
+                            background: 'var(--green-bg)',
+                            color: 'var(--green-text)',
+                          }}
+                        >
+                          {t('reports.sellinout.healthyBadge', { months: p.monthsOnHand })}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

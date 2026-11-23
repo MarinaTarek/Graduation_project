@@ -8,6 +8,7 @@ import { InvoiceListItem } from './components/InvoiceListItem'
 import { invoicesStore, type StoredInvoice } from '@/data/mock/invoices'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
+import { getSystemCurrentDate, getSystemCurrentYearMonth } from '@/lib/dateUtils'
 
 export interface InvoicesPageProps {
   onAdd: () => void
@@ -57,8 +58,17 @@ export default function InvoicesPage({
     }
 
     // 3. Date range
-    if (activeFilters.dateRange !== 'All time' && invoice.dateRange !== activeFilters.dateRange) {
-      return false
+    if (activeFilters.dateRange !== 'All time') {
+      const todayStr = getSystemCurrentDate()
+      const invDate = invoice.issueDate || (invoice.created_at ? invoice.created_at.slice(0, 10) : '')
+      if (activeFilters.dateRange === 'Today') {
+        if (invoice.dateRange !== 'Today' && invDate !== todayStr) return false
+      } else if (activeFilters.dateRange === 'This month') {
+        const curYM = getSystemCurrentYearMonth()
+        if (invoice.dateRange !== 'This month' && !invDate.startsWith(curYM)) return false
+      } else if (invoice.dateRange !== activeFilters.dateRange) {
+        return false
+      }
     }
 
     // 4. Source
@@ -197,13 +207,9 @@ export default function InvoicesPage({
             <InvoiceListItem key={invoice.name} item={invoice} onClick={() => onItem(invoice)} />
           ))
         ) : (
-          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            {t('invoices.noMatches')}
-          </div>
+          <EmptyState message={t('invoices.noMatches')} />
         )}
       </div>
-
-      <EmptyState />
     </section>
   )
 }

@@ -1,5 +1,6 @@
 import { createStore } from './store'
 import { addAuditLog } from './audit'
+import { getSystemNow } from '@/lib/dateUtils'
 
 export type BudgetType = 'employee' | 'territory' | 'department' | 'activity'
 export type BudgetPeriod = 'monthly' | 'quarterly' | 'yearly'
@@ -184,13 +185,15 @@ const SEED_EXPENSES: ExpenseRecord[] = [
 export const budgetsStore = createStore<Budget[]>('budgets_v1', SEED_BUDGETS)
 export const expensesStore = createStore<ExpenseRecord[]>('expenses_v1', SEED_EXPENSES)
 
-const now = () => new Date().toISOString()
+const now = () => getSystemNow().toISOString()
+let budgetCounter = 0
+let expenseCounter = 0
 
 // 1. Budget Setup Functions
 export function addBudget(data: Omit<Budget, 'id' | 'created_at' | 'updated_at'>): Budget {
   const budget: Budget = {
     ...data,
-    id: `BGT-${Date.now().toString().slice(-4)}`,
+    id: `BGT-${Date.now()}-${(++budgetCounter).toString().padStart(3, '0')}`,
     created_at: now(),
   }
   budgetsStore.update((list) => [budget, ...list])
@@ -238,7 +241,7 @@ export function addExpenseRecord(
 
   const record: ExpenseRecord = {
     ...data,
-    id: `EXP-${Date.now().toString().slice(-4)}`,
+    id: `EXP-${Date.now()}-${(++expenseCounter).toString().padStart(3, '0')}`,
     status: 'Pending',
     created_at: now(),
   }

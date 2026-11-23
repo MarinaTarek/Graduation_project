@@ -8,6 +8,7 @@ import { customersStore } from '@/data/mock/customers'
 import { productsStore } from '@/data/mock/products'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
 import {
+  addVisitPlan,
   updateVisitPlan,
   type VisitPlan,
   type VisitPlanStatus,
@@ -33,7 +34,7 @@ export function EditVisitPlanDrawer({
   const customers = useStore(customersStore).filter((c) => !c.deleted_at)
   const products = useStore(productsStore)
 
-  if (!isOpen || !plan) return null
+  if (!isOpen) return null
 
   return (
     <EditVisitPlanDrawerInner
@@ -48,6 +49,16 @@ export function EditVisitPlanDrawer({
   )
 }
 
+function getDefaultDates() {
+  const start = new Date()
+  const end = new Date()
+  end.setDate(end.getDate() + 30)
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  }
+}
+
 function EditVisitPlanDrawerInner({
   plan,
   onClose,
@@ -57,7 +68,7 @@ function EditVisitPlanDrawerInner({
   currentUserName,
   lang,
 }: {
-  plan: VisitPlan
+  plan: VisitPlan | null
   onClose: () => void
   onSaved: (p: VisitPlan) => void
   customers: any[]
@@ -65,15 +76,18 @@ function EditVisitPlanDrawerInner({
   currentUserName: string
   lang: 'en' | 'ar'
 }) {
-  const [name, setName] = useState(plan.name)
-  const [repName, setRepName] = useState(plan.repName)
-  const [startDate, setStartDate] = useState(plan.startDate)
-  const [endDate, setEndDate] = useState(plan.endDate)
-  const [frequency, setFrequency] = useState<VisitFrequency>(plan.frequency)
-  const [status, setStatus] = useState<VisitPlanStatus>(plan.status)
-  const [targetClients, setTargetClients] = useState<string[]>(plan.targetClients || [])
-  const [plannedProducts, setPlannedProducts] = useState<string[]>(plan.plannedProducts || [])
-  const [notes, setNotes] = useState(plan.notes || '')
+  const isCreate = !plan
+  const defaultDates = getDefaultDates()
+
+  const [name, setName] = useState(plan ? plan.name : '')
+  const [repName, setRepName] = useState(plan ? plan.repName : (ALL_MOCK_REPS[0]?.name || currentUserName))
+  const [startDate, setStartDate] = useState(plan ? plan.startDate : defaultDates.start)
+  const [endDate, setEndDate] = useState(plan ? plan.endDate : defaultDates.end)
+  const [frequency, setFrequency] = useState<VisitFrequency>(plan ? plan.frequency : 'Weekly')
+  const [status, setStatus] = useState<VisitPlanStatus>(plan ? plan.status : 'Draft')
+  const [targetClients, setTargetClients] = useState<string[]>(plan?.targetClients || [])
+  const [plannedProducts, setPlannedProducts] = useState<string[]>(plan?.plannedProducts || [])
+  const [notes, setNotes] = useState(plan?.notes || '')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -106,23 +120,40 @@ function EditVisitPlanDrawerInner({
     setSaving(true)
     try {
       const repObj = ALL_MOCK_REPS.find((r) => r.name === repName)
-      const updated = updateVisitPlan(
-        plan.id,
-        {
+      if (isCreate) {
+        const created = addVisitPlan({
           name: name.trim(),
           repName,
-          repId: repObj?.id || plan.repId,
+          repId: repObj?.id || 'rep-1',
           startDate,
           endDate,
           frequency,
           status,
           targetClients,
           plannedProducts,
+          stops: [],
           notes: notes.trim(),
-        },
-        currentUserName
-      )
-      onSaved(updated)
+        })
+        onSaved(created)
+      } else {
+        const updated = updateVisitPlan(
+          plan.id,
+          {
+            name: name.trim(),
+            repName,
+            repId: repObj?.id || plan.repId,
+            startDate,
+            endDate,
+            frequency,
+            status,
+            targetClients,
+            plannedProducts,
+            notes: notes.trim(),
+          },
+          currentUserName
+        )
+        onSaved(updated)
+      }
       onClose()
     } catch (err) {
       setError((err as Error).message)
@@ -151,10 +182,16 @@ function EditVisitPlanDrawerInner({
     color: 'var(--muted-text)',
   }
 
+  const drawerTitle = isCreate
+    ? (lang === 'ar' ? 'إنشاء خطة زيارات جديدة' : 'Create New Visit Plan')
+    : (lang === 'ar' ? `تعديل الخطة: ${plan?.name || plan?.id}` : `Edit Plan: ${plan?.name || plan?.id}`)
+
+  const drawerKicker = isCreate ? 'NEW VISIT PLAN' : (plan?.id || 'VISIT PLAN')
+
   return (
     <Drawer
-      title={lang === 'ar' ? 'تعديل خطة الزيارات' : 'Edit Visit Plan'}
-      kicker={plan.id}
+      title={drawerTitle}
+      kicker={drawerKicker}
       onClose={onClose}
     >
       <div style={{ padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -345,7 +382,9 @@ function EditVisitPlanDrawerInner({
             {lang === 'ar' ? 'إلغاء' : 'Cancel'}
           </Button>
           <Button variant="primary" onClick={handleSave} loading={saving}>
-            {lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes'}
+            {isCreate
+              ? (lang === 'ar' ? 'إنشاء الخطة' : 'Create Plan')
+              : (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes')}
           </Button>
         </div>
       </div>

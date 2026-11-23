@@ -19,6 +19,7 @@ import { Modal } from '@/ui/design-system/components/Modal'
 import { FieldError } from '@/ui/design-system/components/FieldError'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Toast } from '@/ui/design-system/components/Toast'
+import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { useT } from '@/lib/i18n'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { useStore } from '@/data/mock/store'
@@ -323,8 +324,11 @@ export default function BudgetsPage({
       {/* TAB 1: BUDGET ALLOCATIONS */}
       {activeTab === 'allocation' && (
         <div style={{ marginTop: '16px' }}>
-          <div className="collection-list">
-            {budgets.map((b) => {
+          {budgets.length === 0 ? (
+            <EmptyState message={lang === 'ar' ? 'لا توجد ميزانيات مخصصة حالياً.' : 'No budgets allocated yet.'} />
+          ) : (
+            <div className="collection-list">
+              {budgets.map((b) => {
               // Calculate spending for this specific budget
               const spent = expenses
                 .filter((e) => {
@@ -406,6 +410,7 @@ export default function BudgetsPage({
               )
             })}
           </div>
+          )}
         </div>
       )}
 
@@ -519,9 +524,7 @@ export default function BudgetsPage({
                 </div>
               ))
             ) : (
-              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--muted-text)' }}>
-                {lang === 'ar' ? 'لا توجد مطالبات نفقات مطابقة.' : 'No expense claims match this filter.'}
-              </div>
+              <EmptyState message={lang === 'ar' ? 'لا توجد مطالبات نفقات مطابقة.' : 'No expense claims match this filter.'} />
             )}
           </div>
         </div>
@@ -537,13 +540,31 @@ export default function BudgetsPage({
               <h4 style={{ margin: '0 0 12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <PieChart size={16} /> {lang === 'ar' ? 'الإنفاق الفعلي حسب البند' : 'Spending by Category'}
               </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {catSpending.map((c) => (
-                  <div key={c.category} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--muted-text)' }}>{c.category}</span>
-                    <strong>{formatCurrency(c.spent, 'EGP', lang)}</strong>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {catSpending.length > 0 ? (
+                  (() => {
+                    const totalCat = catSpending.reduce((s, x) => s + x.spent, 0)
+                    return catSpending.map((c) => {
+                      const pct = totalCat > 0 ? Math.round((c.spent / totalCat) * 100) : 0
+                      return (
+                        <div key={c.category} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                            <span style={{ color: 'var(--muted-text)', fontWeight: 500 }}>{c.category}</span>
+                            <span style={{ fontWeight: 600 }}>
+                              {formatCurrency(c.spent, 'EGP', lang)}{' '}
+                              <span style={{ fontSize: '11px', color: 'var(--muted-text)', fontWeight: 400 }}>({pct}%)</span>
+                            </span>
+                          </div>
+                          <div style={{ height: '6px', borderRadius: '3px', background: 'var(--surface-raised)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: '#7c3aed', borderRadius: '3px' }} />
+                          </div>
+                        </div>
+                      )
+                    })
+                  })()
+                ) : (
+                  <EmptyState message={lang === 'ar' ? 'لا توجد بيانات إنفاق' : 'No spending data'} />
+                )}
               </div>
             </div>
 
@@ -552,13 +573,31 @@ export default function BudgetsPage({
               <h4 style={{ margin: '0 0 12px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Building size={16} /> {lang === 'ar' ? 'الإنفاق الفعلي حسب المنطقة' : 'Spending by Territory'}
               </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {terSpending.map((t) => (
-                  <div key={t.territory} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--muted-text)' }}>{t.territory}</span>
-                    <strong>{formatCurrency(t.spent, 'EGP', lang)}</strong>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {terSpending.length > 0 ? (
+                  (() => {
+                    const totalTer = terSpending.reduce((s, x) => s + x.spent, 0)
+                    return terSpending.map((t) => {
+                      const pct = totalTer > 0 ? Math.round((t.spent / totalTer) * 100) : 0
+                      return (
+                        <div key={t.territory} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                            <span style={{ color: 'var(--muted-text)', fontWeight: 500 }}>{t.territory}</span>
+                            <span style={{ fontWeight: 600 }}>
+                              {formatCurrency(t.spent, 'EGP', lang)}{' '}
+                              <span style={{ fontSize: '11px', color: 'var(--muted-text)', fontWeight: 400 }}>({pct}%)</span>
+                            </span>
+                          </div>
+                          <div style={{ height: '6px', borderRadius: '3px', background: 'var(--surface-raised)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: '#0284c7', borderRadius: '3px' }} />
+                          </div>
+                        </div>
+                      )
+                    })
+                  })()
+                ) : (
+                  <EmptyState message={lang === 'ar' ? 'لا توجد بيانات إنفاق' : 'No spending data'} />
+                )}
               </div>
             </div>
           </div>

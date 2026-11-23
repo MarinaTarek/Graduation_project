@@ -17,6 +17,7 @@ export interface MoreLinkItem {
   name_ar?: string
   icon: ElementType
   targetPage?: string
+  adminOnly?: boolean
 }
 
 export const moreLinksMockData: MoreLinkItem[] = [
@@ -27,6 +28,6 @@ export const moreLinksMockData: MoreLinkItem[] = [
   { name: 'Cash In', name_ar: 'التحصيلات النقدية', icon: BadgeDollarSign, targetPage: 'Cash In' },
   { name: 'Visits', name_ar: 'الزيارات', icon: Stethoscope, targetPage: 'Visits' },
   { name: 'Targets', name_ar: 'الأهداف', icon: Target, targetPage: 'Targets' },
-  { name: 'Admin panel', name_ar: 'لوحة الإدارة', icon: Settings2, targetPage: 'Admin' },
+  { name: 'Admin panel', name_ar: 'لوحة الإدارة', icon: Settings2, targetPage: 'Admin', adminOnly: true },
   { name: 'Settings', name_ar: 'الإعدادات', icon: SlidersHorizontal, targetPage: 'Settings' },
 ]

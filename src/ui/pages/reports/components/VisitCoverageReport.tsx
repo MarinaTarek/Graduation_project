@@ -2,12 +2,17 @@
 
 import { useMemo } from 'react'
 import { AlertCircle, Calendar, Clock, Stethoscope } from 'lucide-react'
-import { VISIT_COVERAGE_MOCK, type OverdueDoctor } from '../mock-data'
+import type { OverdueDoctor } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { useT } from '@/lib/i18n'
 import { formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
+import { useStore } from '@/data/mock/store'
+import { visitsStore } from '@/data/mock/visits'
+import { customersStore } from '@/data/mock/customers'
+import { usersStore } from '@/data/mock/users'
+import { getAuthoritativeVisitCoverage } from '@/data/mock/reportingAnalytics'
 
 export interface VisitCoverageReportProps {
   filters: ReportFiltersState
@@ -15,50 +20,19 @@ export interface VisitCoverageReportProps {
 
 export function VisitCoverageReport({ filters }: VisitCoverageReportProps) {
   const { t, lang } = useT()
-  const overdueDocs = VISIT_COVERAGE_MOCK.overdueDoctors.filter((doc) => {
-    if (filters.reps.length > 0 && !filters.reps.includes(doc.assignedRep)) return false
-    if (filters.regions.length > 0 && !filters.regions.some((reg) => doc.territory.includes(reg.split(' ')[0]))) return false
-    return true
-  })
 
-  const repCoverage = VISIT_COVERAGE_MOCK.repCoverage.filter((r) => {
-    if (filters.reps.length > 0 && !filters.reps.includes(r.rep)) return false
-    return true
-  })
+  const visits = useStore(visitsStore)
+  const customers = useStore(customersStore)
+  const users = useStore(usersStore)
 
-  const summaryStats = useMemo(() => {
-    if (repCoverage.length === 0) {
-      return [
-        { label: 'Target Coverage', value: '0.0%', change: '0 visits reached', isPositive: false },
-        { label: 'Overdue Doctors', value: `${overdueDocs.length} accounts`, change: 'Exceeding cycle interval', isPositive: overdueDocs.length === 0 },
-        { label: 'Total Visits Logged', value: '0 visits', change: '0 field reps', isPositive: false },
-      ]
-    }
-    const totalPlanned = repCoverage.reduce((sum, r) => sum + r.planned, 0)
-    const totalCompleted = repCoverage.reduce((sum, r) => sum + r.completed, 0)
-    const covRate = totalPlanned > 0 ? ((totalCompleted / totalPlanned) * 100).toFixed(1) : '0.0'
+  const authoritative = useMemo(
+    () => getAuthoritativeVisitCoverage(filters),
+    [filters, visits, customers, users]
+  )
 
-    return [
-      {
-        label: 'Target Coverage',
-        value: `${covRate}%`,
-        change: `${totalCompleted} of ${totalPlanned} doctors reached`,
-        isPositive: Number(covRate) >= 85,
-      },
-      {
-        label: 'Overdue Doctors',
-        value: `${overdueDocs.length} accounts`,
-        change: 'Exceeding cycle interval',
-        isPositive: overdueDocs.length === 0,
-      },
-      {
-        label: 'Total Visits Logged',
-        value: `${totalCompleted} visits`,
-        change: `${repCoverage.length} active field reps`,
-        isPositive: totalCompleted > 0,
-      },
-    ]
-  }, [repCoverage, overdueDocs])
+  const overdueDocs = authoritative.overdueDoctors
+  const repCoverage = authoritative.repCoverage
+  const summaryStats = authoritative.summaryStats
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -265,40 +239,48 @@ export function VisitCoverageReport({ filters }: VisitCoverageReportProps) {
               </tr>
             </thead>
             <tbody>
-              {overdueDocs.map((doc) => (
-                <tr
-                  key={doc.id}
-                  style={{
-                    background: 'var(--input-bg)',
-                    borderRadius: '14px',
-                  }}
-                >
-                  <td style={{ padding: '12px 14px', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Stethoscope style={{ width: '16px', height: '16px', color: 'var(--ocean)' }} />
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--heading-text)' }}>{doc.name}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{doc.clinic}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--heading-text)' }}>{doc.specialty}</td>
-                  <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{doc.territory}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Avatar initials={doc.assignedRep.split(' ').map((n) => n[0]).join('')} size="sm" />
-                      <span style={{ fontSize: '12px', color: 'var(--heading-text)' }}>{doc.assignedRep}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{doc.lastVisit}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--rose-text)' }}>
-                    {t('reports.coverage.daysPlus', { days: doc.daysOverdue })}
-                  </td>
-                  <td style={{ padding: '12px 14px', textAlign: 'center', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
-                    <StatusPill status={doc.daysOverdue > 20 ? 'Overdue' : 'Pending'} />
+              {overdueDocs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted-text)' }}>
+                    No overdue accounts. All accounts are within cycle frequency.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                overdueDocs.map((doc) => (
+                  <tr
+                    key={doc.id}
+                    style={{
+                      background: 'var(--input-bg)',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <td style={{ padding: '12px 14px', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Stethoscope style={{ width: '16px', height: '16px', color: 'var(--ocean)' }} />
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--heading-text)' }}>{doc.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{doc.clinic}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', color: 'var(--heading-text)' }}>{doc.specialty}</td>
+                    <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{doc.territory}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Avatar initials={doc.assignedRep.split(' ').map((n) => n[0]).join('')} size="sm" />
+                        <span style={{ fontSize: '12px', color: 'var(--heading-text)' }}>{doc.assignedRep}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{doc.lastVisit}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--rose-text)' }}>
+                      {t('reports.coverage.daysPlus', { days: doc.daysOverdue })}
+                    </td>
+                    <td style={{ padding: '12px 14px', textAlign: 'center', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
+                      <StatusPill status={doc.daysOverdue > 20 ? 'Overdue' : 'Pending'} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

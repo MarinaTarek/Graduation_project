@@ -5,13 +5,16 @@ import { moreLinksMockData } from '../mock-data'
 export interface MoreGridProps {
   onSelectPage: (page: string) => void
   onAction: (actionText: string) => void
+  role?: 'admin' | 'rep'
 }
 
-export function MoreGrid({ onSelectPage, onAction }: MoreGridProps) {
+export function MoreGrid({ onSelectPage, onAction, role = 'admin' }: MoreGridProps) {
   const { t, lang } = useT()
+  const visibleLinks = moreLinksMockData.filter((item) => !(item.adminOnly && role === 'rep'))
+
   return (
     <div className="more-grid">
-      {moreLinksMockData.map((item) => {
+      {visibleLinks.map((item) => {
         const Icon = item.icon
         const displayName = lang === 'ar' && item.name_ar ? item.name_ar : item.name
         return (

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CalendarDays, Route, Briefcase, Plus, Edit3 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Toast } from '@/ui/design-system/components/Toast'
 import { useT } from '@/lib/i18n'
@@ -26,6 +27,7 @@ export default function VisitPlanPage({
 
   const [activeTab, setActiveTab] = useState<'plans' | 'calendar' | 'vacations'>('plans')
   const [editingPlan, setEditingPlan] = useState<VisitPlan | null>(null)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const notify = (msg: string) => {
@@ -114,7 +116,7 @@ export default function VisitPlanPage({
       {/* TAB 1: VISIT PLANS */}
       {activeTab === 'plans' && (
         <div style={{ marginTop: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '16px' }}>
                 {lang === 'ar' ? 'الخطط الميدانية النشطة والمسودات' : 'Field Visit Plans'}
@@ -125,67 +127,75 @@ export default function VisitPlanPage({
                   : 'Manage weekly/monthly target routes, assigned representatives, and target organizations'}
               </span>
             </div>
+
+            <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
+              <Plus data-icon="inline-start" /> {lang === 'ar' ? 'خطة جديدة' : 'New Plan'}
+            </Button>
           </div>
 
           <div className="collection-list">
-            {visitPlans.map((plan) => (
-              <div
-                key={plan.id}
-                className="collection-card"
-                style={{
-                  padding: '16px 20px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-soft)',
-                  background: 'var(--surface)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  marginBottom: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ocean)' }}>
-                        {plan.id}
+            {visitPlans.length > 0 ? (
+              visitPlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="collection-card"
+                  style={{
+                    padding: '16px 20px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-soft)',
+                    background: 'var(--surface)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ocean)' }}>
+                          {plan.id}
+                        </span>
+                        <strong style={{ fontSize: '15px' }}>{plan.name}</strong>
+                      </div>
+                      <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
+                        👤 {plan.repName} · 📅 {formatDate(plan.startDate, lang)} &rarr; {formatDate(plan.endDate, lang)} · ⏱️ {plan.frequency}
                       </span>
-                      <strong style={{ fontSize: '15px' }}>{plan.name}</strong>
                     </div>
-                    <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
-                      👤 {plan.repName} · 📅 {formatDate(plan.startDate, lang)} &rarr; {formatDate(plan.endDate, lang)} · ⏱️ {plan.frequency}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <StatusPill status={plan.status} />
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        style={{ fontSize: '12px', height: '30px', padding: '0 10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        onClick={() => setEditingPlan(plan)}
+                      >
+                        <Edit3 size={13} />
+                        {lang === 'ar' ? 'تعديل الخطة' : 'Edit Plan'}
+                      </Button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <StatusPill status={plan.status} />
-                    <Button
-                      variant="secondary"
-                      type="button"
-                      style={{ fontSize: '12px', height: '30px', padding: '0 10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      onClick={() => setEditingPlan(plan)}
-                    >
-                      <Edit3 size={13} />
-                      {lang === 'ar' ? 'تعديل الخطة' : 'Edit Plan'}
-                    </Button>
-                  </div>
-                </div>
 
-                <div style={{ fontSize: '12px', color: 'var(--muted-text)', lineHeight: 1.5 }}>
-                  <div>
-                    <strong>{lang === 'ar' ? 'المستهدفون: ' : 'Target Clients: '}</strong>
-                    {plan.targetClients.join(', ')}
-                  </div>
-                  <div>
-                    <strong>{lang === 'ar' ? 'المنتجات / الحملات: ' : 'Planned Products: '}</strong>
-                    {plan.plannedProducts.join(', ')}
-                  </div>
-                  {plan.notes && (
-                    <div style={{ marginTop: '4px', fontStyle: 'italic' }}>
-                      &ldquo;{plan.notes}&rdquo;
+                  <div style={{ fontSize: '12px', color: 'var(--muted-text)', lineHeight: 1.5 }}>
+                    <div>
+                      <strong>{lang === 'ar' ? 'المستهدفون: ' : 'Target Clients: '}</strong>
+                      {plan.targetClients.join(', ')}
                     </div>
-                  )}
+                    <div>
+                      <strong>{lang === 'ar' ? 'المنتجات / الحملات: ' : 'Planned Products: '}</strong>
+                      {plan.plannedProducts.join(', ')}
+                    </div>
+                    {plan.notes && (
+                      <div style={{ marginTop: '4px', fontStyle: 'italic' }}>
+                        &ldquo;{plan.notes}&rdquo;
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState message={lang === 'ar' ? 'لا توجد خطط زيارات مسجلة' : 'No visit plans recorded'} />
+            )}
           </div>
 
           <div style={{ marginTop: '24px' }}>
@@ -215,13 +225,20 @@ export default function VisitPlanPage({
         </div>
       )}
 
-      {/* Edit Visit Plan Drawer */}
+      {/* Create or Edit Visit Plan Drawer */}
       <EditVisitPlanDrawer
         plan={editingPlan}
-        isOpen={Boolean(editingPlan)}
-        onClose={() => setEditingPlan(null)}
-        onSaved={(updated) => {
-          notify(lang === 'ar' ? `تم تحديث خطة ${updated.name}` : `Plan ${updated.name} updated successfully`)
+        isOpen={Boolean(editingPlan) || isCreateOpen}
+        onClose={() => {
+          setEditingPlan(null)
+          setIsCreateOpen(false)
+        }}
+        onSaved={(plan) => {
+          notify(
+            isCreateOpen
+              ? (lang === 'ar' ? `تم إنشاء خطة ${plan.name} بنجاح` : `Plan ${plan.name} created successfully`)
+              : (lang === 'ar' ? `تم تحديث خطة ${plan.name}` : `Plan ${plan.name} updated successfully`)
+          )
         }}
         currentUserName={currentUserName}
       />

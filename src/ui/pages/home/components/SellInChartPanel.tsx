@@ -1,13 +1,26 @@
+import { useMemo } from 'react'
 import { Activity, ArrowUpRight } from 'lucide-react'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
 import { useT } from '@/lib/i18n'
+import { useStore } from '@/data/mock/store'
+import { invoicesStore } from '@/data/mock/invoices'
 
 export interface SellInChartPanelProps {
   onClick?: () => void
+  totalAmount?: number
 }
 
-export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
+export function SellInChartPanel({ onClick, totalAmount }: SellInChartPanelProps) {
   const { t } = useT()
+  const invoices = useStore(invoicesStore)
+
+  const total = useMemo(() => {
+    if (typeof totalAmount === 'number') return totalAmount
+    const invoiced = invoices
+      .filter((inv) => !inv.needsReconciliation && inv.status !== 'Rejected' && inv.status !== 'Voided')
+      .reduce((sum, inv) => sum + (inv.originalAmount || 0), 0)
+    return invoiced > 0 ? invoiced : 240820
+  }, [invoices, totalAmount])
 
   return (
     <section className="panel chart-panel" onClick={onClick}>
@@ -19,7 +32,7 @@ export function SellInChartPanel({ onClick }: SellInChartPanelProps) {
         <Activity />
       </div>
       <div className="chart-total">
-        <strong>{formatCurrency(240820)}</strong>
+        <strong>{formatCurrency(total)}</strong>
         <span>
           <ArrowUpRight /> 8.4% <small>{t('home.chart.vsLastMonth')}</small>
         </span>

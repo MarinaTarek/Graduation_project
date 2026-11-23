@@ -1,5 +1,6 @@
 import { createStore } from './store'
 import { addAuditLog } from './audit'
+import { batchesStore, stockMovementsStore, deriveBatches } from './stockDerived'
 
 export interface WarehouseBatchStock {
   batchNumber: string
@@ -506,16 +507,31 @@ export function updateWarehouse(
   return updatedItem
 }
 
+export function archiveWarehouse(id: string, actor: string = 'Alex Morgan'): Warehouse | undefined {
+  return updateWarehouse(id, { status: 'Inactive' }, actor)
+}
+
 export function deleteWarehouse(id: string, actor: string = 'Alex Morgan') {
   const target = warehousesStore.get().find((w) => w.id === id)
+  if (!target) return
+
+  // Check physical and reserved inventory in this warehouse
+  const batches = deriveBatches(batchesStore.get(), stockMovementsStore.get(), undefined, id)
+  const totalStock = batches.reduce((sum, b) => sum + (b.qty_physical || 0), 0)
+  const reservedStock = batches.reduce((sum, b) => sum + (b.qty_reserved || 0), 0)
+
+  if (totalStock > 0 || reservedStock > 0) {
+    throw new Error(
+      `Cannot delete warehouse ${target.name} (${id}): holds ${totalStock} physical units and ${reservedStock} reserved units. Transfer or write off inventory first, or archive the warehouse.`
+    )
+  }
+
   warehousesStore.update((list) => list.filter((w) => w.id !== id))
 
-  if (target) {
-    addAuditLog({
-      action: 'Warehouse Deleted',
-      actor,
-      time: 'Just now',
-      details: `Deleted warehouse ${target.name} (${target.code}) by ${actor}`,
-    })
-  }
+  addAuditLog({
+    action: 'Warehouse Deleted',
+    actor,
+    time: 'Just now',
+    details: `Deleted warehouse ${target.name} (${target.code}) by ${actor}`,
+  })
 }

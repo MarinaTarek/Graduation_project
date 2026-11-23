@@ -6,6 +6,9 @@ import {
 import { Skeleton } from '@/ui/design-system/components/Skeleton'
 import { customersStore, type Customer } from '@/data/mock/customers'
 import { stockMovementsStore, batchesStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
+import { invoicesStore } from '@/data/mock/invoices'
+import { returnsStore } from '@/data/mock/returns'
+import { getAuthoritativeReceivables } from '@/data/mock/reportingAnalytics'
 import { useStore } from '@/data/mock/store'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
@@ -112,7 +115,11 @@ export function KpiStrip({
 
   const batches = useStore(batchesStore)
   const movements = useStore(stockMovementsStore)
+  const invoices = useStore(invoicesStore)
   const batchesNearExpiryCount = getBatchesNearExpiry(movements, batches, 90).length
+  const pendingInvoicesCount = invoices.filter(
+    (inv) => inv.status === 'Pending' && !inv.needsReconciliation
+  ).length
 
   const tiles = [
     {
@@ -131,7 +138,7 @@ export function KpiStrip({
     },
     {
       label: t('home.kpi.invoicesPending'),
-      value: String(homeKpiStrip.invoices_pending),
+      value: String(pendingInvoicesCount),
       sub: t('home.kpi.avgApproval', { hours: homeKpiStrip.avg_approval_hours }),
       color: '#d97706',
       onClick: () => onNav?.('Invoices', { filter: 'Pending' }),
@@ -405,9 +412,12 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
 export function ReceivablesPanel() {
   const { t, lang } = useT()
   const [open, setOpen] = useState(false)
-  const totalOutstanding = homeReceivables.reduce((s, r) => s + r.outstanding_amount, 0)
-  const totalOverdue = homeReceivables.reduce((s, r) => s + r.overdue_amount, 0)
-  const top3 = [...homeReceivables].filter(r => r.days_overdue > 0).sort((a, b) => b.days_overdue - a.days_overdue).slice(0, 3)
+  const invoices = useStore(invoicesStore)
+  const dynamicReceivables = useMemo(() => getAuthoritativeReceivables(), [invoices])
+  const receivables = invoices.length > 0 ? dynamicReceivables : homeReceivables
+  const totalOutstanding = receivables.reduce((s, r) => s + r.outstanding_amount, 0)
+  const totalOverdue = receivables.reduce((s, r) => s + r.overdue_amount, 0)
+  const top3 = [...receivables].filter(r => r.days_overdue > 0).sort((a, b) => b.days_overdue - a.days_overdue).slice(0, 3)
 
   return (
     <>
@@ -457,7 +467,7 @@ export function ReceivablesPanel() {
               </button>
             </div>
             <div style={{ padding: '0 24px 24px' }}>
-              {homeReceivables.map(r => (
+              {receivables.map(r => (
                 <div key={r.customer_id} style={{ padding: '14px 0', borderBottom: '1px solid var(--border-soft)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
@@ -496,9 +506,24 @@ const REASON_KEYS: Record<string, TranslationKey> = {
 
 export function ReturnsPanel({ repId }: { repId?: string }) {
   const { t } = useT()
-  const entries = repId ? homeReturns.filter(r => r.rep_id === repId) : homeReturns
+  const liveReturns = useStore(returnsStore)
+  const liveMovements = useStore(stockMovementsStore)
+  const dynamicReturns = useMemo(() => {
+    if (liveReturns.length === 0) return homeReturns
+    return liveReturns.map((r) => ({
+      customer_id: r.customerName || 'c-unknown',
+      customer_name: r.customerName || 'Customer',
+      rep_id: r.repId || 'u-admin-1',
+      product_name: r.productName,
+      units_returned: r.quantity,
+      reason: r.reason,
+      status: r.status,
+    }))
+  }, [liveReturns])
+  const entries = repId ? dynamicReturns.filter(r => r.rep_id === repId) : dynamicReturns
   const totalUnits = entries.reduce((s, r) => s + r.units_returned, 0)
-  const totalSold = 12840 + 8620 + 7290 + 5410 + 4110
+  const soldUnits = liveMovements.filter((m) => m.type === 'sell_in').reduce((sum, m) => sum + m.quantity, 0)
+  const totalSold = soldUnits > 0 ? soldUnits : (12840 + 8620 + 7290 + 5410 + 4110)
   const returnRate = ((totalUnits / totalSold) * 100).toFixed(1)
 
   // Compact breakdown of the recorded return reasons (real mock-data source).

@@ -17,7 +17,7 @@ import { getStoredUsers, saveStoredUsers, storedUsersStore, type MockUserRecord 
 import { addAuditLog } from '@/data/mock/audit'
 import { addUser, deleteUser, updateUser, usersStore } from '@/data/mock/users'
 import { useStore } from '@/data/mock/store'
-import { addMockNotification } from '@/ui/layout/notifications-mock'
+import { addNotification } from '@/data/mock/notifications'
 import { type AdminUserRecord } from '../mock-data'
 import { useUndo } from '@/lib/useUndo'
 import { useT } from '@/lib/i18n'
@@ -238,7 +238,11 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
     }
 
     setDeletedUser(user)
-    deleteUser(user.id)
+    const result = deleteUser(user.id, currentUser?.name || 'Admin')
+    if (result && result.deactivated) {
+      showToast(`User ${user.name} has historical dependencies and was safely deactivated to preserve historical records.`)
+      return
+    }
 
     trigger(
       `User ${user.name} deleted`,
@@ -401,7 +405,14 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
         details: `Account approved for ${approvingUser.name} as ${roleLabel}`,
       })
 
-      addMockNotification(`Account approved for ${approvingUser.name} as ${roleLabel}`)
+      addNotification({
+        title: 'Account Approved',
+        message: `Account approved for ${approvingUser.name} as ${roleLabel}`,
+        category: 'system',
+        priority: 'info',
+        time: 'Just now',
+        targetPage: 'Users',
+      })
       showToast(`Account approved for ${approvingUser.name} as ${roleLabel}`)
 
       setIsSavingApprove(false)
@@ -436,6 +447,13 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       saveStoredUsers(allStored)
     }
 
+    const adminUser = usersStore.get().find(
+      (u) => u.id === userToReject.id || u.email.toLowerCase() === userToReject.email.toLowerCase()
+    )
+    if (adminUser) {
+      updateUser(adminUser.id, { status: 'Rejected' }, currentUser?.name || 'Admin')
+    }
+
     addAuditLog({
       action: 'Account Rejected',
       actor: currentUser?.name || 'Admin',
@@ -453,6 +471,9 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
           currentStored[idx] = { ...currentStored[idx], status: 'pending' }
           saveStoredUsers(currentStored)
         }
+        if (adminUser) {
+          updateUser(adminUser.id, { status: 'Pending' }, currentUser?.name || 'Admin')
+        }
       }
     )
 
@@ -463,6 +484,9 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       if (idx !== -1) {
         currentStored[idx] = { ...currentStored[idx], status: 'pending' }
         saveStoredUsers(currentStored)
+      }
+      if (adminUser) {
+        updateUser(adminUser.id, { status: 'Pending' }, currentUser?.name || 'Admin')
       }
       setToastMessage(`Restored ${userToReject.name} request`)
       setTimeout(() => setToastMessage(null), 3000)

@@ -4,6 +4,7 @@ import { Drawer } from '@/ui/design-system/components/Drawer'
 import { Button } from '@/ui/design-system/components/Button'
 import { FieldError } from '@/ui/design-system/components/FieldError'
 import { useT } from '@/lib/i18n'
+import { getSystemCurrentYearMonth, getRecentMonthOptions } from '@/lib/dateUtils'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
 import { warehousesStore } from '@/data/mock/warehouses'
 import { productsStore } from '@/data/mock/products'
@@ -54,7 +55,7 @@ export function RecordWarehouseSellOutDrawer({
 
   const isEditing = Boolean(existingReport)
 
-  const [reportingMonth, setReportingMonth] = useState('2026-10')
+  const [reportingMonth, setReportingMonth] = useState(() => getSystemCurrentYearMonth())
   const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id || '')
   const [repId, setRepId] = useState('')
   const [notes, setNotes] = useState('')
@@ -78,7 +79,7 @@ export function RecordWarehouseSellOutDrawer({
       )
     } else {
       const defaultWh = warehouses[0]
-      setReportingMonth('2026-10')
+      setReportingMonth(getSystemCurrentYearMonth())
       setWarehouseId(defaultWh?.id || '')
       const matchedRep = ALL_MOCK_REPS.find(
         (r) => r.name.toLowerCase() === currentUserName.toLowerCase()
@@ -233,10 +234,11 @@ export function RecordWarehouseSellOutDrawer({
               onChange={(e) => setReportingMonth(e.target.value)}
               style={inputStyle}
             >
-              <option value="2026-10">October 2026 (2026-10)</option>
-              <option value="2026-09">September 2026 (2026-09)</option>
-              <option value="2026-08">August 2026 (2026-08)</option>
-              <option value="2026-11">November 2026 (2026-11)</option>
+              {getRecentMonthOptions(6).map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {lang === 'ar' ? opt.labelAr : opt.labelEn} ({opt.key})
+                </option>
+              ))}
             </select>
             {errors.month && <FieldError message={errors.month} />}
           </label>

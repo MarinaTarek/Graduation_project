@@ -1,12 +1,18 @@
 'use client'
 
 import { useMemo } from 'react'
-import { SALES_PERFORMANCE_MOCK, type SalesRepBreakdown } from '../mock-data'
+import type { SalesRepBreakdown } from '../mock-data'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { useT } from '@/lib/i18n'
 import { formatCurrency, formatCurrencyCompact, formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
+import { useStore } from '@/data/mock/store'
+import { invoicesStore } from '@/data/mock/invoices'
+import { targetsStore } from '@/data/mock/targets'
+import { salesOrdersStore } from '@/data/mock/sales-orders'
+import { usersStore } from '@/data/mock/users'
+import { getAuthoritativeSalesPerformance } from '@/data/mock/reportingAnalytics'
 
 export interface SalesPerformanceReportProps {
   filters: ReportFiltersState
@@ -14,49 +20,19 @@ export interface SalesPerformanceReportProps {
 
 export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps) {
   const { t, lang } = useT()
-  // Filter by reps and regions if selected
-  const reps = SALES_PERFORMANCE_MOCK.byRep.filter((r) => {
-    if (filters.reps.length > 0 && !filters.reps.includes(r.rep)) return false
-    if (filters.regions.length > 0 && !filters.regions.some((reg) => r.territory.includes(reg.split(' ')[0]))) return false
-    return true
-  })
 
-  // Dynamic summary stats aggregating from active filtered dataset
-  const summaryStats = useMemo(() => {
-    if (reps.length === 0) {
-      return [
-        { label: 'Total Revenue', value: 'EGP 0', change: '0% vs target', isPositive: false },
-        { label: 'Quota Achievement', value: '0.0%', change: 'Goal: EGP 0', isPositive: false },
-        { label: 'Average Rep Velocity', value: 'EGP 0', change: '0 active field reps', isPositive: false },
-      ]
-    }
-    const totalActual = reps.reduce((sum, r) => sum + r.actual, 0)
-    const totalTarget = reps.reduce((sum, r) => sum + r.target, 0)
-    const rate = totalTarget > 0 ? ((totalActual / totalTarget) * 100).toFixed(1) : '0.0'
-    const avgVelocity = Math.round(totalActual / reps.length)
-    const vsTargetPct = totalTarget > 0 ? (((totalActual - totalTarget) / totalTarget) * 100).toFixed(1) : '0.0'
+  const invoices = useStore(invoicesStore)
+  const targets = useStore(targetsStore)
+  const orders = useStore(salesOrdersStore)
+  const users = useStore(usersStore)
 
-    return [
-      {
-        label: 'Total Revenue',
-        value: `EGP ${totalActual.toLocaleString('en-US')}`,
-        change: `${totalActual >= totalTarget ? '+' : ''}${vsTargetPct}% vs target`,
-        isPositive: totalActual >= totalTarget,
-      },
-      {
-        label: 'Quota Achievement',
-        value: `${rate}%`,
-        change: `Goal: EGP ${totalTarget.toLocaleString('en-US')}`,
-        isPositive: Number(rate) >= 100,
-      },
-      {
-        label: 'Average Rep Velocity',
-        value: `EGP ${avgVelocity.toLocaleString('en-US')}`,
-        change: `${reps.length} active field reps`,
-        isPositive: true,
-      },
-    ]
-  }, [reps])
+  const authoritative = useMemo(
+    () => getAuthoritativeSalesPerformance(filters),
+    [filters, invoices, targets, orders, users]
+  )
+
+  const reps = authoritative.reps
+  const summaryStats = authoritative.summaryStats
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -265,38 +241,46 @@ export function SalesPerformanceReport({ filters }: SalesPerformanceReportProps)
               </tr>
             </thead>
             <tbody>
-              {reps.map((r) => (
-                <tr
-                  key={r.id}
-                  style={{
-                    background: 'var(--input-bg)',
-                    borderRadius: '14px',
-                  }}
-                >
-                  <td style={{ padding: '12px 14px', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Avatar initials={r.rep.split(' ').map((n) => n[0]).join('')} size="sm" />
-                      <span style={{ fontWeight: 600, color: 'var(--heading-text)' }}>{r.rep}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{r.territory}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {formatCurrency(r.target, 'EGP', lang)}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
-                    {formatCurrency(r.actual, 'EGP', lang)}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    <span style={{ color: r.achievementRate >= 100 ? 'var(--story-em)' : 'var(--amber-text)' }}>
-                      {r.achievementRate}%
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--heading-text)' }}>{r.topProduct}</td>
-                  <td style={{ padding: '12px 14px', textAlign: 'center', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
-                    <StatusPill status={r.achievementRate >= 100 ? 'Achieved' : 'Pending'} />
+              {reps.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted-text)' }}>
+                    No sales performance data available.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                reps.map((r) => (
+                  <tr
+                    key={r.id}
+                    style={{
+                      background: 'var(--input-bg)',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <td style={{ padding: '12px 14px', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Avatar initials={r.rep.split(' ').map((n) => n[0]).join('')} size="sm" />
+                        <span style={{ fontWeight: 600, color: 'var(--heading-text)' }}>{r.rep}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{r.territory}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatCurrency(r.target, 'EGP', lang)}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--heading-text)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatCurrency(r.actual, 'EGP', lang)}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ color: r.achievementRate >= 100 ? 'var(--story-em)' : 'var(--amber-text)' }}>
+                        {r.achievementRate}%
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px', color: 'var(--heading-text)' }}>{r.topProduct}</td>
+                    <td style={{ padding: '12px 14px', textAlign: 'center', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
+                      <StatusPill status={r.achievementRate >= 100 ? 'Achieved' : 'Pending'} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

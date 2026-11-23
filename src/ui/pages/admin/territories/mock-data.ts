@@ -1,3 +1,6 @@
+import { createStore } from '@/data/mock/store'
+import { addAuditLog } from '@/data/mock/audit'
+
 export interface TerritoryRecord {
   name: string
   name_ar?: string
@@ -16,3 +19,30 @@ export const adminTerritoriesMockData: TerritoryRecord[] = [
   { name: 'El Mahalla El Kubra', name_ar: 'المحلة الكبرى (محافظة الغربية)', leadRep: 'Olivia Martin', accountsCount: 32, target: 'EGP 65,000', target_ar: '65,000 ج.م' },
   { name: 'Assiut', name_ar: 'أسيوط (محافظة أسيوط)', leadRep: 'James Wilson', accountsCount: 44, target: 'EGP 80,000', target_ar: '80,000 ج.م' },
 ]
+
+export const territoriesStore = createStore<TerritoryRecord[]>(
+  'admin_territories_v1',
+  adminTerritoriesMockData
+)
+
+export function addTerritory(terr: TerritoryRecord, actor = 'Admin') {
+  territoriesStore.update((prev) => [terr, ...prev])
+  addAuditLog({
+    action: 'Territory Created',
+    actor,
+    time: 'Just now',
+    details: `Added new territory ${terr.name} with target ${terr.target}`,
+  })
+}
+
+export function updateTerritory(name: string, patch: Partial<TerritoryRecord>, actor = 'Admin') {
+  territoriesStore.update((prev) =>
+    prev.map((t) => (t.name === name ? { ...t, ...patch } : t))
+  )
+  addAuditLog({
+    action: 'Territory Updated',
+    actor,
+    time: 'Just now',
+    details: `Updated territory ${name} (Lead: ${patch.leadRep || 'unchanged'})`,
+  })
+}

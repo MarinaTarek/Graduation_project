@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
+import { Toast } from '@/ui/design-system/components/Toast'
 import { useT } from '@/lib/i18n'
 import { ReturnsList } from './components/ReturnsList'
 import { CreateReturnDrawer } from './components/CreateReturnDrawer'
@@ -55,25 +56,7 @@ export default function ReturnsPage({ onAction }: ReturnsPageProps) {
         onAction={handleAction}
       />
 
-      {notice && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'var(--surface-raised)',
-            padding: '10px 20px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-            fontSize: '14px',
-            fontWeight: 600,
-            zIndex: 9999,
-          }}
-        >
-          {notice}
-        </div>
-      )}
+      {notice && <Toast message={notice} />}
     </section>
   )
 }

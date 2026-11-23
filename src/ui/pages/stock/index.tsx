@@ -348,13 +348,9 @@ export default function StockPage({
             )
           })
         ) : (
-          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-            {t('stock.noMatches')}
-          </div>
+          <EmptyState message={t('stock.noMatches')} />
         )}
       </div>
-
-      <EmptyState />
 
       {/* Stock Action Modal */}
       <StockActionModal

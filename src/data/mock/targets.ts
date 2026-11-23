@@ -2,6 +2,7 @@ import { createStore } from './store'
 import { addAuditLog } from './audit'
 import type { StoredInvoice } from './invoices'
 import type { SalesOrder } from './sales-orders'
+import { getSystemCurrentDate, getSystemNow } from '@/lib/dateUtils'
 
 export type TargetPeriod = 'Monthly' | 'Quarterly'
 export type TargetStatus = 'In Progress' | 'Achieved' | 'Expired'
@@ -94,7 +95,7 @@ export function createTarget(
   const newTarget: SalesTarget = {
     ...data,
     id: `tgt-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000)}`,
-    createdAt: new Date().toISOString(),
+    createdAt: getSystemNow().toISOString(),
   }
 
   targetsStore.update((list) => [newTarget, ...list])
@@ -125,7 +126,7 @@ export function updateTarget(
         return {
           ...item,
           ...patch,
-          updatedAt: new Date().toISOString(),
+          updatedAt: getSystemNow().toISOString(),
         }
       }
       return item
@@ -164,8 +165,8 @@ export function deleteTarget(id: string, actor: string = 'Alex Morgan'): boolean
   return false
 }
 
-// System reference date for simulation
-export const SYSTEM_CURRENT_DATE = '2026-10-26'
+// Dynamic system reference date
+export const SYSTEM_CURRENT_DATE = getSystemCurrentDate()
 
 /**
  * Calculates progress automatically from live sales invoices and approved sales orders.
@@ -187,31 +188,34 @@ export function calculateTargetProgress(
 
   // 1. Invoices sales
   invoices.forEach((inv) => {
+    if (inv.order_id) countedOrderIds.add(inv.order_id)
+    // D-03 / D-06: exclude Rejected and needsReconciliation invoices entirely.
     if (inv.status === 'Rejected') return
+    if (inv.needsReconciliation) return
     if (!inv.repName || inv.repName.trim().toLowerCase() !== repNameLower) return
 
-    const invDateStr = inv.issueDate || (inv.updated_at ? inv.updated_at.slice(0, 10) : '2026-10-15')
-    const invTs = new Date(invDateStr).getTime()
+    // D-07: if issueDate is missing, skip — do not invent a date.
+    if (!inv.issueDate) return
+    const invTs = new Date(inv.issueDate).getTime()
 
     if (invTs >= startTs && invTs <= endTs) {
-      let amt = inv.originalAmount || 0
-      if (!amt && inv.meta) {
-        const match = inv.meta.match(/EGP\s*([\d,]+(?:\.\d+)?)/)
-        if (match) amt = Number(match[1].replace(/,/g, ''))
-      }
+      // D-06: use structured originalAmount only; no regex fallback.
+      const amt =
+        typeof inv.originalAmount === 'number' && Number.isFinite(inv.originalAmount) && inv.originalAmount > 0
+          ? inv.originalAmount
+          : 0
       invoiceSales += amt
-      if (inv.order_id) countedOrderIds.add(inv.order_id)
     }
   })
 
-  // 2. Approved Sales Orders not yet invoiced
+  // 2. Approved or Dispatched Sales Orders not yet invoiced
   let orderSales = 0
   salesOrders.forEach((so) => {
-    if (so.status !== 'Approved') return
+    if (so.status !== 'Approved' && so.status !== 'Dispatched') return
     if (countedOrderIds.has(so.id)) return
     if (!so.repName || so.repName.trim().toLowerCase() !== repNameLower) return
 
-    const orderDateStr = so.createdAt ? so.createdAt.slice(0, 10) : '2026-10-15'
+    const orderDateStr = so.createdAt ? so.createdAt.slice(0, 10) : getSystemCurrentDate()
     const orderTs = new Date(orderDateStr).getTime()
 
     if (orderTs >= startTs && orderTs <= endTs) {

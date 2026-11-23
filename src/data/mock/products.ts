@@ -4,6 +4,8 @@ import { adminProductsMockData, type CatalogProduct } from '@/ui/pages/admin/pro
 import { stockProductsMockData, type StockProductRecord } from '@/ui/pages/stock/mock-data'
 import { addAuditLog } from './audit'
 import { createStore } from './store'
+import { batchesStore, stockMovementsStore } from './stockDerived'
+import { salesOrdersStore } from './sales-orders'
 
 export const productsStore = createStore<CatalogProduct[]>('products', adminProductsMockData)
 export const stockProductsStore = createStore<StockProductRecord[]>('stock_products', stockProductsMockData)
@@ -13,7 +15,7 @@ const now = () => new Date().toISOString()
 
 export function addProductRecord(product: CatalogProduct, actor: string) {
   const updatedAt = now()
-  const catalog: CatalogProduct = { ...product, updated_at: updatedAt }
+  const catalog: CatalogProduct = { ...product, status: product.status || 'Active', updated_at: updatedAt }
   productsStore.update((list) => [catalog, ...list])
   stockProductsStore.update((list) => [
     {
@@ -78,4 +80,59 @@ export function updateProduct(code: string, patch: Partial<CatalogProduct>, acto
     }
   }
   return next
+}
+
+export function archiveProduct(code: string, actor: string = 'Admin') {
+  const prod = productsStore.get().find((p) => p.code === code)
+  if (!prod) throw new Error(`Product not found: ${code}`)
+
+  updateProduct(code, { status: 'Archived' }, actor)
+  addAuditLog({
+    action: 'Product Archived',
+    actor,
+    time: 'Just now',
+    details: `Archived product ${prod.name} (${code})`,
+  })
+}
+
+export function deactivateProduct(code: string, actor: string = 'Admin') {
+  const prod = productsStore.get().find((p) => p.code === code)
+  if (!prod) throw new Error(`Product not found: ${code}`)
+
+  updateProduct(code, { status: 'Inactive' }, actor)
+  addAuditLog({
+    action: 'Product Deactivated',
+    actor,
+    time: 'Just now',
+    details: `Deactivated product ${prod.name} (${code})`,
+  })
+}
+
+export function deleteProduct(code: string, actor: string = 'Admin') {
+  const prod = productsStore.get().find((p) => p.code === code)
+  if (!prod) throw new Error(`Product not found: ${code}`)
+
+  // Referential check
+  const pName = prod.name.toLowerCase()
+  const batches = batchesStore.get().filter((b) => b.product_id === code || b.productName.toLowerCase() === pName)
+  const orders = salesOrdersStore.get().filter((o) =>
+    o.items.some((i) => i.productCode === code || i.productName.toLowerCase() === pName)
+  )
+
+  if (batches.length > 0 || orders.length > 0) {
+    throw new Error(
+      `Cannot delete product ${prod.name} (${code}): referenced in ${batches.length} batches and ${orders.length} orders. Archive it instead.`
+    )
+  }
+
+  productsStore.update((list) => list.filter((p) => p.code !== code))
+  stockProductsStore.update((list) => list.filter((p) => p.name.toLowerCase() !== pName))
+  sharedProductsStore.update((list) => list.filter((p) => p.name.toLowerCase() !== pName))
+
+  addAuditLog({
+    action: 'Product Deleted',
+    actor,
+    time: 'Just now',
+    details: `Deleted product ${prod.name} (${code})`,
+  })
 }

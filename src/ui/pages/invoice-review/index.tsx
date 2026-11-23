@@ -22,6 +22,10 @@ export interface InvoiceReviewPageProps {
   onAction: (msg: string) => void
 }
 
+// D-05: parseMetaAmount is retained ONLY as a display hint for genuinely
+// legacy records that pre-date structured amount storage.  It MUST NOT be
+// used for financial calculations, approval decisions, or KPI aggregation.
+// All post-Phase-1 invoices carry a valid numeric originalAmount.
 function parseMetaAmount(meta: string): number | undefined {
   const match = meta.match(/EGP\s*([\d,]+(?:\.\d+)?)/)
   if (!match) return undefined
@@ -85,14 +89,38 @@ export default function InvoiceReviewPage({
     ? localizedName(linkedCustomer, lang)
     : linkedOrder?.customerName ??
       (invoice.name.includes('·') ? invoice.name.split('·').slice(1).join('·').trim() : invoice.name)
+  // D-05: structured originalAmount is the sole authoritative financial value.
+  // parseMetaAmount is retained ONLY as a last-resort display fallback for
+  // legacy records that pre-date Phase 1 and have not yet been reconciled;
+  // it must NEVER be used for approvals, allocations, or financial aggregates.
+  // Such records will also carry needsReconciliation=true from normalizeLegacyInvoice().
+  const invoiceOriginalAmount =
+    typeof invoice.originalAmount === 'number' && !isNaN(invoice.originalAmount) && invoice.originalAmount > 0
+      ? invoice.originalAmount
+      : undefined
+  const parsedEstimate = !invoiceOriginalAmount && invoice.meta ? parseMetaAmount(invoice.meta) : undefined
+  const isEstimatedAmount = !linkedOrder && !invoiceOriginalAmount && typeof parsedEstimate === 'number'
+
   const amount = linkedOrder
     ? formatCurrency(linkedOrder.total, 'EGP', lang)
-    : formatCurrency(parseMetaAmount(invoice.meta), 'EGP', lang)
+    : invoiceOriginalAmount
+      ? formatCurrency(invoiceOriginalAmount, 'EGP', lang)
+      : isEstimatedAmount
+        ? `${formatCurrency(parsedEstimate, 'EGP', lang)} ${lang === 'ar' ? '(تقديري غير موثق)' : '(Unverified Estimate)'}`
+        : formatCurrency(undefined, 'EGP', lang)
   const meta = lang === 'ar' ? invoice.meta_ar || invoice.meta : invoice.meta
 
   const handleApprove = () => {
     // Prevent duplicate approval actions
     if (loadingAction || !isPending) return
+    if (!linkedOrder && (!invoiceOriginalAmount || invoiceOriginalAmount <= 0)) {
+      alert(
+        lang === 'ar'
+          ? 'لا يمكن اعتماد فاتورة بمبلغ تقديري غير موثق أو صفر. يرجى تعديل ومطابقة الفاتورة أولاً.'
+          : 'Cannot approve an invoice with an unverified estimate or zero amount. Reconcile the invoice first.',
+      )
+      return
+    }
     setLoadingAction('approve')
     try {
       const now = new Date().toISOString()
@@ -224,6 +252,43 @@ export default function InvoiceReviewPage({
   return (
     <Drawer title={invoice.name} kicker={t('invoices.reviewKicker')} onClose={onClose}>
       <InvoiceDetailCard client={client} amount={amount} meta={meta} />
+
+      {isEstimatedAmount && (
+        <div
+          style={{
+            margin: '-8px 24px 16px',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid var(--rose-text, #ef4444)',
+            color: 'var(--rose-text, #ef4444)',
+            fontSize: '12px',
+          }}
+        >
+          <strong>{lang === 'ar' ? 'تنبيه تدقيق مالي:' : 'Financial Audit Alert:'}</strong>{' '}
+          {lang === 'ar'
+            ? 'المبلغ المعروض تم استخراجه كتقدير تقريبي من بيانات نصية قديمة وهو غير معتمد محاسبياً. يجب مراجعة وتوثيق الفاتورة قبل اعتمادها.'
+            : 'The displayed amount is an unverified estimate parsed from legacy text metadata. It is non-authoritative and must be reconciled before approval.'}
+        </div>
+      )}
+
+      {invoice.needsReconciliation && !isEstimatedAmount && (
+        <div
+          style={{
+            margin: '-8px 24px 16px',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            background: 'rgba(245, 158, 11, 0.1)',
+            border: '1px solid #f59e0b',
+            color: '#b45309',
+            fontSize: '12px',
+          }}
+        >
+          <strong>{lang === 'ar' ? 'تنبيه مطابقة:' : 'Reconciliation Required:'}</strong>{' '}
+          {invoice.reconciliationReason ||
+            (lang === 'ar' ? 'هذا السجل يحتاج إلى مطابقة بيانات.' : 'This record requires data reconciliation.')}
+        </div>
+      )}
 
       {linkedOrder && (
         <div style={{ margin: '-8px 24px 16px', fontSize: '12px', color: 'var(--muted-text)' }}>

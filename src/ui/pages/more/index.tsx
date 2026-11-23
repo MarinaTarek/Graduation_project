@@ -5,9 +5,10 @@ import { MoreGrid } from './components/MoreGrid'
 export interface MorePageProps {
   onSelectPage: (page: string) => void
   onAction: (actionText: string) => void
+  role?: 'admin' | 'rep'
 }
 
-export default function MorePage({ onSelectPage, onAction }: MorePageProps) {
+export default function MorePage({ onSelectPage, onAction, role = 'admin' }: MorePageProps) {
   const { t } = useT()
   return (
     <section className="content">
@@ -20,7 +21,7 @@ export default function MorePage({ onSelectPage, onAction }: MorePageProps) {
           <p className="story">{t('more.story')}</p>
         </div>
       </div>
-      <MoreGrid onSelectPage={onSelectPage} onAction={onAction} />
+      <MoreGrid onSelectPage={onSelectPage} onAction={onAction} role={role} />
     </section>
   )
 }

@@ -1,7 +1,11 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { CheckCircle2, Clock, FileText, XCircle } from 'lucide-react'
 import { INVOICES_APPROVALS_MOCK, type RejectionReasonStat } from '../mock-data'
+import { useStore } from '@/data/mock/store'
+import { invoicesStore } from '@/data/mock/invoices'
+import { getAuthoritativeInvoicesApprovalsSummary } from '@/data/mock/reportingAnalytics'
 import { useT } from '@/lib/i18n'
 import { formatReportTerm, formatMetricValue } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
@@ -12,7 +16,45 @@ export interface InvoicesApprovalsReportProps {
 
 export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProps) {
   const { t, lang } = useT()
-  const reasons = INVOICES_APPROVALS_MOCK.rejectionReasons
+  const invoices = useStore(invoicesStore)
+  const authSummary = useMemo(() => getAuthoritativeInvoicesApprovalsSummary(), [invoices])
+
+  const summary = useMemo(() => {
+    const rate = authSummary.totalCount > 0
+      ? ((authSummary.rejectedCount / authSummary.totalCount) * 100).toFixed(1)
+      : '0.0'
+    return [
+      {
+        label: 'Invoices Processed',
+        value: `${authSummary.totalCount} claims`,
+        change: `EGP ${authSummary.totalAmount.toLocaleString('en-US')} validated`,
+        isPositive: authSummary.totalCount > 0,
+      },
+      {
+        label: 'Avg Approval Time',
+        value: '3.4 hours',
+        change: 'Reduced from 6.8h',
+        isPositive: true,
+      },
+      {
+        label: 'Rejection Rate',
+        value: `${rate}%`,
+        change: `${authSummary.rejectedCount} total rejected`,
+        isPositive: authSummary.rejectedCount === 0,
+      },
+    ]
+  }, [authSummary])
+
+  const reasons = authSummary.rejectionReasons.length > 0
+    ? authSummary.rejectionReasons.map((r, i) => ({
+        id: `rr-${i + 1}`,
+        reason: r.reason,
+        count: r.count,
+        pct: r.pct,
+        avgResolutionTime: '24 hours',
+        affectedReps: 'Field Representatives',
+      }))
+    : INVOICES_APPROVALS_MOCK.rejectionReasons
   const timeline = INVOICES_APPROVALS_MOCK.statusTimeline
 
   return (
@@ -25,7 +67,7 @@ export function InvoicesApprovalsReport({ filters }: InvoicesApprovalsReportProp
           gap: '16px',
         }}
       >
-        {INVOICES_APPROVALS_MOCK.summary.map((stat) => (
+        {summary.map((stat) => (
           <div
             key={stat.label}
             className="panel"

@@ -423,13 +423,9 @@ export default function InvoicesSellInPage({
                 )
               })
             ) : (
-              <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted-text)' }}>
-                {t('invoices.noMatches')}
-              </div>
+              <EmptyState message={t('invoices.noMatches')} />
             )}
           </div>
-
-          <EmptyState />
         </div>
       )}
 

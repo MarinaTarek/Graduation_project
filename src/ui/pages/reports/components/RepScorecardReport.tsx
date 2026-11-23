@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -8,14 +8,23 @@ import {
   CheckCircle2,
   ChevronRight,
   Minus,
+  Search,
   Sparkles,
   Stethoscope,
   Target,
   TrendingUp,
 } from 'lucide-react'
 import { REP_SCORECARD_MOCK, type RepScorecardProfile } from '../mock-data'
+import { getAuthoritativeRepScorecard } from '@/data/mock/reportingAnalytics'
+import { useStore } from '@/data/mock/store'
+import { invoicesStore } from '@/data/mock/invoices'
+import { targetsStore } from '@/data/mock/targets'
+import { visitsStore } from '@/data/mock/visits'
+import { stockMovementsStore } from '@/data/mock/stockDerived'
+import { usersStore } from '@/data/mock/users'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
+import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { useT } from '@/lib/i18n'
 import { formatCurrency } from '@/lib/format'
 import type { ReportFiltersState } from './ReportFilters'
@@ -35,6 +44,7 @@ export function RepScorecardReport({
   const [selectedRepName, setSelectedRepName] = useState<string>(
     role === 'rep' ? currentUserName : filters.reps[0] || 'Alex Morgan'
   )
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Current active rep profile
   const repList = Object.values(REP_SCORECARD_MOCK).filter((r) => {
@@ -43,7 +53,34 @@ export function RepScorecardReport({
     return true
   })
 
-  const currentRep = REP_SCORECARD_MOCK[selectedRepName] || repList[0] || REP_SCORECARD_MOCK['Alex Morgan']
+  const filteredRepList = repList.filter((r) => {
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.toLowerCase()
+    return r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)
+  })
+
+  const invoices = useStore(invoicesStore)
+  const targets = useStore(targetsStore)
+  const visits = useStore(visitsStore)
+  const movements = useStore(stockMovementsStore)
+  const users = useStore(usersStore)
+
+  const baseRep = REP_SCORECARD_MOCK[selectedRepName] || repList[0] || REP_SCORECARD_MOCK['Alex Morgan']
+  const authoritative = useMemo(
+    () => getAuthoritativeRepScorecard(selectedRepName),
+    [selectedRepName, invoices, targets, visits, movements, users]
+  )
+  const currentRep: RepScorecardProfile = useMemo(() => {
+    return {
+      ...baseRep,
+      sales: authoritative.sales,
+      salesTarget: authoritative.salesTarget,
+      targetPct: authoritative.targetPct,
+      visitsLogged: authoritative.visitsLogged,
+      visitsTarget: authoritative.visitsTarget,
+      samplesDelivered: authoritative.samplesDistributed,
+    }
+  }, [baseRep, authoritative])
 
   const renderTrendIcon = (trend: RepScorecardProfile['trend'], pct: number) => {
     if (trend === 'up') {
@@ -313,7 +350,7 @@ export function RepScorecardReport({
           border: '1px solid var(--border-subtle)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 600, color: 'var(--heading-text)' }}>
               {role === 'rep' ? t('reports.scorecard.myTableTitle') : t('reports.scorecard.allTableTitle')}
@@ -322,6 +359,29 @@ export function RepScorecardReport({
               {t('reports.scorecard.tableSubtitle')}
             </p>
           </div>
+          {role === 'admin' && (
+            <div style={{ position: 'relative', width: '220px' }}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-text)' }} />
+              <input
+                type="text"
+                placeholder={lang === 'ar' ? 'بحث عن مندوب...' : 'Search reps...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '32px',
+                  paddingLeft: '30px',
+                  paddingRight: '10px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-soft)',
+                  background: 'var(--input-bg)',
+                  fontSize: '12px',
+                  color: 'var(--heading-text)',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -338,46 +398,54 @@ export function RepScorecardReport({
               </tr>
             </thead>
             <tbody>
-              {repList.map((r) => (
-                <tr
-                  key={r.id}
-                  onClick={() => role === 'admin' && setSelectedRepName(r.name)}
-                  style={{
-                    background: selectedRepName === r.name ? 'var(--mist-100, var(--input-bg))' : 'var(--input-bg)',
-                    borderRadius: '14px',
-                    cursor: role === 'admin' ? 'pointer' : 'default',
-                    outline: selectedRepName === r.name ? '2px solid var(--ocean)' : 'none',
-                  }}
-                >
-                  <td style={{ padding: '12px 14px', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Avatar initials={r.avatarInitials} size="sm" />
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--heading-text)' }}>{r.name}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{r.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    {formatCurrency(r.sales, 'EGP', lang)}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {r.visitsLogged} / {r.visitsTarget}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {r.samplesDelivered}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                    <span style={{ color: r.targetPct >= 100 ? 'var(--story-em)' : 'var(--amber-text)' }}>
-                      {r.targetPct}%
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px' }}>{renderTrendIcon(r.trend, r.trendPct)}</td>
-                  <td style={{ padding: '12px 14px', textAlign: 'center', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
-                    <StatusPill status={r.targetPct >= 100 ? 'Achieved' : 'Pending'} />
+              {filteredRepList.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '24px', textAlign: 'center' }}>
+                    <EmptyState message={lang === 'ar' ? 'لا يوجد مندوب مطابق للبحث' : 'No representatives found'} />
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredRepList.map((r) => (
+                  <tr
+                    key={r.id}
+                    onClick={() => role === 'admin' && setSelectedRepName(r.name)}
+                    style={{
+                      background: selectedRepName === r.name ? 'var(--mist-100, var(--input-bg))' : 'var(--input-bg)',
+                      borderRadius: '14px',
+                      cursor: role === 'admin' ? 'pointer' : 'default',
+                      outline: selectedRepName === r.name ? '2px solid var(--ocean)' : 'none',
+                    }}
+                  >
+                    <td style={{ padding: '12px 14px', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Avatar initials={r.avatarInitials} size="sm" />
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--heading-text)' }}>{r.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--muted-text)' }}>{r.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      {formatCurrency(r.sales, 'EGP', lang)}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {r.visitsLogged} / {r.visitsTarget}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {r.samplesDelivered}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ color: r.targetPct >= 100 ? 'var(--story-em)' : 'var(--amber-text)' }}>
+                        {r.targetPct}%
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px' }}>{renderTrendIcon(r.trend, r.trendPct)}</td>
+                    <td style={{ padding: '12px 14px', textAlign: 'center', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
+                      <StatusPill status={r.targetPct >= 100 ? 'Achieved' : 'Pending'} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Check, X, Search, ChevronDown } from 'lucide-react'
+import { Check, X, Search, ChevronDown, Building2, Package, ClipboardCheck, AlertTriangle } from 'lucide-react'
 import { Button } from './Button'
 import { Avatar } from './Avatar'
 import { FieldError } from './FieldError'
@@ -7,6 +7,10 @@ import { addCustomer } from '@/data/mock/customers'
 import { addProduct } from '@/lib/productService'
 import { useT } from '@/lib/i18n'
 import { EGYPT_REGIONS } from '@/data/regions'
+import { productsStore } from '@/data/mock/products'
+import { batchesStore, stockMovementsStore, addStockMovement, deriveProductStock } from '@/data/mock/stockDerived'
+import { warehousesStore } from '@/data/mock/warehouses'
+import { addAuditLog } from '@/data/mock/audit'
 
 export interface RecordFormDrawerProps {
   title: string
@@ -38,6 +42,48 @@ export function RecordFormDrawer({
   // Common states
   const isDoctor = title === 'Add doctor'
   const isProduct = title === 'Add product'
+  const isPharmacy = title === 'Add pharmacy'
+  const isStockCount = title === 'Stock count'
+
+  // Pharmacy Form State
+  const [pharmacyName, setPharmacyName] = useState('')
+  const [pharmacyNameAr, setPharmacyNameAr] = useState('')
+  const [pharmacyType, setPharmacyType] = useState('Community Pharmacy')
+  const [pharmacyRegion, setPharmacyRegion] = useState(EGYPT_REGIONS[0]?.name_en || 'North region')
+  const [pharmacyAddress, setPharmacyAddress] = useState('')
+  const [pharmacyPhone, setPharmacyPhone] = useState('')
+  const [pharmacyClassification, setPharmacyClassification] = useState('Class A')
+
+  // Stock Count Form State
+  const availableProducts = useMemo(() => productsStore.get(), [])
+  const availableWarehouses = useMemo(() => warehousesStore.get(), [])
+  const [scProduct, setScProduct] = useState(availableProducts[0]?.name || 'Bevato')
+  const [scWarehouse, setScWarehouse] = useState(availableWarehouses[0]?.name || 'Cairo Central Logistics Hub')
+  
+  // Derived batches for selected stock count product
+  const derivedBatches = useMemo(() => {
+    const derived = deriveProductStock(scProduct, stockMovementsStore.get(), batchesStore.get(), role, currentUser?.name)
+    return derived.batches
+  }, [scProduct, role, currentUser])
+
+  const [scBatch, setScBatch] = useState(derivedBatches[0]?.batch_no || '')
+  
+  useEffect(() => {
+    if (derivedBatches.length > 0 && !derivedBatches.some((b) => b.batch_no === scBatch)) {
+      setScBatch(derivedBatches[0].batch_no)
+    }
+  }, [derivedBatches, scBatch])
+
+  const scSelectedBatchObj = derivedBatches.find((b) => b.batch_no === scBatch)
+  const scSystemQty = scSelectedBatchObj ? scSelectedBatchObj.qty_remaining : 0
+  const [scCountedQty, setScCountedQty] = useState<string>(String(scSystemQty))
+
+  useEffect(() => {
+    setScCountedQty(String(scSystemQty))
+  }, [scSystemQty])
+
+  const [scReason, setScReason] = useState('Routine Cycle Count')
+  const [scNotes, setScNotes] = useState('')
 
   // Reps list setup
   const repsList = useMemo(() => {
@@ -189,6 +235,77 @@ export function RecordFormDrawer({
       } catch (err: any) {
         setGenericError(err.message || 'Failed to add product')
       }
+      return
+    }
+
+    if (isPharmacy) {
+      if (!pharmacyName.trim()) {
+        setGenericError(lang === 'ar' ? 'اسم الصيدلية / المؤسسة مطلوب' : 'Pharmacy name is required')
+        return
+      }
+
+      const repToSave = role === 'rep' && currentUser ? initialRep : selectedRep
+      const newPharmacy = {
+        id: `c-${Date.now()}`,
+        name: pharmacyName.trim(),
+        name_ar: pharmacyNameAr.trim() || undefined,
+        meta: `${pharmacyType} · ${pharmacyRegion} · ${pharmacyClassification}`,
+        status: 'Active',
+        clientCategory: 'hco' as const,
+        hcoType: 'pharmacy' as const,
+        type: 'pharmacy' as const,
+        specialty: 'Pharmacy',
+        classification: pharmacyClassification,
+        region: pharmacyRegion,
+        address: pharmacyAddress.trim() || undefined,
+        phone: pharmacyPhone.trim() || undefined,
+        repName: repToSave.name,
+        rep_id: repToSave.id,
+        relationshipStatus: 'Regular',
+      }
+
+      addCustomer(newPharmacy)
+      onSave(`Pharmacy ${newPharmacy.name} added successfully`)
+      return
+    }
+
+    if (isStockCount) {
+      const counted = Number(scCountedQty)
+      if (isNaN(counted) || counted < 0 || !Number.isInteger(counted)) {
+        setGenericError('Counted quantity must be a non-negative whole integer')
+        return
+      }
+
+      if (!scBatch) {
+        setGenericError('Batch number is required')
+        return
+      }
+
+      const variance = counted - scSystemQty
+      const today = new Date().toISOString().slice(0, 10)
+      const actorName = currentUser?.name || 'Admin'
+
+      if (variance !== 0) {
+        addStockMovement({
+          productName: scProduct,
+          batchNumber: scBatch,
+          quantity: variance,
+          type: 'adjustment',
+          date: today,
+          repName: actorName,
+          reason: `Stock count audit: ${scReason}`,
+          notes: scNotes || `Variance of ${variance > 0 ? '+' : ''}${variance} units reconciled during physical count at ${scWarehouse}`,
+        })
+      }
+
+      addAuditLog({
+        action: 'Stock Count Reconciled',
+        actor: actorName,
+        time: 'Just now',
+        details: `Physical count for ${scProduct} (Batch ${scBatch}) at ${scWarehouse}: Counted ${counted}, System ${scSystemQty}, Variance ${variance >= 0 ? '+' : ''}${variance}`,
+      })
+
+      onSave(`Stock count saved: ${scProduct} (Batch ${scBatch})`)
       return
     }
 
@@ -530,8 +647,244 @@ export function RecordFormDrawer({
           </div>
         )}
 
-        {/* 3. Fallback for other drawer types */}
-        {!isDoctor && !isProduct && (
+        {/* 3. Add Pharmacy (HCO) Form */}
+        {isPharmacy && (
+          <div className="form-grid">
+            <label className="full">
+              Pharmacy / Organization name (EN) *
+              <input
+                placeholder="e.g. Green Cross Pharmacy"
+                value={pharmacyName}
+                onChange={(e) => setPharmacyName(e.target.value)}
+                autoFocus
+              />
+            </label>
+
+            <label className="full">
+              Pharmacy name (Arabic)
+              <input
+                placeholder="مثال: صيدلية جرين كروس"
+                value={pharmacyNameAr}
+                onChange={(e) => setPharmacyNameAr(e.target.value)}
+                dir="rtl"
+              />
+            </label>
+
+            <label>
+              Organization Type
+              <select value={pharmacyType} onChange={(e) => setPharmacyType(e.target.value)}>
+                <option>Community Pharmacy</option>
+                <option>Chain Pharmacy</option>
+                <option>Hospital Pharmacy</option>
+                <option>Poly-Clinic Pharmacy</option>
+                <option>Medical Center</option>
+              </select>
+            </label>
+
+            <label>
+              Classification
+              <select value={pharmacyClassification} onChange={(e) => setPharmacyClassification(e.target.value)}>
+                <option>Class A</option>
+                <option>Class B</option>
+                <option>Class C</option>
+              </select>
+            </label>
+
+            <label>
+              Region
+              <select value={pharmacyRegion} onChange={(e) => setPharmacyRegion(e.target.value)}>
+                {EGYPT_REGIONS.map((r) => (
+                  <option key={r.id} value={r.name_en}>
+                    {lang === 'ar' ? `${r.name_ar} (${r.governorate_ar})` : `${r.name_en} (${r.governorate_en})`}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Phone
+              <input
+                placeholder="+20 100 000 0000"
+                value={pharmacyPhone}
+                onChange={(e) => setPharmacyPhone(e.target.value)}
+              />
+            </label>
+
+            <label className="full">
+              Commercial Address
+              <input
+                placeholder="Street address, building number, landmark..."
+                value={pharmacyAddress}
+                onChange={(e) => setPharmacyAddress(e.target.value)}
+              />
+            </label>
+
+            {/* Rep selector for Pharmacy */}
+            <div className="full" style={{ position: 'relative' }} ref={repDropdownRef}>
+              <label style={{ display: 'block', marginBottom: '6px' }}>
+                Account Representative *
+              </label>
+
+              {role === 'rep' ? (
+                <div
+                  title="Auto-assigned to your account"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-soft)',
+                    background: 'var(--surface-raised)',
+                    opacity: 0.85,
+                  }}
+                >
+                  <Avatar initials={getInitials(selectedRep.name)} size="sm" />
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>
+                      {selectedRep.name}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
+                      {t('salesOrders.autoAssignedYou')}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setRepDropdownOpen((prev) => !prev)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-soft)',
+                    background: 'var(--surface)',
+                    cursor: 'pointer',
+                    textAlign: 'start',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Avatar initials={getInitials(selectedRep.name)} size="sm" />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>
+                      {selectedRep.name} ({selectedRep.region})
+                    </span>
+                  </div>
+                  <ChevronDown style={{ width: '16px', height: '16px', color: 'var(--muted-text)' }} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 4. Stock Count Audit Form */}
+        {isStockCount && (
+          <div className="form-grid">
+            <label>
+              Product *
+              <select value={scProduct} onChange={(e) => setScProduct(e.target.value)}>
+                {availableProducts.map((p) => (
+                  <option key={p.name} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Warehouse / Hub *
+              <select value={scWarehouse} onChange={(e) => setScWarehouse(e.target.value)}>
+                {availableWarehouses.map((w) => (
+                  <option key={w.id} value={w.name}>{w.name}</option>
+                ))}
+                <option value="Field Rep Custody">Field Rep Custody</option>
+              </select>
+            </label>
+
+            <label>
+              Batch Number *
+              <select value={scBatch} onChange={(e) => setScBatch(e.target.value)}>
+                {derivedBatches.length > 0 ? (
+                  derivedBatches.map((b) => (
+                    <option key={b.batch_no} value={b.batch_no}>
+                      {b.batch_no} (Exp: {b.expiry_date} · Current: {b.qty_remaining} units)
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No active batches found</option>
+                )}
+              </select>
+            </label>
+
+            <label>
+              Audit Reason
+              <select value={scReason} onChange={(e) => setScReason(e.target.value)}>
+                <option>Routine Cycle Count</option>
+                <option>Monthly Inventory Audit</option>
+                <option>Discrepancy Investigation</option>
+                <option>Damaged Goods Write-off</option>
+              </select>
+            </label>
+
+            {/* System Quantity vs Counted Quantity */}
+            <div style={{ display: 'flex', gap: '12px', gridColumn: 'span 2' }}>
+              <div style={{ flex: 1, padding: '12px 14px', borderRadius: '10px', background: 'var(--surface-raised)', border: '1px solid var(--border-soft)' }}>
+                <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--muted-text)', fontWeight: 700, display: 'block' }}>
+                  System Book Quantity
+                </span>
+                <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--heading-text)' }}>
+                  {scSystemQty.toLocaleString()} <span style={{ fontSize: '12px', fontWeight: 500 }}>units</span>
+                </span>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', fontWeight: 600 }}>
+                  Physical Counted Quantity *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={scCountedQty}
+                  onChange={(e) => setScCountedQty(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-soft)',
+                    background: 'var(--surface)',
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: 'var(--heading-text)',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Live Variance Calculation Badge */}
+            <div className="full" style={{ padding: '10px 14px', borderRadius: '8px', background: Number(scCountedQty) === scSystemQty ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', border: `1px solid ${Number(scCountedQty) === scSystemQty ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: Number(scCountedQty) === scSystemQty ? '#059669' : '#d97706' }}>
+                {Number(scCountedQty) === scSystemQty ? 'Counts Match: No variance adjustment needed' : `Discrepancy: ${Number(scCountedQty) - scSystemQty > 0 ? '+' : ''}${Number(scCountedQty) - scSystemQty} units adjustment will be applied`}
+              </span>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: Number(scCountedQty) === scSystemQty ? '#059669' : '#d97706' }}>
+                Variance: {Number(scCountedQty) - scSystemQty > 0 ? '+' : ''}{Number(scCountedQty) - scSystemQty}
+              </span>
+            </div>
+
+            <label className="full">
+              Audit Notes & Findings
+              <textarea
+                placeholder="Document cause of any discrepancy, package condition, inspector notes..."
+                value={scNotes}
+                onChange={(e) => setScNotes(e.target.value)}
+                rows={2}
+              />
+            </label>
+          </div>
+        )}
+
+        {/* 5. Fallback for any other drawer types */}
+        {!isDoctor && !isProduct && !isPharmacy && !isStockCount && (
           <div className="form-grid">
             <label>
               Name
@@ -547,7 +900,7 @@ export function RecordFormDrawer({
             </label>
             <label>
               Phone
-              <input placeholder="+1 555 000 0000" />
+              <input placeholder="+20 100 000 0000" />
             </label>
             <label className="full">
               Notes

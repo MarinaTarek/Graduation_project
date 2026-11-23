@@ -1,6 +1,27 @@
 import { createStore } from './store'
 import { addAuditLog } from './audit'
 import { addStockMovement } from './stockDerived'
+import { salesOrdersStore } from './sales-orders'
+import { productsStore } from './products'
+import { getSystemNow } from '@/lib/dateUtils'
+
+export interface CreditNoteRecord {
+  id: string
+  returnId: string
+  orderId?: string
+  customerId: string
+  customerName: string
+  productName: string
+  batchNumber: string
+  quantity: number
+  amount: number
+  currency: string
+  status: 'Issued' | 'Applied' | 'Voided'
+  createdAt: string
+  updatedAt: string
+}
+
+export const creditNotesStore = createStore<CreditNoteRecord[]>('credit_notes_v1', [])
 
 export interface ReturnRecord {
   id: string
@@ -77,7 +98,8 @@ const SEED_RETURNS: ReturnRecord[] = [
 
 export const returnsStore = createStore<ReturnRecord[]>('returns_v1', SEED_RETURNS)
 
-const now = () => new Date().toISOString()
+const now = () => getSystemNow().toISOString()
+let returnCounter = 0
 
 export interface AddReturnInput {
   order_id?: string
@@ -106,9 +128,30 @@ export function addReturn(input: AddReturnInput): ReturnRecord {
     throw new Error('Customer is required.')
   }
 
+  if (input.order_id) {
+    const order = salesOrdersStore.get().find((o) => o.id === input.order_id)
+    if (!order) {
+      throw new Error(`Original sales order ${input.order_id} not found.`)
+    }
+    const orderItem = order.items.find(
+      (it) => it.productName.toLowerCase() === input.productName.toLowerCase(),
+    )
+    if (!orderItem) {
+      throw new Error(
+        `Product ${input.productName} was not found in sales order ${input.order_id}.`,
+      )
+    }
+    const alreadyReturned = getReturnedQtyForOrder(input.order_id, input.productName)
+    if (alreadyReturned + input.quantity > orderItem.quantity) {
+      throw new Error(
+        `Cannot return ${input.quantity} units. Already returned: ${alreadyReturned}, Ordered: ${orderItem.quantity}.`,
+      )
+    }
+  }
+
   const at = now()
   const record: ReturnRecord = {
-    id: `RTN-${Date.now()}`,
+    id: `RTN-${Date.now()}-${(++returnCounter).toString().padStart(3, '0')}`,
     order_id: input.order_id || undefined,
     invoice_ref: input.invoice_ref || undefined,
     customerId: input.customerId,
@@ -139,19 +182,24 @@ export function addReturn(input: AddReturnInput): ReturnRecord {
   return record
 }
 
-export function approveReturn(id: string, actor: string): void {
+export function approveReturn(
+  id: string,
+  actor: string,
+  disposition?: 'sellable' | 'damaged' | 'expired',
+): CreditNoteRecord {
   const record = returnsStore.get().find((r) => r.id === id)
   if (!record) throw new Error('Return record not found.')
   if (record.status !== 'Pending') throw new Error('Only pending returns can be approved.')
 
   const at = now()
+  const condition = disposition || record.condition
 
   addStockMovement({
     productName: record.productName,
     batchNumber: record.batchNumber,
     quantity: record.quantity,
     type: 'return',
-    return_condition: record.condition,
+    return_condition: condition,
     date: record.returnDate,
     customer_id: record.customerId,
     customerName: record.customerName,
@@ -161,16 +209,56 @@ export function approveReturn(id: string, actor: string): void {
     notes: `Return ${record.id}`,
   })
 
+  // Look up unit price from order item or product catalog for credit note
+  let unitPrice = 0
+  if (record.order_id) {
+    const order = salesOrdersStore.get().find((o) => o.id === record.order_id)
+    const item = order?.items.find(
+      (it) => it.productName.toLowerCase() === record.productName.toLowerCase(),
+    )
+    if (item) unitPrice = item.unitPrice
+  }
+  if (!unitPrice) {
+    const prod = productsStore
+      .get()
+      .find((p) => p.name.toLowerCase() === record.productName.toLowerCase())
+    if (prod) unitPrice = Number(prod.price) || 0
+  }
+
+  const creditAmount = Math.round(record.quantity * unitPrice * 100) / 100
+
+  const creditNote: CreditNoteRecord = {
+    id: `CRN-${record.id}`,
+    returnId: record.id,
+    orderId: record.order_id,
+    customerId: record.customerId,
+    customerName: record.customerName,
+    productName: record.productName,
+    batchNumber: record.batchNumber,
+    quantity: record.quantity,
+    amount: creditAmount,
+    currency: 'EGP',
+    status: 'Issued',
+    createdAt: at,
+    updatedAt: at,
+  }
+
+  creditNotesStore.update((list) => [creditNote, ...list])
+
   returnsStore.update((list) =>
-    list.map((r) => (r.id === id ? { ...r, status: 'Approved', updatedAt: at } : r)),
+    list.map((r) =>
+      r.id === id ? { ...r, condition, status: 'Approved', updatedAt: at } : r,
+    ),
   )
 
   addAuditLog({
     action: 'Return Approved',
     actor,
     time: 'Just now',
-    details: `Approved return ${id}: ${record.quantity} units of ${record.productName} (${record.condition})`,
+    details: `Approved return ${id}: ${record.quantity} units of ${record.productName} (${condition}). Credit Note ${creditNote.id} issued for ${creditAmount} EGP`,
   })
+
+  return creditNote
 }
 
 export function rejectReturn(id: string, reason: string, actor: string): void {

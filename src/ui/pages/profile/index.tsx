@@ -23,6 +23,14 @@ export default function ProfilePage({
   const { t } = useT()
   const [telegramLinked, setTelegramLinked] = useState(false)
 
+  const initials = userName
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'U'
+
   const handleLinkTelegram = () => {
     setTelegramLinked(!telegramLinked)
     onAction(
@@ -49,7 +57,7 @@ export default function ProfilePage({
       <div style={{ marginTop: '36px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '640px' }}>
         {/* User Identity Card */}
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <Avatar initials="AM" size="lg" />
+          <Avatar initials={initials} size="lg" />
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: '20px', color: 'var(--heading-text)', margin: '0 0 4px' }}>
               {userName}

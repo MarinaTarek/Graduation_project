@@ -2,6 +2,8 @@ import { createStore } from './store'
 import { addAuditLog } from './audit'
 import { addNotification } from './notifications'
 import { invoicesStore, type StoredInvoice, updateInvoice } from './invoices'
+import { resolveCustomerId } from './customerResolution'
+import { getSystemCurrentDate, getSystemCurrentYearMonth } from '@/lib/dateUtils'
 
 export interface CollectionInvoice {
   id: string
@@ -15,9 +17,13 @@ export interface CollectionInvoice {
   issueDate: string
   dueDate: string
   originalAmount: number
+  currency: string
   repName: string
   repId?: string
   notes?: string
+  status?: string
+  needsReconciliation?: boolean
+  reconciliationReason?: string
 }
 
 export interface InvoiceAllocation {
@@ -39,12 +45,14 @@ export interface PaymentRecord {
   customerName_ar?: string
   paymentDate: string
   amount: number
+  currency?: string
   paymentMethod: PaymentMethod
   referenceNumber: string
   receivedBy: string
   status: PaymentStatus
   notes?: string
   allocations: InvoiceAllocation[]
+  unallocatedAmount?: number
   created_at: string
   voidedAt?: string
   voidedBy?: string
@@ -55,6 +63,9 @@ export interface InvoiceCalculatedSummary {
   invoice: CollectionInvoice
   paidAmount: number
   remainingBalance: number
+  effectiveBalance: number
+  isOverpaid: boolean
+  overpaidAmount: number
   paymentStatus: InvoicePaymentStatus
   isOverdue: boolean
   daysOverdue: number
@@ -69,34 +80,34 @@ export interface CashInKpis {
   collectionsThisMonth: number
 }
 
-// Reference system date for simulation: October 26, 2026
-export const SYSTEM_CURRENT_DATE = '2026-10-26'
+// Dynamic system reference date
+export const SYSTEM_CURRENT_DATE = getSystemCurrentDate()
 
+// D-05 / D-07 / D-02:
+// - Amount: use inv.originalAmount directly; NO EGP regex fallback here.
+//   Records that could not be normalised carry needsReconciliation=true and
+//   originalAmount=0; callers must check that flag before allocating.
+// - Customer: delegate to the shared resolveCustomerId() so this path and
+//   normalizeLegacyInvoice() are always consistent.
+// - Dates: missing dates are exposed as empty strings rather than invented
+//   historical defaults; date-dependent calculations guard for falsy dates.
 export function toCollectionInvoice(inv: StoredInvoice): CollectionInvoice {
   const invoiceNumber = inv.invoiceNumber || inv.id || inv.name.split('·')[0].trim()
   const customerName = inv.customerName || (inv.name.includes('·') ? inv.name.split('·')[1].trim() : inv.name)
 
-  let amount = inv.originalAmount || 0
-  if (!amount && inv.meta) {
-    const match = inv.meta.match(/EGP\s*([\d,]+(?:\.\d+)?)/)
-    if (match) amount = Number(match[1].replace(/,/g, ''))
-  }
+  // D-05: structured amount is authoritative; no regex fallback.
+  const amount =
+    typeof inv.originalAmount === 'number' && Number.isFinite(inv.originalAmount) && inv.originalAmount >= 0
+      ? inv.originalAmount
+      : 0
 
-  let customerId = inv.customerId
-  if (!customerId) {
-    const norm = customerName.toLowerCase()
-    if (norm.includes('green cross')) customerId = 'c-2'
-    else if (norm.includes('metro health') || norm.includes('city clinic')) customerId = 'c-6'
-    else if (norm.includes('riverside')) customerId = 'c-9'
-    else if (norm.includes('wellness')) customerId = 'c-4'
-    else if (norm.includes('apex')) customerId = 'c-apex'
-    else if (norm.includes('medplus')) customerId = 'c-medplus'
-    else if (norm.includes('northstar')) customerId = 'c-northstar'
-    else if (norm.includes('wellcare')) customerId = 'c-wellcare'
-    else if (norm.includes('cairo central') || norm.includes('logistics hub')) customerId = 'wh-cai-01'
-    else if (norm.includes('giza')) customerId = 'wh-gz-01'
-    else customerId = `c-${customerName.toLowerCase().replace(/[^a-z0-9]/g, '')}`
-  }
+  // D-02: single shared customer-resolution path.
+  const customerResolution = resolveCustomerId(inv.customerId, customerName)
+  const customerId = customerResolution.customerId
+
+  // D-07: expose real dates; never invent them.
+  const issueDate = inv.issueDate || ''
+  const dueDate = inv.dueDate || ''
 
   return {
     id: invoiceNumber,
@@ -107,17 +118,22 @@ export function toCollectionInvoice(inv: StoredInvoice): CollectionInvoice {
     warehouseId: inv.warehouseId || (customerId.startsWith('wh-') ? customerId : undefined),
     warehouseName: inv.warehouseName,
     warehouseName_ar: inv.warehouseName_ar,
-    issueDate: inv.issueDate || '2026-10-15',
-    dueDate: inv.dueDate || '2026-11-15',
-    originalAmount: amount,
+    issueDate,
+    dueDate,
+    originalAmount: Math.round(amount * 100) / 100,
+    currency: inv.currency || 'EGP',
     repName: inv.repName || 'Alex Morgan',
-    repId: inv.repName === 'Maya Patel' ? 'rep-maya' : inv.repName === 'Olivia Martin' ? 'rep-olivia' : inv.repName === 'Sofia Chen' ? 'rep-sofia' : inv.repName === 'James Wilson' ? 'rep-james' : 'u-admin-1',
+    repId: inv.repId || (inv.repName === 'Maya Patel' ? 'rep-maya' : inv.repName === 'Olivia Martin' ? 'rep-olivia' : inv.repName === 'Sofia Chen' ? 'rep-sofia' : inv.repName === 'James Wilson' ? 'rep-james' : 'u-admin-1'),
     notes: inv.notes || inv.meta,
+    status: inv.status,
+    needsReconciliation: inv.needsReconciliation,
+    reconciliationReason: inv.reconciliationReason,
   }
 }
 
 export function getSharedCollectionInvoices(): CollectionInvoice[] {
-  return invoicesStore.get().filter((i) => i.status !== 'Rejected').map(toCollectionInvoice)
+  // D-03: exclude Rejected and needsReconciliation invoices from normal collection views.
+  return invoicesStore.get().filter((i) => i.status !== 'Rejected' && !i.needsReconciliation).map(toCollectionInvoice)
 }
 
 export const INITIAL_PAYMENTS: PaymentRecord[] = [
@@ -336,7 +352,7 @@ export const collectionTargetStore = createStore<CollectionTargetSettings>(
   'cash_in_target',
   {
     monthlyTarget: 100000,
-    targetMonth: '2026-10',
+    targetMonth: getSystemCurrentYearMonth(),
   },
 )
 
@@ -361,7 +377,7 @@ export function updateCollectionTarget(newTarget: number, actor: string = 'Alex 
 export function getInvoicePaymentSummary(
   invoice: CollectionInvoice,
   allPayments: PaymentRecord[],
-  systemDate: string = SYSTEM_CURRENT_DATE,
+  systemDate: string = getSystemCurrentDate(),
 ): InvoiceCalculatedSummary {
   // Non-voided payments allocating to this invoice
   const validAllocations = allPayments
@@ -372,14 +388,23 @@ export function getInvoicePaymentSummary(
         .map((a) => a.allocatedAmount),
     )
 
-  const paidAmount = validAllocations.reduce((sum, amt) => sum + amt, 0)
-  const remainingBalance = Math.max(0, invoice.originalAmount - paidAmount)
+  const paidAmount = Math.round(validAllocations.reduce((sum, amt) => sum + amt, 0) * 100) / 100
+  const rawRemaining = Math.round((invoice.originalAmount - paidAmount) * 100) / 100
+  const isOverpaid = rawRemaining < 0
+  const overpaidAmount = isOverpaid ? Math.abs(rawRemaining) : 0
+  const remainingBalance = rawRemaining
+  const effectiveBalance = Math.max(0, remainingBalance)
 
-  const isDueDatePassed = new Date(invoice.dueDate).getTime() < new Date(systemDate).getTime()
+  // D-07: guard against missing/empty dates — if dueDate is unknown, treat
+  // the invoice as not overdue (we cannot determine overdue status safely).
+  const isDueDatePassed =
+    invoice.dueDate
+      ? new Date(invoice.dueDate).getTime() < new Date(systemDate).getTime()
+      : false
   const isOverdue = remainingBalance > 0 && isDueDatePassed
 
   let daysOverdue = 0
-  if (isOverdue) {
+  if (isOverdue && invoice.dueDate) {
     const diffTime = Math.abs(new Date(systemDate).getTime() - new Date(invoice.dueDate).getTime())
     daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
@@ -387,10 +412,10 @@ export function getInvoicePaymentSummary(
   let paymentStatus: InvoicePaymentStatus = 'Unpaid'
   if (remainingBalance <= 0) {
     paymentStatus = 'Paid'
-  } else if (isOverdue) {
-    paymentStatus = 'Overdue'
   } else if (paidAmount > 0) {
     paymentStatus = 'Partially Paid'
+  } else if (isOverdue) {
+    paymentStatus = 'Overdue'
   } else {
     paymentStatus = 'Unpaid'
   }
@@ -399,6 +424,9 @@ export function getInvoicePaymentSummary(
     invoice,
     paidAmount,
     remainingBalance,
+    effectiveBalance,
+    isOverpaid,
+    overpaidAmount,
     paymentStatus,
     isOverdue,
     daysOverdue,
@@ -424,60 +452,160 @@ export function calculateCashInKpis(
 
   invoices.forEach((inv) => {
     const summary = getInvoicePaymentSummary(inv, payments, systemDate)
-    outstandingBalance += summary.remainingBalance
+    outstandingBalance += summary.effectiveBalance
     if (summary.isOverdue) {
-      overdueAmount += summary.remainingBalance
+      overdueAmount += summary.effectiveBalance
     }
   })
 
   // 5. Collections This Month (payments in current month: 2026-10)
   const currentMonthPrefix = systemDate.slice(0, 7) // '2026-10'
   const collectionsThisMonth = validPayments
-    .filter((p) => p.paymentDate.startsWith(currentMonthPrefix))
+    .filter((p) => p.paymentDate?.startsWith(currentMonthPrefix))
     .reduce((sum, p) => sum + p.amount, 0)
 
   return {
-    totalInvoiced,
-    totalCollected,
-    outstandingBalance,
-    overdueAmount,
-    collectionsThisMonth,
+    totalInvoiced: Math.round(totalInvoiced * 100) / 100,
+    totalCollected: Math.round(totalCollected * 100) / 100,
+    outstandingBalance: Math.round(outstandingBalance * 100) / 100,
+    overdueAmount: Math.round(overdueAmount * 100) / 100,
+    collectionsThisMonth: Math.round(collectionsThisMonth * 100) / 100,
   }
 }
 
-// Add New Collection Action
+// Add New Collection Action with strict domain invariants
 export function addCollectionPayment(
-  data: Omit<PaymentRecord, 'id' | 'created_at' | 'status'> & { status?: PaymentStatus },
+  data: Omit<PaymentRecord, 'id' | 'created_at' | 'status' | 'receiptNumber'> & {
+    status?: PaymentStatus
+    currency?: string
+    receiptNumber?: string
+  },
 ): PaymentRecord {
+  if (!Number.isFinite(data.amount) || data.amount <= 0) {
+    throw new Error('Payment received amount must be a positive number.')
+  }
+  if (!data.customerId || !data.customerId.trim()) {
+    throw new Error('Customer ID is required for recording a payment.')
+  }
+
   const all = collectionsStore.get()
-  const nextNum = all.length + 89
-  const receiptNumber = data.receiptNumber || `REC-2026-${String(nextNum).padStart(3, '0')}`
-  const id = `pay-${String(nextNum).padStart(3, '0')}`
+  const currency = data.currency || 'EGP'
+
+  // Monotonic unique receipt numbering (never relying on array length)
+  let receiptNumber = data.receiptNumber?.trim()
+  if (!receiptNumber) {
+    const maxNum = all.reduce((max, p) => {
+      const match = p.receiptNumber.match(/REC-\d+-(\d+)/)
+      return match ? Math.max(max, Number(match[1])) : max
+    }, 88)
+    receiptNumber = `REC-2026-${String(maxNum + 1).padStart(3, '0')}`
+  } else {
+    const duplicate = all.find((p) => p.receiptNumber === receiptNumber)
+    if (duplicate) {
+      throw new Error(`Receipt number ${receiptNumber} already exists.`)
+    }
+  }
+
+  // Validate allocations
+  const currentInvoices = invoicesStore.get()
+  let totalAllocated = 0
+
+  for (const alloc of data.allocations) {
+    if (!Number.isFinite(alloc.allocatedAmount) || alloc.allocatedAmount <= 0) {
+      throw new Error(`Allocation for invoice ${alloc.invoiceNumber || alloc.invoiceId} must be positive.`)
+    }
+
+    // Locate target invoice
+    const inv = currentInvoices.find(
+      (i) =>
+        i.id === alloc.invoiceId ||
+        i.invoiceNumber === alloc.invoiceNumber ||
+        i.name === alloc.invoiceId ||
+        i.name.includes(alloc.invoiceNumber),
+    )
+    if (!inv) {
+      throw new Error(`Invoice ${alloc.invoiceNumber || alloc.invoiceId} not found.`)
+    }
+
+    // D-03: block allocation against invoices that need reconciliation.
+    if (inv.needsReconciliation) {
+      throw new Error(
+        `Invoice ${inv.invoiceNumber || inv.id} requires reconciliation before it can receive payment allocations. Reason: ${inv.reconciliationReason || 'unknown'}`,
+      )
+    }
+
+    const colInv = toCollectionInvoice(inv)
+
+    // Customer match check: invoice must belong to the same customer or linked warehouse
+    if (colInv.customerId !== data.customerId && colInv.warehouseId !== data.customerId) {
+      throw new Error(
+        `Cannot allocate payment from customer ${data.customerId} to invoice ${colInv.invoiceNumber} belonging to customer ${colInv.customerId}.`,
+      )
+    }
+
+    // Check currency match
+    if (colInv.currency && colInv.currency !== currency) {
+      throw new Error(
+        `Currency mismatch: Receipt is in ${currency} but invoice ${colInv.invoiceNumber} is in ${colInv.currency}.`,
+      )
+    }
+
+    // Check allocation does not exceed remaining eligible balance
+    const summary = getInvoicePaymentSummary(colInv, all)
+    if (alloc.allocatedAmount > summary.remainingBalance) {
+      throw new Error(
+        `Allocation of ${alloc.allocatedAmount} ${currency} exceeds remaining balance of ${summary.remainingBalance} ${currency} on invoice ${colInv.invoiceNumber}.`,
+      )
+    }
+
+    totalAllocated += alloc.allocatedAmount
+  }
+
+  totalAllocated = Math.round(totalAllocated * 100) / 100
+
+  // Invariant: Total active allocations <= Receipt amount
+  if (totalAllocated > data.amount) {
+    throw new Error(
+      `Total allocated amount (${totalAllocated} ${currency}) cannot exceed received payment amount (${data.amount} ${currency}).`,
+    )
+  }
+
+  const unallocatedAmount = Math.round((data.amount - totalAllocated) * 100) / 100
+  const id = `pay-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`
 
   const newPayment: PaymentRecord = {
     ...data,
     id,
     receiptNumber,
-    paymentMethod: 'Cash',
+    currency,
+    paymentDate: data.paymentDate || new Date().toISOString().split('T')[0],
+    paymentMethod: data.paymentMethod || 'Cash',
     status: data.status || 'Completed',
+    unallocatedAmount,
     created_at: new Date().toISOString(),
   }
 
   collectionsStore.update((list) => [newPayment, ...list])
 
-  // Also update balances in invoicesStore for allocated invoices
+  // Update invoice status & balances in invoicesStore
   const updatedAll = [newPayment, ...all]
   data.allocations.forEach((alloc) => {
     const inv = invoicesStore.get().find(
-      (i) => i.name.includes(alloc.invoiceNumber) || i.name === alloc.invoiceId || (i as any).invoiceNumber === alloc.invoiceNumber,
+      (i) =>
+        i.id === alloc.invoiceId ||
+        i.invoiceNumber === alloc.invoiceNumber ||
+        i.name.includes(alloc.invoiceNumber) ||
+        i.name === alloc.invoiceId,
     )
     if (inv) {
       const colInv = toCollectionInvoice(inv)
       const summary = getInvoicePaymentSummary(colInv, updatedAll)
-      updateInvoice(inv.name, {
+      updateInvoice(inv.id || inv.name, {
         paidAmount: summary.paidAmount,
         remainingBalance: summary.remainingBalance,
         paymentStatus: summary.paymentStatus,
+        overpaid: summary.isOverpaid,
+        overpaidAmount: summary.overpaidAmount,
       })
     }
   })
@@ -486,14 +614,14 @@ export function addCollectionPayment(
     action: 'Payment Collected',
     actor: data.receivedBy,
     time: 'Just now',
-    details: `Recorded receipt ${receiptNumber} for ${data.customerName} (${data.amount.toLocaleString()} EGP in cash)`,
+    details: `Recorded receipt ${receiptNumber} for ${data.customerName} (${data.amount.toLocaleString()} ${currency} in cash, ${unallocatedAmount} unallocated)`,
   })
 
   addNotification({
     title: 'Payment Collected',
     title_ar: 'تم تسجيل تحصيل نقدي',
-    message: `Receipt ${receiptNumber} collected from ${data.customerName} (EGP ${data.amount.toLocaleString()})`,
-    message_ar: `تم تسجيل إيصال ${receiptNumber} من ${data.customerName_ar || data.customerName} (${data.amount.toLocaleString()} ج.م نقداً)`,
+    message: `Receipt ${receiptNumber} collected from ${data.customerName} (${currency} ${data.amount.toLocaleString()})`,
+    message_ar: `تم تسجيل إيصال ${receiptNumber} من ${data.customerName_ar || data.customerName} (${data.amount.toLocaleString()} ${currency === 'EGP' ? 'ج.م' : currency} نقداً)`,
     category: 'collections',
     priority: 'info',
     time: 'Just now',
@@ -505,7 +633,7 @@ export function addCollectionPayment(
   return newPayment
 }
 
-// Void Payment Action
+// Void Payment Action with full duplicate prevention and state reconciliation
 export function voidCollectionPayment(
   receiptNumber: string,
   reason: string,
@@ -513,6 +641,17 @@ export function voidCollectionPayment(
 ): boolean {
   let success = false
   let targetPayment: PaymentRecord | undefined
+
+  const currentPayments = collectionsStore.get()
+  const found = currentPayments.find((p) => p.receiptNumber === receiptNumber || p.id === receiptNumber)
+
+  if (!found) {
+    throw new Error(`Payment receipt ${receiptNumber} not found.`)
+  }
+
+  if (found.status === 'Voided') {
+    throw new Error(`Payment receipt ${receiptNumber} is already voided.`)
+  }
 
   collectionsStore.update((list) =>
     list.map((p) => {
@@ -531,24 +670,28 @@ export function voidCollectionPayment(
     }),
   )
 
-  if (success) {
-    if (targetPayment) {
-      const updatedPayments = collectionsStore.get()
-      targetPayment.allocations.forEach((alloc) => {
-        const inv = invoicesStore.get().find(
-          (i) => i.name.includes(alloc.invoiceNumber) || i.name === alloc.invoiceId || (i as any).invoiceNumber === alloc.invoiceNumber,
-        )
-        if (inv) {
-          const colInv = toCollectionInvoice(inv)
-          const summary = getInvoicePaymentSummary(colInv, updatedPayments)
-          updateInvoice(inv.name, {
-            paidAmount: summary.paidAmount,
-            remainingBalance: summary.remainingBalance,
-            paymentStatus: summary.paymentStatus,
-          })
-        }
-      })
-    }
+  if (success && targetPayment) {
+    const updatedPayments = collectionsStore.get()
+    targetPayment.allocations.forEach((alloc) => {
+      const inv = invoicesStore.get().find(
+        (i) =>
+          i.id === alloc.invoiceId ||
+          i.invoiceNumber === alloc.invoiceNumber ||
+          i.name.includes(alloc.invoiceNumber) ||
+          i.name === alloc.invoiceId,
+      )
+      if (inv) {
+        const colInv = toCollectionInvoice(inv)
+        const summary = getInvoicePaymentSummary(colInv, updatedPayments)
+        updateInvoice(inv.id || inv.name, {
+          paidAmount: summary.paidAmount,
+          remainingBalance: summary.remainingBalance,
+          paymentStatus: summary.paymentStatus,
+          overpaid: summary.isOverpaid,
+          overpaidAmount: summary.overpaidAmount,
+        })
+      }
+    })
 
     addAuditLog({
       action: 'Payment Voided',

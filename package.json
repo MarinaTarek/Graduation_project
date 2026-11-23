@@ -5,8 +5,9 @@
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "build": "next build --webpack",
+    "start": "next start",
+    "test": "node --loader ./tests/loader.mjs --experimental-strip-types --test tests/financial-logic.test.ts tests/inventory-logic.test.ts tests/cross-module-consistency.test.ts tests/phase3-targeted-corrections.test.ts tests/phase4-workflows.test.ts tests/backend-readiness.test.ts tests/date-dashboard-sync.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

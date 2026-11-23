@@ -9,6 +9,43 @@ import { formatCurrency } from '@/lib/format'
 import { useStore } from '@/data/mock/store'
 import { usersStore } from '@/data/mock/users'
 import type { SalesTarget, TargetPeriod } from '@/data/mock/targets'
+import { getSystemNow } from '@/lib/dateUtils'
+
+const getCurrentMonthStartAndEnd = () => {
+  const now = getSystemNow()
+  const y = now.getFullYear()
+  const m = now.getMonth()
+  const start = `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(y, m + 1, 0).getDate()
+  const end = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { start, end }
+}
+
+const getNextMonthStartAndEnd = () => {
+  const now = getSystemNow()
+  let y = now.getFullYear()
+  let m = now.getMonth() + 1
+  if (m > 11) {
+    m = 0
+    y++
+  }
+  const start = `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(y, m + 1, 0).getDate()
+  const end = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { start, end }
+}
+
+const getCurrentQuarterStartAndEnd = () => {
+  const now = getSystemNow()
+  const y = now.getFullYear()
+  const q = Math.floor(now.getMonth() / 3)
+  const startMonth = q * 3
+  const endMonth = startMonth + 2
+  const start = `${y}-${String(startMonth + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(y, endMonth + 1, 0).getDate()
+  const end = `${y}-${String(endMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { start, end }
+}
 
 export interface TargetFormModalProps {
   isOpen: boolean
@@ -36,8 +73,9 @@ export function TargetFormModal({
   const [name, setName] = useState('')
   const [repId, setRepId] = useState('')
   const [period, setPeriod] = useState<TargetPeriod>('Monthly')
-  const [startDate, setStartDate] = useState('2026-10-01')
-  const [endDate, setEndDate] = useState('2026-10-31')
+  const curPreset = getCurrentMonthStartAndEnd()
+  const [startDate, setStartDate] = useState(curPreset.start)
+  const [endDate, setEndDate] = useState(curPreset.end)
   const [targetValue, setTargetValue] = useState('100000')
   const [error, setError] = useState<string | null>(null)
 
@@ -51,11 +89,12 @@ export function TargetFormModal({
       setTargetValue(String(targetToEdit.targetValue))
       setError(null)
     } else {
+      const { start, end } = getCurrentMonthStartAndEnd()
       setName('')
       setRepId(availableReps[0]?.id || 'u-rep-olivia')
       setPeriod('Monthly')
-      setStartDate('2026-10-01')
-      setEndDate('2026-10-31')
+      setStartDate(start)
+      setEndDate(end)
       setTargetValue('80000')
       setError(null)
     }
@@ -65,18 +104,21 @@ export function TargetFormModal({
   const setMonthlyPreset = (month: 'current' | 'next') => {
     setPeriod('Monthly')
     if (month === 'current') {
-      setStartDate('2026-10-01')
-      setEndDate('2026-10-31')
+      const { start, end } = getCurrentMonthStartAndEnd()
+      setStartDate(start)
+      setEndDate(end)
     } else {
-      setStartDate('2026-11-01')
-      setEndDate('2026-11-30')
+      const { start, end } = getNextMonthStartAndEnd()
+      setStartDate(start)
+      setEndDate(end)
     }
   }
 
   const setQuarterlyPreset = () => {
     setPeriod('Quarterly')
-    setStartDate('2026-10-01')
-    setEndDate('2026-12-31')
+    const { start, end } = getCurrentQuarterStartAndEnd()
+    setStartDate(start)
+    setEndDate(end)
   }
 
   const handleSubmit = (e: React.FormEvent) => {

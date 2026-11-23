@@ -2,16 +2,21 @@
 import { createStore } from './store'
 import { customersStore } from './customers'
 import { productsStore } from './products'
+import { usersStore } from './users'
 import { addAuditLog } from './audit'
 import { addInvoice, generateInvoiceName, invoicesStore } from './invoices'
+import { getSystemNow } from '@/lib/dateUtils'
 import {
   batchesStore,
   stockMovementsStore,
   addStockMovement,
   allocateFefo,
+  reserveStock,
+  releaseReservation,
+  dispatchReservedStock,
 } from './stockDerived'
 
-export type SalesOrderStatus = 'Pending' | 'Approved' | 'Rejected'
+export type SalesOrderStatus = 'Pending' | 'Approved' | 'Dispatched' | 'Rejected' | 'Cancelled'
 
 export type SalesOrderDiscountType = 'percentage' | 'fixed'
 
@@ -72,6 +77,7 @@ type CreateSalesOrderInput = {
   }
 }
 
+let orderCounter = 0
 export function addSalesOrder(input: CreateSalesOrderInput) {
   const customer = customersStore.get().find(
     (item) => item.id === input.customerId,
@@ -83,6 +89,13 @@ export function addSalesOrder(input: CreateSalesOrderInput) {
 
   if (!input.repId.trim() || !input.repName.trim()) {
     throw new Error('Select a sales representative.')
+  }
+
+  const rep = usersStore.get().find(
+    (u) => u.id === input.repId || u.name.toLowerCase() === input.repName.toLowerCase()
+  )
+  if (rep && (rep.status === 'Inactive' || rep.status === 'Archived' || rep.status === 'inactive')) {
+    throw new Error(`Representative ${rep.name} is inactive or archived.`)
   }
 
   if (!input.items.length) {
@@ -102,6 +115,10 @@ export function addSalesOrder(input: CreateSalesOrderInput) {
       throw new Error(`Product ${item.productCode} was not found.`)
     }
 
+    if (product.status === 'Inactive' || product.status === 'Archived') {
+      throw new Error(`Product ${product.name} (${item.productCode}) is inactive or archived.`)
+    }
+
     const unitPrice = Number(product.price)
 
     if (!Number.isFinite(unitPrice) || unitPrice < 0) {
@@ -118,7 +135,7 @@ export function addSalesOrder(input: CreateSalesOrderInput) {
   })
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0)
-  const now = new Date().toISOString()
+  const now = getSystemNow().toISOString()
 
   // Optional discount: validated against the subtotal so an order can never
   // total below zero. Zero-value discounts are stored as "no discount".
@@ -153,7 +170,7 @@ export function addSalesOrder(input: CreateSalesOrderInput) {
   const total = Math.round((subtotal - discountAmount) * 100) / 100
 
   const order: SalesOrder = {
-    id: `SO-${Date.now()}`,
+    id: `SO-${Date.now()}-${(++orderCounter).toString().padStart(3, '0')}`,
     customerId: customer.id!,
     customerName: customer.name,
     repId: input.repId,
@@ -188,7 +205,7 @@ export function approveSalesOrder(orderId: string, actor: string) {
     throw new Error('Sales order was not found.')
   }
 
-  // Prevent duplicate stock deductions when an approval action is repeated
+  // Prevent duplicate operations when an approval action is repeated
   if (order.status === 'Approved') {
     return orderId
   }
@@ -197,86 +214,55 @@ export function approveSalesOrder(orderId: string, actor: string) {
     throw new Error('Only pending orders can be approved.')
   }
 
-  const batches = batchesStore.get()
-  const movements = stockMovementsStore.get()
+  // Phase 2 Operational Flow:
+  // Reserve stock using FEFO allocation across unexpired batches.
+  // Physical stock deduction does NOT happen here; it happens on dispatch.
+  // If unexpired stock is insufficient, reserveStock throws and approval aborts.
+  reserveStock(
+    orderId,
+    order.items.map((it) => ({
+      productCode: it.productCode,
+      productName: it.productName,
+      quantity: it.quantity,
+    })),
+  )
 
-  // Consolidate required quantity per product line
-  const requiredQtyByProduct = new Map<string, number>()
-  for (const item of order.items) {
-    requiredQtyByProduct.set(
-      item.productName,
-      (requiredQtyByProduct.get(item.productName) ?? 0) + item.quantity,
-    )
-  }
-
-  // Check already deducted quantities for this specific order
-  const alreadyDeductedByProduct = new Map<string, number>()
-  for (const movement of movements) {
-    if (movement.order_id === orderId && movement.type === 'sell_in') {
-      alreadyDeductedByProduct.set(
-        movement.productName,
-        (alreadyDeductedByProduct.get(movement.productName) ?? 0) + movement.quantity,
-      )
-    }
-  }
-
-  // Compute remaining needed quantities per product.
-  // Partial movements cannot cause an order to be treated as fully processed:
-  // any unfulfilled line item must be allocated and moved.
-  const neededByProduct = new Map<string, number>()
-  for (const [productName, reqQty] of requiredQtyByProduct.entries()) {
-    const alreadyDeducted = alreadyDeductedByProduct.get(productName) ?? 0
-    const needed = Math.max(0, reqQty - alreadyDeducted)
-    if (needed > 0) {
-      neededByProduct.set(productName, needed)
-    }
-  }
-
-  // If any quantity remains to be deducted, allocate FEFO across unexpired batches.
-  // If any product lacks unexpired batch stock, allocateFefo throws and approval aborts.
-  if (neededByProduct.size > 0) {
-    const allocations = [...neededByProduct.entries()].flatMap(
-      ([productName, quantity]) => allocateFefo(productName, quantity, batches, movements),
-    )
-
-    for (const allocation of allocations) {
-      addStockMovement({
-        order_id: orderId,
-        productName: allocation.productName,
-        batch_id: allocation.batchId,
-        batchNumber: allocation.batchNumber,
-        quantity: allocation.quantity,
-        type: 'sell_in',
-        date: new Date().toISOString().slice(0, 10),
-        customer_id: order.customerId,
-        customerName: order.customerName,
-        rep_id: order.repId,
-        repName: order.repName,
-        reason: 'Approved sales order',
-        notes: `Sales order ${orderId}`,
-      })
-    }
-  }
-
-  // One invoice per order; created after stock is secured so a failure
-  // above never leaves an invoice without its movements.
+  // One invoice per order; created after stock reservation is secured.
   const existingInvoice = invoicesStore.get().find(
     (invoice) => invoice.order_id === orderId,
   )
   if (!existingInvoice) {
+    const issueDate = getSystemNow().toISOString().slice(0, 10)
+    const dueObj = new Date()
+    dueObj.setDate(dueObj.getDate() + 30)
+    const dueDate = dueObj.toISOString().slice(0, 10)
+
     addInvoice({
-      name: generateInvoiceName(order.customerName),
-      meta: `${order.items.length} items · EGP ${order.total.toLocaleString('en-US')}`,
-      meta_ar: `${order.items.length} أصناف · ${order.total.toLocaleString('en-US')} ج.م`,
+      customerId: order.customerId,
+      customerName: order.customerName,
+      originalAmount: order.total,
+      currency: 'EGP',
+      issueDate,
+      dueDate,
       status: 'Pending',
       source: 'Sales order',
       dateRange: 'Today',
       repName: order.repName,
+      repId: order.repId,
       order_id: orderId,
+      discountAmount: order.discountAmount,
+      items: order.items.map((it) => ({
+        productCode: it.productCode,
+        productName: it.productName,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        total: it.total,
+      })),
+      notes: `Generated from approved sales order ${order.id}`,
     })
   }
 
-  const updatedAt = new Date().toISOString()
+  const updatedAt = getSystemNow().toISOString()
 
   salesOrdersStore.update((orders) =>
     orders.map((item) =>
@@ -296,6 +282,113 @@ export function approveSalesOrder(orderId: string, actor: string) {
   return orderId
 }
 
+export function dispatchSalesOrder(orderId: string, actor: string) {
+  const order = salesOrdersStore.get().find((item) => item.id === orderId)
+
+  if (!order) {
+    throw new Error('Sales order was not found.')
+  }
+
+  if (order.status === 'Dispatched') {
+    return orderId
+  }
+
+  if (order.status !== 'Approved') {
+    throw new Error('Only approved orders can be dispatched.')
+  }
+
+  // Fulfills reservations and records physical sell_in / dispatch movements
+  dispatchReservedStock(orderId, actor, {
+    customerId: order.customerId,
+    customerName: order.customerName,
+    repId: order.repId,
+    repName: order.repName,
+  })
+
+  const updatedAt = getSystemNow().toISOString()
+
+  salesOrdersStore.update((orders) =>
+    orders.map((item) =>
+      item.id === orderId
+        ? { ...item, status: 'Dispatched', updatedAt }
+        : item,
+    ),
+  )
+
+  addAuditLog({
+    action: 'Sales Order Dispatched',
+    actor,
+    time: 'Just now',
+    details: `Dispatched ${orderId} for ${order.customerName}`,
+  })
+
+  return orderId
+}
+
+export function cancelSalesOrder(
+  orderId: string,
+  reason: string,
+  actor: string,
+) {
+  const order = salesOrdersStore.get().find((item) => item.id === orderId)
+
+  if (!order) {
+    throw new Error('Sales order was not found.')
+  }
+
+  if (order.status === 'Cancelled') {
+    return orderId
+  }
+
+  if (order.status !== 'Pending' && order.status !== 'Approved') {
+    throw new Error('Only pending or approved orders can be cancelled.')
+  }
+
+  if (!reason.trim()) {
+    throw new Error('A cancellation reason is required.')
+  }
+
+  // If order was approved, release active reservations and void/reject any linked invoice
+  if (order.status === 'Approved') {
+    releaseReservation(orderId, reason.trim())
+    invoicesStore.update((invoices) =>
+      invoices.map((inv) =>
+        inv.order_id === orderId
+          ? {
+              ...inv,
+              status: 'Rejected',
+              notes: `${inv.notes ? inv.notes + ' | ' : ''}Order cancelled: ${reason.trim()}`,
+            }
+          : inv,
+      ),
+    )
+  }
+
+  const updatedAt = getSystemNow().toISOString()
+
+  salesOrdersStore.update((orders) =>
+    orders.map((item) =>
+      item.id === orderId
+        ? {
+            ...item,
+            status: 'Cancelled',
+            rejectionReason: reason.trim(),
+            updatedAt,
+          }
+        : item,
+    ),
+  )
+
+  addAuditLog({
+    action: 'Sales Order Cancelled',
+    actor,
+    time: 'Just now',
+    details: `Cancelled ${orderId}: ${reason.trim()}`,
+  })
+
+  return orderId
+}
+
 export function rejectSalesOrder(
   orderId: string,
   reason: string,
@@ -307,6 +400,10 @@ export function rejectSalesOrder(
     throw new Error('Sales order was not found.')
   }
 
+  if (order.status === 'Rejected') {
+    return orderId
+  }
+
   if (order.status !== 'Pending') {
     throw new Error('Only pending orders can be rejected.')
   }
@@ -315,7 +412,7 @@ export function rejectSalesOrder(
     throw new Error('A rejection reason is required.')
   }
 
-  const updatedAt = new Date().toISOString()
+  const updatedAt = getSystemNow().toISOString()
 
   salesOrdersStore.update((orders) =>
     orders.map((item) =>
