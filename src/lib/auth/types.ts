@@ -1,4 +1,10 @@
-export type UserRole = 'admin' | 'rep'
+export type UserRole =
+  | 'admin'
+  | 'rep'
+  | 'first_line_manager'
+  | 'business_unit_manager'
+  | 'marketing_manager'
+
 export type UserStatus = 'pending' | 'active' | 'rejected' | 'disabled'
 
 export interface UserPermissions {
@@ -18,9 +24,12 @@ export interface User {
   requestedDate?: string
   role: UserRole
   region?: string
+  businessUnit?: string
   status?: UserStatus
   emailVerified?: boolean
   permissions?: UserPermissions
+  managerId?: string
+  isTestUser?: boolean
 }
 
 export interface AuthSession {

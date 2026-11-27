@@ -39,7 +39,7 @@ import { CreateBudgetDrawer } from './components/CreateBudgetDrawer'
 import { RecordExpenseDrawer } from './components/RecordExpenseDrawer'
 
 export interface BudgetsPageProps {
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
 }
 

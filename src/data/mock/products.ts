@@ -6,6 +6,7 @@ import { addAuditLog } from './audit'
 import { createStore } from './store'
 import { batchesStore, stockMovementsStore } from './stockDerived'
 import { salesOrdersStore } from './sales-orders'
+import { findAuthoritativeUser } from '@/lib/approval/approvalEngine'
 
 export const productsStore = createStore<CatalogProduct[]>('products', adminProductsMockData)
 export const stockProductsStore = createStore<StockProductRecord[]>('stock_products', stockProductsMockData)
@@ -13,7 +14,16 @@ const sharedProductsStore = createStore<Product[]>('shared_products', sharedProd
 
 const now = () => new Date().toISOString()
 
+function assertAdminProductActor(actor?: string): void {
+  if (!actor || actor === 'Admin') return
+  const authUser = findAuthoritativeUser(actor)
+  if (authUser && authUser.role !== 'admin') {
+    throw new Error(`Unauthorized: User "${actor}" (${authUser.role}) cannot perform product management operations.`)
+  }
+}
+
 export function addProductRecord(product: CatalogProduct, actor: string) {
+  assertAdminProductActor(actor)
   const updatedAt = now()
   const catalog: CatalogProduct = { ...product, status: product.status || 'Active', updated_at: updatedAt }
   productsStore.update((list) => [catalog, ...list])
@@ -41,11 +51,29 @@ export function addProductRecord(product: CatalogProduct, actor: string) {
   return catalog
 }
 
+export function getCanonicalProduct(identifier: string): CatalogProduct | undefined {
+  if (!identifier) return undefined
+  const clean = identifier.trim().toLowerCase()
+  return productsStore.get().find(
+    (p) => p.code.toLowerCase() === clean || p.name.toLowerCase() === clean
+  )
+}
+
+export function resolveCanonicalProductCode(identifier: string): string {
+  const prod = getCanonicalProduct(identifier)
+  return prod ? prod.code : identifier.trim()
+}
+
 export function updateProduct(code: string, patch: Partial<CatalogProduct>, actor?: string) {
+  assertAdminProductActor(actor)
   const updatedAt = now()
   const current = productsStore.get().find((p) => p.code === code)
-  const oldPrice = current?.price ?? 0
+  if (!current) throw new Error(`Product ${code} not found.`)
+
+  const oldName = current.name
+  const oldPrice = current.price ?? 0
   let next: CatalogProduct | undefined
+
   productsStore.update((list) =>
     list.map((p) => {
       if (p.code !== code) return p
@@ -53,36 +81,74 @@ export function updateProduct(code: string, patch: Partial<CatalogProduct>, acto
       return next
     }),
   )
-  if (next?.name) {
-    const name = next.name
+
+  if (next) {
+    const newName = next.name || oldName
     const price = next.price
+
+    // Phase 2 - 3.2: Historical movements must NOT be rewritten when a product is renamed.
+    // product_id remains the stable foreign identifier, while productName in movements
+    // preserves the historical snapshot recorded when the transaction occurred.
+    // Only batchesStore is updated with the current name and product_id so active batch lots stay aligned.
+    if (patch.name && patch.name.trim() && patch.name.trim().toLowerCase() !== oldName.toLowerCase()) {
+      batchesStore.update((bList) =>
+        bList.map((b) =>
+          b.product_id === code || b.productName.toLowerCase() === oldName.toLowerCase()
+            ? { ...b, product_id: code, productName: newName, updated_at: updatedAt }
+            : b
+        )
+      )
+
+      // Ensure historical movements possess the stable product_id without altering their recorded snapshot productName
+      stockMovementsStore.update((mList) =>
+        mList.map((m) =>
+          (m.product_id === code || m.productName.toLowerCase() === oldName.toLowerCase()) && !m.product_id
+            ? { ...m, product_id: code }
+            : m
+        )
+      )
+    }
+
+    // Synchronize projection stores
     stockProductsStore.update((list) =>
       list.map((p) =>
-        p.name.toLowerCase() === name.toLowerCase()
-          ? { ...p, price, updated_at: updatedAt }
+        p.name.toLowerCase() === oldName.toLowerCase() || p.name.toLowerCase() === newName.toLowerCase()
+          ? { ...p, name: newName, price, updated_at: updatedAt }
           : p,
       ),
     )
     sharedProductsStore.update((list) =>
       list.map((p) =>
-        p.name.toLowerCase() === name.toLowerCase()
-          ? { ...p, price, updated_at: updatedAt }
+        p.name.toLowerCase() === oldName.toLowerCase() || p.name.toLowerCase() === newName.toLowerCase()
+          ? { ...p, name: newName, price, updated_at: updatedAt }
           : p,
       ),
     )
-    if (actor && patch.price !== undefined) {
+
+    if (actor && patch.price !== undefined && patch.price !== oldPrice) {
       addAuditLog({
         action: 'Price Updated',
         actor,
         time: 'Just now',
-        details: `Price changed: ${name} ${oldPrice} -> ${patch.price} by ${actor}`,
+        details: `Price changed: ${newName} ${oldPrice} -> ${patch.price} by ${actor}`,
+      })
+    }
+
+    if (actor && patch.name !== undefined && patch.name !== oldName) {
+      addAuditLog({
+        action: 'Product Renamed',
+        actor,
+        time: 'Just now',
+        details: `Product renamed: ${oldName} -> ${patch.name} (${code}) by ${actor}`,
       })
     }
   }
+
   return next
 }
 
 export function archiveProduct(code: string, actor: string = 'Admin') {
+  assertAdminProductActor(actor)
   const prod = productsStore.get().find((p) => p.code === code)
   if (!prod) throw new Error(`Product not found: ${code}`)
 
@@ -96,6 +162,7 @@ export function archiveProduct(code: string, actor: string = 'Admin') {
 }
 
 export function deactivateProduct(code: string, actor: string = 'Admin') {
+  assertAdminProductActor(actor)
   const prod = productsStore.get().find((p) => p.code === code)
   if (!prod) throw new Error(`Product not found: ${code}`)
 
@@ -109,6 +176,7 @@ export function deactivateProduct(code: string, actor: string = 'Admin') {
 }
 
 export function deleteProduct(code: string, actor: string = 'Admin') {
+  assertAdminProductActor(actor)
   const prod = productsStore.get().find((p) => p.code === code)
   if (!prod) throw new Error(`Product not found: ${code}`)
 

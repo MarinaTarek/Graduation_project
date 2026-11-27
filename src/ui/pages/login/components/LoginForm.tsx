@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Check, Eye, EyeOff, ArrowLeft, Mail, ShieldCheck, KeyRound, Send } from 'lucide-react'
+import { Check, Eye, EyeOff, ArrowLeft, Mail, ShieldCheck, KeyRound, Send, ChevronDown, ChevronUp, UserCheck } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { useAuth } from '@/lib/auth'
 import { FieldError } from '@/ui/design-system/components/FieldError'
 import * as authService from '@/lib/auth/auth-service'
 import { useT } from '@/lib/i18n'
+import { DEVELOPMENT_TEST_USERS } from '@/lib/auth/mock-users'
 
 export interface LoginFormProps {
   onLogin: () => void
@@ -204,6 +205,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [showPw, _setShowPw] = useState(false)
   const [failCount, setFailCount] = useState(0)
+  const [showDevAccounts, setShowDevAccounts] = useState(false)
   const lockout = useCountdown(30)
 
   // Signup state
@@ -521,7 +523,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               </div>
             </form>
 
-            {/* Demo accounts hint */}
+            {/* Development Hierarchy Test Accounts Switcher */}
             <div
               style={{
                 marginTop: '20px',
@@ -532,12 +534,146 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 color: 'var(--muted-text)',
                 textAlign: 'start',
                 lineHeight: 1.5,
+                border: '1px solid var(--border-soft)',
               }}
             >
-              <strong style={{ color: 'var(--heading-text)', display: 'block', marginBottom: '4px' }}>Demo accounts:</strong>
-              <div>• <b>Admin:</b> admin@navigenpharma.net / Admin123! (Alex Morgan)</div>
-              <div>• <b>Rep 1:</b> ahmed@navigenpharma.net / Rep123! (Ahmed Samir)</div>
-              <div>• <b>Rep 2:</b> sara@navigenpharma.net / Rep123! (Sara Ali)</div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+                onClick={() => setShowDevAccounts((prev) => !prev)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <UserCheck size={14} style={{ color: 'var(--accent-primary, #2563eb)' }} />
+                  <strong style={{ color: 'var(--heading-text)', fontSize: '12px' }}>
+                    Quick Login — 9 Hierarchy Test Accounts
+                  </strong>
+                </div>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--muted-text)',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showDevAccounts ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              </div>
+
+              {showDevAccounts ? (
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--muted-text)', marginBottom: '4px' }}>
+                    Click any account below to autofill its credentials (Password: <code>Test123!</code>):
+                  </div>
+                  {DEVELOPMENT_TEST_USERS.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setEmail(u.email)
+                        setPassword('Test123!')
+                        setError(null)
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-soft)',
+                        background: email === u.email ? 'rgba(37, 99, 235, 0.12)' : 'var(--surface)',
+                        color: email === u.email ? 'var(--accent-primary, #2563eb)' : 'var(--heading-text)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        textAlign: 'start',
+                        fontSize: '11px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div>
+                        <strong>{u.name}</strong>{' '}
+                        <span style={{ color: 'var(--muted-text)', fontSize: '10px' }}>({u.email})</span>
+                        <div style={{ fontSize: '10px', color: 'var(--muted-text)' }}>
+                          Role: <b>{u.role}</b> {u.businessUnit ? `· BU: ${u.businessUnit}` : ''}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: 'var(--surface-raised, rgba(0,0,0,0.06))',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {u.role === 'admin'
+                          ? 'HQ'
+                          : u.role === 'business_unit_manager'
+                          ? 'BUM'
+                          : u.role === 'first_line_manager'
+                          ? 'FLM'
+                          : u.role === 'marketing_manager'
+                          ? 'MKT'
+                          : 'REP'}
+                      </span>
+                    </button>
+                  ))}
+
+                  <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: '6px', marginTop: '4px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--muted-text)' }}>Standard Accounts:</div>
+                    <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail('admin@navigenpharma.net')
+                          setPassword('Admin123!')
+                          setError(null)
+                        }}
+                        style={{
+                          fontSize: '10px',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-soft)',
+                          background: 'var(--surface)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Alex Morgan (Admin)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail('ahmed@navigenpharma.net')
+                          setPassword('Rep123!')
+                          setError(null)
+                        }}
+                        style={{
+                          fontSize: '10px',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-soft)',
+                          background: 'var(--surface)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Ahmed Samir (Rep)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginTop: '4px', color: 'var(--muted-text)', fontSize: '10px' }}>
+                  Click to expand test accounts for BUM, FLM, Reps (Cardio & Respiratory) & Marketing.
+                </div>
+              )}
             </div>
           </>
         ) : (

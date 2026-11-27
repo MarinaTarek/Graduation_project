@@ -1,8 +1,9 @@
-import { Languages, LogOut, Moon, Sun } from 'lucide-react'
+import { Languages, LogOut, Moon, Sun, X } from 'lucide-react'
 import { useT } from '@/lib/i18n'
 
 export interface MenuSheetProps {
   isOpen: boolean
+  onClose?: () => void
   dark: boolean
   onToggleDark: () => void
   onOpenLogout: () => void
@@ -12,6 +13,7 @@ export interface MenuSheetProps {
 
 export function MenuSheet({
   isOpen,
+  onClose,
   dark,
   onToggleDark,
   onOpenLogout,
@@ -30,7 +32,27 @@ export function MenuSheet({
 
   return (
     <div className="profile-menu">
-      <strong>{userName}</strong>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <strong>{userName}</strong>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close menu"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--muted-text)',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
       <span>{displayAccountType}</span>
       <button onClick={onToggleDark}>
         {dark ? <Sun /> : <Moon />}

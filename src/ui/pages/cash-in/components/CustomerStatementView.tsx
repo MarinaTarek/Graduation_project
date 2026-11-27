@@ -288,9 +288,9 @@ export function CustomerStatementView({
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start', fontSize: '13px' }}>
+            <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'start', fontSize: '13px' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-card, #e2e8f0)', background: 'var(--surface-raised, #f8fafc)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-card, #e2e8f0)', background: 'var(--surface-raised, #f8fafc)', position: 'sticky', top: 0, zIndex: 2 }}>
                   <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--muted-text)' }}>
                     {t('cashIn.statement.date')}
                   </th>

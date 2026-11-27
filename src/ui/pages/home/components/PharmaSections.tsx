@@ -12,8 +12,8 @@ import { getAuthoritativeReceivables } from '@/data/mock/reportingAnalytics'
 import { useStore } from '@/data/mock/store'
 import { useT, type TranslationKey } from '@/lib/i18n'
 import { formatCurrency, formatCurrencyCompact } from '@/lib/format'
+import { visitFrequencyStore, getCustomerVisitStats, isCustomerOverdue } from '@/data/mock/visitFrequency'
 import {
-  VISIT_INTERVAL_DAYS,
   homeCustomers,
   homeSamples,
   homeExpiringBatches,
@@ -46,8 +46,13 @@ function daysSince(isoDate: string): number {
   return Math.floor((Date.now() - new Date(isoDate).getTime()) / 86_400_000)
 }
 
+/**
+ * A customer is overdue when their completed-visit count for the current
+ * target period is below the configured minimum for their class.
+ * Falls back to interval-based check only when no store record exists.
+ */
 function isOverdue(c: HomeCustomer): boolean {
-  return daysSince(c.last_visit_date) > VISIT_INTERVAL_DAYS[c.classification]
+  return isCustomerOverdue(c.customer_id)
 }
 
 function pill(label: string, color: string, textColor = '#fff') {
@@ -106,6 +111,7 @@ export function KpiStrip({
   onNav?: (page: string, opts?: { filter?: string }) => void
 }) {
   const { t } = useT()
+  useStore(visitFrequencyStore)
   const stored = useStore(customersStore).filter((c) => !c.deleted_at && c.active !== false)
   const allList = stored.length > 0 ? stored.map(adaptCustomer) : homeCustomers
   const customers = repId ? allList.filter(c => c.rep_id === repId) : allList
@@ -153,13 +159,7 @@ export function KpiStrip({
   ]
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '12px',
-      }}
-    >
+    <div className="kpi-strip">
       {tiles.map((t) => (
         <button
           key={t.label}
@@ -195,25 +195,30 @@ export function VisitCoverageByClass({
   repId?: string
   onNav?: (page: string, opts?: { filter?: string }) => void
 }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const stored = useStore(customersStore).filter((c) => !c.deleted_at && c.active !== false)
   const allList = stored.length > 0 ? stored.map(adaptCustomer) : homeCustomers
   const customers = repId ? allList.filter(c => c.rep_id === repId) : allList
+  const policy = useStore(visitFrequencyStore)
   const classes = ['A', 'B', 'C'] as const
 
   const stats = classes.map((cls) => {
     const group = customers.filter(c => c.classification === cls)
     const total = group.length
-    const overdue = group.filter(isOverdue).length
+    const targetConfig = policy[cls]
+    const overdue = group.filter((c) => {
+      const cStats = getCustomerVisitStats(c.customer_id)
+      return cStats ? cStats.completedVisits < targetConfig.targetVisits : isOverdue(c)
+    }).length
     const visited = total - overdue
     const pct = total > 0 ? Math.round((visited / total) * 100) : 0
-    return { cls, total, visited, overdue, pct }
+    return { cls, total, visited, overdue, pct, targetConfig }
   })
 
   return (
     <CardShell>
       <CardTitle icon={Stethoscope} label={t('home.pharma.visitCoverageTitle')} />
-      {stats.map(({ cls, pct, total, overdue }) => (
+      {stats.map(({ cls, pct, total, overdue, targetConfig }) => (
         <button
           key={cls}
           onClick={() => onNav?.('Clients', { filter: `Class ${cls}` })}
@@ -239,7 +244,9 @@ export function VisitCoverageByClass({
             }} />
           </div>
           <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
-            {t('home.pharma.targetInterval', { days: VISIT_INTERVAL_DAYS[cls], total })}
+            {lang === 'ar'
+              ? `المستهدف: ${targetConfig.targetVisits} زيارة ${targetConfig.periodMonths === 1 ? 'شهرياً' : `كل ${targetConfig.periodMonths} أشهر`} · ${total} طبيب في نطاق التغطية`
+              : `Target: ${targetConfig.targetVisits} visit${targetConfig.targetVisits > 1 ? 's' : ''} / ${targetConfig.periodMonths === 1 ? 'month' : `${targetConfig.periodMonths} months`} · ${total} in coverage`}
           </span>
         </button>
       ))}
@@ -455,8 +462,8 @@ export function ReceivablesPanel() {
 
       {/* Receivables Drawer */}
       {open && (
-        <div className="modal-backdrop" onClick={() => setOpen(false)}>
-          <aside className="side-sheet" onClick={e => e.stopPropagation()}>
+        <div className="modal-backdrop">
+          <aside className="side-sheet">
             <div className="sheet-head">
               <div>
                 <span className="eyebrow">{t('home.receivables.eyebrow')}</span>

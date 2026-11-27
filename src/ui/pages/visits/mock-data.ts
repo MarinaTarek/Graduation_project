@@ -17,6 +17,16 @@ export interface VisitRecord {
   notes: string
   nextVisitDate: string
   gpsVerified: boolean
+  isDoubleVisit?: boolean
+  jointRepId?: string
+  jointRepName?: string
+  jointRepName_ar?: string
+  jointVisitStatus?: 'Pending' | 'Accepted' | 'Rejected'
+  invitationId?: string
+  presentationImage?: string
+  presentationImageId?: string
+  presentationImageName?: string
+  gpsCapturedAt?: string
 }
 
 export const visitsMockData: VisitRecord[] = [

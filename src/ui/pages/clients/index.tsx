@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
-import { Plus, Users, Edit3, Building2, Stethoscope } from 'lucide-react'
+import { Plus, Users, Edit3, Building2, Stethoscope, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
@@ -9,6 +9,8 @@ import { ClientToolbar, type ClientFiltersState, ENTITY_TYPE_AR, STATUS_AR } fro
 import { ClientListItem } from './components/ClientListItem'
 import { EditCustomerDrawer } from './components/EditCustomerDrawer'
 import { customersStore, updateCustomer, type Customer } from '@/data/mock/customers'
+import { filterCustomersByScope } from '@/data/mock/dataScope'
+import type { UserRole } from '@/lib/auth/types'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
 import { SPECIALTY_AR, CLASSIFICATION_AR, CLIENT_REGION_AR } from './mock-data'
@@ -19,8 +21,10 @@ export interface ClientsPageProps {
   onItem: (client?: Customer) => void
   filter?: string | null
   onClearFilter?: () => void
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
 }
 
 export default function ClientsPage({
@@ -31,6 +35,8 @@ export default function ClientsPage({
   onClearFilter,
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
 }: ClientsPageProps) {
   const { t, lang } = useT()
   const customers = useStore(customersStore).filter((c) => !c.deleted_at)
@@ -74,88 +80,170 @@ export default function ClientsPage({
     return Array.from(new Set(customers.map((c) => c.repName).filter(Boolean)))
   }, [customers])
 
-  // Role scoping: Reps only see their assigned clients
-  const roleScopedClients = role === 'rep'
-    ? customers.filter((c) =>
-        (c.repName && c.repName.toLowerCase() === currentUserName.toLowerCase()) ||
-        (c.rep_id && currentUserName && c.rep_id.toLowerCase().includes(currentUserName.toLowerCase().split(' ')[0]))
-      )
-    : customers
+  // Role scoping: Reps see own clients; Managers see team/BU clients; Admin sees all
+  const roleScopedClients = useMemo(() => {
+    return filterCustomersByScope(customers, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [customers, currentUserId, currentUserName, role, businessUnit])
 
-  // Apply search and popover filters
-  const displayedClients = roleScopedClients.filter((client) => {
-    // 1. Search text
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      const matchName = client.name.toLowerCase().includes(q)
-      const matchNameAr = client.name_ar?.toLowerCase().includes(q)
-      const matchMeta = client.meta.toLowerCase().includes(q)
-      const matchRep = client.repName.toLowerCase().includes(q)
-      const matchHco = client.associatedHcoNames?.some((h) => h.toLowerCase().includes(q))
-      const matchHcp = client.associatedHcpNames?.some((h) => h.toLowerCase().includes(q))
-      if (!matchName && !matchNameAr && !matchMeta && !matchRep && !matchHco && !matchHcp) return false
-    }
+  // Helper to distinguish HCO (Organizations/Pharmacies) from HCP (Professionals/Doctors)
+  const isHcoClient = (client: Customer): boolean =>
+    client.clientCategory ? client.clientCategory === 'hco' : client.type === 'pharmacy'
 
-    // 2. Navigation filter or popover overdue filter
-    const isOverdueFiltered = activeFilters.overdueOnly || filter === 'Overdue only'
-    if (isOverdueFiltered && client.status.toLowerCase() !== 'overdue') {
-      return false
-    }
+  const isHcpClient = (client: Customer): boolean => !isHcoClient(client)
 
-    // 3. Entity Type: HCP vs HCO
-    if (activeFilters.entityType && activeFilters.entityType !== 'All types') {
-      const isHco = client.clientCategory === 'hco' || client.type === 'pharmacy'
-      if (activeFilters.entityType === 'All HCPs' && isHco) return false
-      if (activeFilters.entityType === 'All HCOs' && !isHco) return false
-      if (activeFilters.entityType === 'Doctor (HCP)' && (isHco || client.hcpType === 'pharmacist' || client.hcpType === 'other')) return false
-      if (activeFilters.entityType === 'Pharmacist (HCP)' && (isHco || client.hcpType !== 'pharmacist')) return false
-      if (activeFilters.entityType === 'Other Specialist (HCP)' && (isHco || client.hcpType !== 'other')) return false
-      if (activeFilters.entityType === 'Hospital (HCO)' && (!isHco || client.hcoType !== 'hospital')) return false
-      if (activeFilters.entityType === 'Clinic (HCO)' && (!isHco || client.hcoType !== 'clinic')) return false
-      if (activeFilters.entityType === 'Medical Center (HCO)' && (!isHco || client.hcoType !== 'medical_center')) return false
-      if (activeFilters.entityType === 'Pharmacy (HCO)' && (!isHco || (client.hcoType !== 'pharmacy' && client.type !== 'pharmacy'))) return false
-    }
+  // Base filtered clients matching search & all filters EXCLUDING entityType tab
+  const clientsMatchingBaseFilters = useMemo(() => {
+    return roleScopedClients.filter((client) => {
+      // 1. Search text
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        const matchName = client.name.toLowerCase().includes(q)
+        const matchNameAr = client.name_ar?.toLowerCase().includes(q)
+        const matchMeta = client.meta.toLowerCase().includes(q)
+        const matchRep = client.repName.toLowerCase().includes(q)
+        const matchHco = client.associatedHcoNames?.some((h) => h.toLowerCase().includes(q))
+        const matchHcp = client.associatedHcpNames?.some((h) => h.toLowerCase().includes(q))
+        if (!matchName && !matchNameAr && !matchMeta && !matchRep && !matchHco && !matchHcp) return false
+      }
 
-    // 4. Status
-    if (activeFilters.status && activeFilters.status !== 'All statuses') {
-      if (client.status.toLowerCase() !== activeFilters.status.toLowerCase()) {
+      // 2. Navigation filter or popover overdue filter
+      const isOverdueFiltered = activeFilters.overdueOnly || filter === 'Overdue only'
+      if (isOverdueFiltered && client.status.toLowerCase() !== 'overdue') {
         return false
       }
-    }
 
-    // 5. Assigned Representative
-    if (activeFilters.assignedRep && activeFilters.assignedRep !== 'All representatives') {
-      if (client.repName.toLowerCase() !== activeFilters.assignedRep.toLowerCase()) {
+      // 4. Status
+      if (activeFilters.status && activeFilters.status !== 'All statuses') {
+        if (client.status.toLowerCase() !== activeFilters.status.toLowerCase()) {
+          return false
+        }
+      }
+
+      // 5. Assigned Representative
+      if (activeFilters.assignedRep && activeFilters.assignedRep !== 'All representatives') {
+        if (client.repName.toLowerCase() !== activeFilters.assignedRep.toLowerCase()) {
+          return false
+        }
+      }
+
+      // 6. Specialty
+      if (activeFilters.specialty !== 'All specialties' && client.specialty !== activeFilters.specialty) {
         return false
       }
-    }
 
-    // 6. Specialty
-    if (activeFilters.specialty !== 'All specialties' && client.specialty !== activeFilters.specialty) {
-      return false
-    }
+      // 7. Classification
+      if (activeFilters.classification !== 'All classes' && client.classification !== activeFilters.classification) {
+        return false
+      }
 
-    // 7. Classification
-    if (activeFilters.classification !== 'All classes' && client.classification !== activeFilters.classification) {
-      return false
-    }
+      // 8. Region / Territory
+      if (activeFilters.region !== 'All regions' && client.region !== activeFilters.region) {
+        return false
+      }
 
-    // 8. Region / Territory
-    if (activeFilters.region !== 'All regions' && client.region !== activeFilters.region) {
-      return false
-    }
+      return true
+    })
+  }, [
+    roleScopedClients,
+    searchQuery,
+    filter,
+    activeFilters.overdueOnly,
+    activeFilters.status,
+    activeFilters.assignedRep,
+    activeFilters.specialty,
+    activeFilters.classification,
+    activeFilters.region,
+  ])
 
-    return true
-  })
+  // Dynamic tab counts (All = HCP + HCO)
+  const hcpTabCount = useMemo(() => {
+    return clientsMatchingBaseFilters.filter(isHcpClient).length
+  }, [clientsMatchingBaseFilters])
+
+  const hcoTabCount = useMemo(() => {
+    return clientsMatchingBaseFilters.filter(isHcoClient).length
+  }, [clientsMatchingBaseFilters])
+
+  const allClientsTabCount = useMemo(() => {
+    return hcpTabCount + hcoTabCount
+  }, [hcpTabCount, hcoTabCount])
+
+  // Summary card analytics
+  const clientStats = useMemo(() => {
+    let activeClients = 0
+    let classACount = 0
+    let classBCount = 0
+    let doctorCount = 0
+    let pharmacistCount = 0
+    let hospitalCount = 0
+    let pharmacyCount = 0
+
+    clientsMatchingBaseFilters.forEach((c) => {
+      const isHco = isHcoClient(c)
+      if (isHco) {
+        if (c.hcoType === 'hospital') hospitalCount++
+        else if (c.hcoType === 'pharmacy' || c.type === 'pharmacy') pharmacyCount++
+      } else {
+        if (c.hcpType === 'pharmacist') pharmacistCount++
+        else doctorCount++
+      }
+
+      const isActive = c.active !== false && c.status?.toLowerCase() !== 'inactive'
+      if (isActive) activeClients++
+
+      if (c.classification === 'Class A') classACount++
+      else if (c.classification === 'Class B') classBCount++
+    })
+
+    const total = allClientsTabCount
+    const activePct = total > 0 ? Math.round((activeClients / total) * 100) : 0
+    const inactiveClients = total - activeClients
+
+    return {
+      totalHcp: hcpTabCount,
+      totalHco: hcoTabCount,
+      activeClients,
+      inactiveClients,
+      activePct,
+      totalClients: total,
+      classACount,
+      classBCount,
+      doctorCount,
+      pharmacistCount,
+      hospitalCount,
+      pharmacyCount,
+    }
+  }, [clientsMatchingBaseFilters, allClientsTabCount, hcpTabCount, hcoTabCount])
+
+  // Final displayed clients after applying entityType tab/filter
+  const displayedClients = useMemo(() => {
+    return clientsMatchingBaseFilters.filter((client) => {
+      if (activeFilters.entityType && activeFilters.entityType !== 'All types') {
+        const isHco = isHcoClient(client)
+        if (activeFilters.entityType === 'All HCPs' && isHco) return false
+        if (activeFilters.entityType === 'All HCOs' && !isHco) return false
+        if (activeFilters.entityType === 'Doctor (HCP)' && (isHco || client.hcpType === 'pharmacist' || client.hcpType === 'other')) return false
+        if (activeFilters.entityType === 'Pharmacist (HCP)' && (isHco || client.hcpType !== 'pharmacist')) return false
+        if (activeFilters.entityType === 'Other Specialist (HCP)' && (isHco || client.hcpType !== 'other')) return false
+        if (activeFilters.entityType === 'Hospital (HCO)' && (!isHco || client.hcoType !== 'hospital')) return false
+        if (activeFilters.entityType === 'Clinic (HCO)' && (!isHco || client.hcoType !== 'clinic')) return false
+        if (activeFilters.entityType === 'Medical Center (HCO)' && (!isHco || client.hcoType !== 'medical_center')) return false
+        if (activeFilters.entityType === 'Pharmacy (HCO)' && (!isHco || (client.hcoType !== 'pharmacy' && client.type !== 'pharmacy'))) return false
+      }
+      return true
+    })
+  }, [clientsMatchingBaseFilters, activeFilters.entityType])
 
   // Default sorting: clients by priority (Overdue first, then Class A)
-  const sortedClients = [...displayedClients].sort((a, b) => {
-    if (a.status === 'Overdue' && b.status !== 'Overdue') return -1
-    if (b.status === 'Overdue' && a.status !== 'Overdue') return 1
-    if (a.classification === 'Class A' && b.classification !== 'Class A') return -1
-    if (b.classification === 'Class A' && a.classification !== 'Class A') return 1
-    return 0
-  })
+  const sortedClients = useMemo(() => {
+    return [...displayedClients].sort((a, b) => {
+      if (a.status === 'Overdue' && b.status !== 'Overdue') return -1
+      if (b.status === 'Overdue' && a.status !== 'Overdue') return 1
+      if (a.classification === 'Class A' && b.classification !== 'Class A') return -1
+      if (b.classification === 'Class A' && a.classification !== 'Class A') return 1
+      return 0
+    })
+  }, [displayedClients])
 
   const removeEntityType = () => setActiveFilters((prev) => ({ ...prev, entityType: 'All types' }))
   const removeStatus = () => setActiveFilters((prev) => ({ ...prev, status: 'All statuses' }))
@@ -199,7 +287,7 @@ export default function ClientsPage({
       </div>
 
       {/* Quick Category Segmented Buttons */}
-      <div style={{ display: 'flex', gap: '8px', margin: '20px 0 16px' }}>
+      <div style={{ display: 'flex', gap: '8px', margin: '20px 0 16px', flexWrap: 'wrap' }}>
         <button
           type="button"
           onClick={() => setActiveFilters((prev) => ({ ...prev, entityType: 'All types' }))}
@@ -212,9 +300,13 @@ export default function ClientsPage({
             fontWeight: 600,
             fontSize: '13px',
             cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
           }}
         >
-          {lang === 'ar' ? 'الكل' : 'All Clients'} ({roleScopedClients.length})
+          <Users size={14} />
+          {lang === 'ar' ? 'الكل' : 'All Clients'} ({allClientsTabCount})
         </button>
         <button
           type="button"
@@ -234,7 +326,7 @@ export default function ClientsPage({
           }}
         >
           <Stethoscope size={14} />
-          {lang === 'ar' ? 'المهنيون الصحيون (HCP)' : 'Healthcare Professionals (HCP)'}
+          {lang === 'ar' ? 'المهنيون الصحيون (HCP)' : 'Healthcare Professionals (HCP)'} ({hcpTabCount})
         </button>
         <button
           type="button"
@@ -254,8 +346,150 @@ export default function ClientsPage({
           }}
         >
           <Building2 size={14} />
-          {lang === 'ar' ? 'المؤسسات الصحية (HCO)' : 'Healthcare Organizations (HCO)'}
+          {lang === 'ar' ? 'المؤسسات الصحية (HCO)' : 'Healthcare Organizations (HCO)'} ({hcoTabCount})
         </button>
+      </div>
+
+      {/* Summary KPI Cards Strip */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '16px',
+          marginBottom: '20px',
+        }}
+      >
+        {/* Card 1: Total HCPs */}
+        <div className="panel" style={{ padding: '20px' }}>
+          <div className="panel-head" style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="eyebrow" style={{ fontSize: '11px' }}>
+                {lang === 'ar' ? 'المهنيون الصحيون' : 'Total HCPs'}
+              </span>
+              <h3 style={{ fontSize: '24px', margin: '4px 0 0', fontWeight: 700 }}>
+                {clientStats.totalHcp.toLocaleString()}
+              </h3>
+            </div>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'rgba(5, 150, 105, 0.12)',
+                color: '#059669',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Stethoscope size={20} />
+            </div>
+          </div>
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)' }}>
+            {lang === 'ar'
+              ? `${clientStats.doctorCount} أطباء · ${clientStats.pharmacistCount} صيادلة`
+              : `${clientStats.doctorCount} Doctors · ${clientStats.pharmacistCount} Pharmacists`}
+          </p>
+        </div>
+
+        {/* Card 2: Total HCOs */}
+        <div className="panel" style={{ padding: '20px' }}>
+          <div className="panel-head" style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="eyebrow" style={{ fontSize: '11px' }}>
+                {lang === 'ar' ? 'المؤسسات الصحية' : 'Total HCOs'}
+              </span>
+              <h3 style={{ fontSize: '24px', margin: '4px 0 0', fontWeight: 700 }}>
+                {clientStats.totalHco.toLocaleString()}
+              </h3>
+            </div>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'rgba(37, 99, 235, 0.12)',
+                color: '#2563eb',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Building2 size={20} />
+            </div>
+          </div>
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)' }}>
+            {lang === 'ar'
+              ? `${clientStats.hospitalCount} مستشفيات · ${clientStats.pharmacyCount} صيدليات`
+              : `${clientStats.hospitalCount} Hospitals · ${clientStats.pharmacyCount} Pharmacies`}
+          </p>
+        </div>
+
+        {/* Card 3: Active Clients */}
+        <div className="panel" style={{ padding: '20px' }}>
+          <div className="panel-head" style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="eyebrow" style={{ fontSize: '11px' }}>
+                {lang === 'ar' ? 'العملاء النشطون' : 'Active Clients'}
+              </span>
+              <h3 style={{ fontSize: '24px', margin: '4px 0 0', fontWeight: 700 }}>
+                {clientStats.activeClients.toLocaleString()}
+              </h3>
+            </div>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: '#10b981',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <CheckCircle2 size={20} />
+            </div>
+          </div>
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)' }}>
+            {lang === 'ar'
+              ? `نسبة النشاط ${clientStats.activePct}% · ${clientStats.inactiveClients} غير نشط`
+              : `${clientStats.activePct}% active rate · ${clientStats.inactiveClients} inactive`}
+          </p>
+        </div>
+
+        {/* Card 4: Total Clients */}
+        <div className="panel" style={{ padding: '20px' }}>
+          <div className="panel-head" style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span className="eyebrow" style={{ fontSize: '11px' }}>
+                {lang === 'ar' ? 'إجمالي العملاء' : 'Total Clients'}
+              </span>
+              <h3 style={{ fontSize: '24px', margin: '4px 0 0', fontWeight: 700 }}>
+                {clientStats.totalClients.toLocaleString()}
+              </h3>
+            </div>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'rgba(27, 53, 84, 0.10)',
+                color: 'var(--navy, #1B3554)',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Users size={20} />
+            </div>
+          </div>
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-text)' }}>
+            {lang === 'ar'
+              ? `${clientStats.classACount} فئة A · ${clientStats.classBCount} فئة B`
+              : `${clientStats.classACount} Class A · ${clientStats.classBCount} Class B`}
+          </p>
+        </div>
       </div>
 
       <ClientToolbar
@@ -454,7 +688,7 @@ export default function ClientsPage({
         customer={editingCustomer}
         isOpen={Boolean(editingCustomer)}
         onClose={() => setEditingCustomer(null)}
-        role={role}
+        role={role === 'rep' ? 'rep' : 'admin'}
         currentUserName={currentUserName}
         onSave={(updated, previous) => {
           showUndoToast(t('clients.savedChanges', { name: updated.name }), () => {

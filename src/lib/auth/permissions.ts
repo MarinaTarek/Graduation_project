@@ -31,6 +31,60 @@ export const ALL_ADMIN_PAGES = [
 
 export const ALL_PAGES = [...ALL_STANDARD_PAGES, ...ALL_ADMIN_PAGES]
 
+export const ROLE_ALLOWED_PAGES: Record<UserRole, string[]> = {
+  admin: [...ALL_PAGES, 'Home'],
+  first_line_manager: [
+    'Dashboard',
+    'Home',
+    'Clients',
+    'Visits',
+    'Visit plan',
+    'Sell-out',
+    'Performance Analytics',
+    'Targets',
+    'Reports',
+  ],
+  business_unit_manager: [
+    'Dashboard',
+    'Home',
+    'Clients',
+    'Visits',
+    'Visit plan',
+    'Sell-out',
+    'Performance Analytics',
+    'Targets',
+    'Reports',
+    'Territories',
+  ],
+  marketing_manager: [
+    'Dashboard',
+    'Home',
+    'Reports',
+    'Products & Batches',
+    'Performance Analytics',
+  ],
+  rep: [
+    'Dashboard',
+    'Home',
+    'Clients',
+    'Visits',
+    'Visit plan',
+    'Sell-out',
+    'Targets',
+    'Performance Analytics',
+    'Reports',
+    'Stock',
+    'Invoices',
+    'Sell-in',
+    'Distribution Overview',
+    'Invoices & Sell-in',
+    'Warehouses',
+    'Cash In',
+    'Returns',
+    'Budgets',
+  ],
+}
+
 export function getDefaultPermissions(role: UserRole): UserPermissions {
   if (role === 'admin') {
     return {
@@ -41,12 +95,73 @@ export function getDefaultPermissions(role: UserRole): UserPermissions {
       canDeleteData: true,
     }
   }
+
+  if (role === 'first_line_manager') {
+    return {
+      pages: [...ROLE_ALLOWED_PAGES.first_line_manager],
+      canEditPrices: false,
+      canApproveInvoices: false,
+      canExport: true,
+      canDeleteData: false,
+    }
+  }
+
+  if (role === 'business_unit_manager') {
+    return {
+      pages: [...ROLE_ALLOWED_PAGES.business_unit_manager],
+      canEditPrices: false,
+      canApproveInvoices: false,
+      canExport: true,
+      canDeleteData: false,
+    }
+  }
+
+  if (role === 'marketing_manager') {
+    return {
+      pages: [...ROLE_ALLOWED_PAGES.marketing_manager],
+      canEditPrices: false,
+      canApproveInvoices: false,
+      canExport: true,
+      canDeleteData: false,
+    }
+  }
+
   return {
-    pages: [...ALL_STANDARD_PAGES, 'Home'],
+    pages: [...ROLE_ALLOWED_PAGES.rep],
     canEditPrices: false,
     canApproveInvoices: false,
     canExport: false,
     canDeleteData: false,
+  }
+}
+
+/**
+ * Sanitizes existing permissions when switching roles to guarantee that
+ * transitioning to a lower-privilege role never accidentally retains unauthorized privileges.
+ */
+export function sanitizeRolePermissions(
+  newRole: UserRole,
+  currentPermissions: UserPermissions
+): UserPermissions {
+  const allowedPages = new Set(ROLE_ALLOWED_PAGES[newRole])
+  const filteredPages = currentPermissions.pages.filter((p) => allowedPages.has(p))
+
+  // If filtered pages lost core pages, merge defaults
+  const defaults = getDefaultPermissions(newRole)
+  const combinedPages = Array.from(new Set([...filteredPages, ...defaults.pages]))
+
+  return {
+    pages: combinedPages,
+    canEditPrices: newRole === 'admin' ? currentPermissions.canEditPrices : false,
+    canApproveInvoices:
+      newRole === 'admin' || newRole === 'business_unit_manager'
+        ? currentPermissions.canApproveInvoices
+        : false,
+    canExport:
+      newRole === 'rep'
+        ? false
+        : (currentPermissions.canExport ?? defaults.canExport),
+    canDeleteData: newRole === 'admin' ? currentPermissions.canDeleteData : false,
   }
 }
 

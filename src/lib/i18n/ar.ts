@@ -3,7 +3,7 @@ import type { TranslationKey } from './en'
 export const ar: Partial<Record<TranslationKey, string>> = {
   // Navigation / Sidebar
   'nav.dashboard': 'لوحة التحكم',
-  'nav.clients': 'العملاء',
+  'nav.clients': 'مقدمو ومؤسسات الرعاية الصحية (HCPs & HCOs)',
   'nav.invoices': 'الفواتير',
   'nav.stock': 'المخزون',
   'nav.sellIn': 'المبيعات المباشرة',
@@ -270,7 +270,7 @@ export const ar: Partial<Record<TranslationKey, string>> = {
   'home.attention.accountRequests': 'طلبات تسجيل حسابات',
   'home.attention.pendingReview': '{count} بانتظار المراجعة',
   'home.attention.actionOpeningPendingInvoices': 'فتح الفواتير المعلقة',
-  'home.attention.actionOpeningOverdueClients': 'فتح العملاء المتأخرين',
+  'home.attention.actionOpeningOverdueClients': 'فتح المتأخرين من HCPs & HCOs',
   'home.attention.actionOpeningExpiringBatch': 'فتح تفاصيل الدفعة المنتهية',
   'home.attention.actionOpeningPendingRequests': 'فتح طلبات المستخدمين المعلقة',
   'home.attention.actionOpening': 'فتح {label}',
@@ -366,7 +366,7 @@ export const ar: Partial<Record<TranslationKey, string>> = {
 
   // Clients Page
   'clients.eyebrow': 'العلاقات',
-  'clients.title': 'العملاء',
+  'clients.title': 'مقدمو ومؤسسات الرعاية الصحية (HCPs & HCOs)',
   'clients.subtitle': 'كل علاقة، محفوظة.',
   'clients.addNew': 'إضافة جديد',
   'clients.activeFilters': 'الفلاتر النشطة:',
@@ -390,6 +390,13 @@ export const ar: Partial<Record<TranslationKey, string>> = {
   'clients.toolbar.switchToList': 'التبديل لعرض القائمة',
   'clients.toolbar.cards': 'بطاقات',
   'clients.toolbar.list': 'قائمة',
+  'clients.tabs.all': 'الكل',
+  'clients.tabs.hcps': 'المهنيون الصحيون (HCP)',
+  'clients.tabs.hcos': 'المؤسسات الصحية (HCO)',
+  'clients.kpi.totalClients': 'إجمالي العملاء',
+  'clients.kpi.totalHcps': 'المهنيون الصحيون',
+  'clients.kpi.totalHcos': 'المؤسسات الصحية',
+  'clients.kpi.activeClients': 'العملاء النشطون',
 
   // Edit Customer Drawer
   'clients.edit.editDoctor': 'تعديل بيانات الطبيب',

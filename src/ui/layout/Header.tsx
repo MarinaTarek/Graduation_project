@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Bell, Moon, Search, Sun } from 'lucide-react'
+import { ArrowLeft, Bell, Menu, Moon, Search, Sun } from 'lucide-react'
 import { useGreeting } from '@/lib/useGreeting'
 import { useT } from '@/lib/i18n'
 import { LanguageSwitch } from '@/ui/design-system/components/LanguageSwitch'
@@ -12,7 +12,7 @@ export interface HeaderProps {
   onOpenNotifications: () => void
   onToggleDark: () => void
   dark: boolean
-  role?: 'admin' | 'rep'
+  role?: string
   onToggleRole?: () => void
   greetingName?: string
   nameAr?: string
@@ -21,6 +21,7 @@ export interface HeaderProps {
   onOpenProfile?: () => void
   activePage?: string
   onBack?: () => void
+  onOpenMenu?: () => void
 }
 
 export function Header({
@@ -36,6 +37,7 @@ export function Header({
   onOpenProfile,
   activePage = 'Home',
   onBack,
+  onOpenMenu,
 }: HeaderProps) {
   const { t, lang } = useT()
   const unreadCount = useStore(notificationsStore).filter((n) => n.unread).length
@@ -57,6 +59,29 @@ export function Header({
     <header className="page-header">
       {/* Left / Start: Back button + Greeting */}
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {onOpenMenu && (
+          <button
+            onClick={onOpenMenu}
+            aria-label="Open menu"
+            title="Open menu"
+            className="tablet-menu-trigger"
+            style={{
+              display: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: '1px solid var(--border-soft)',
+              background: 'var(--card-bg)',
+              color: 'var(--heading-text)',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <Menu style={{ width: '20px', height: '20px' }} />
+          </button>
+        )}
         {showBack && onBack && (
           <button
             onClick={onBack}

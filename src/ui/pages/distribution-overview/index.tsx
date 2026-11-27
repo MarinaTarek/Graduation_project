@@ -12,7 +12,7 @@ import { formatCurrency } from '@/lib/format'
 
 export interface DistributionOverviewProps {
   onNavigate: (page: string, options?: { filter?: string; overlay?: string }) => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
 }
 

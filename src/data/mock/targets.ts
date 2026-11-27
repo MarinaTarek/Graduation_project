@@ -3,6 +3,8 @@ import { addAuditLog } from './audit'
 import type { StoredInvoice } from './invoices'
 import type { SalesOrder } from './sales-orders'
 import { getSystemCurrentDate, getSystemNow } from '@/lib/dateUtils'
+import { findAuthoritativeUser } from '@/lib/approval/approvalEngine'
+import { getAuthorizedScope } from './dataScope'
 
 export type TargetPeriod = 'Monthly' | 'Quarterly'
 export type TargetStatus = 'In Progress' | 'Achieved' | 'Expired'
@@ -88,10 +90,44 @@ export const INITIAL_TARGETS: SalesTarget[] = [
 
 export const targetsStore = createStore<SalesTarget[]>('sales_targets', INITIAL_TARGETS)
 
+function assertTargetMutationScope(
+  actor: string | { id?: string; name?: string; role?: string; email?: string } | undefined,
+  targetData: Partial<SalesTarget>,
+  operation: 'create' | 'update' | 'delete'
+) {
+  if (!actor || actor === 'Alex Morgan') return
+  const authUser = findAuthoritativeUser(actor)
+  const actorObj = typeof actor === 'object' && actor ? actor : null
+  const actorUser = authUser || {
+    id: actorObj?.id || `u-${(actorObj?.name || (typeof actor === 'string' ? actor : 'unknown')).toLowerCase().replace(/\s+/g, '-')}`,
+    name: actorObj?.name || (typeof actor === 'string' ? actor : 'Unknown User'),
+    role: (actorObj?.role || (typeof actor === 'string' && actor.toLowerCase().includes('admin') ? 'admin' : 'rep')) as any,
+    businessUnit: (actorObj as any)?.businessUnit,
+  }
+
+  if (actorUser.role === 'marketing_manager' || actorUser.role === 'rep') {
+    throw new Error(`Unauthorized target mutation: Role "${actorUser.role}" cannot ${operation} sales targets.`)
+  }
+
+  const scope = getAuthorizedScope(actorUser)
+  if (scope.isCompanyWide) return
+
+  const repId = (targetData.repId || '').toLowerCase()
+  const repName = (targetData.repName || '').toLowerCase()
+  const idMatch = repId && (scope.repIds as string[]).some((id) => id.toLowerCase() === repId)
+  const nameMatch = repName && (scope.repNames as string[]).some((n) => n.toLowerCase() === repName)
+
+  if (!idMatch && !nameMatch) {
+    throw new Error(`Unauthorized target mutation: User "${actorUser.name}" (${actorUser.role}) cannot ${operation} targets outside their authorized organizational scope.`)
+  }
+}
+
 export function createTarget(
   data: Omit<SalesTarget, 'id' | 'createdAt'>,
-  actor: string = 'Alex Morgan',
+  actor: string | { id?: string; name?: string; role?: string } = 'Alex Morgan',
 ): SalesTarget {
+  assertTargetMutationScope(actor, data, 'create')
+  const actorName = typeof actor === 'object' && actor ? actor.name || 'User' : actor
   const newTarget: SalesTarget = {
     ...data,
     id: `tgt-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000)}`,
@@ -102,7 +138,7 @@ export function createTarget(
 
   addAuditLog({
     action: 'Sales Target Created',
-    actor,
+    actor: actorName,
     time: 'Just now',
     details: `Created sales target "${newTarget.name}" for ${newTarget.repName} (${newTarget.targetValue.toLocaleString()} EGP)`,
   })
@@ -113,8 +149,13 @@ export function createTarget(
 export function updateTarget(
   id: string,
   patch: Partial<Omit<SalesTarget, 'id' | 'createdAt'>>,
-  actor: string = 'Alex Morgan',
+  actor: string | { id?: string; name?: string; role?: string } = 'Alex Morgan',
 ): boolean {
+  const current = targetsStore.get().find((t) => t.id === id)
+  if (current) {
+    assertTargetMutationScope(actor, current, 'update')
+  }
+
   let updated = false
   let targetName = id
 
@@ -133,10 +174,11 @@ export function updateTarget(
     }),
   )
 
+  const actorName = typeof actor === 'object' && actor ? actor.name || 'User' : actor
   if (updated) {
     addAuditLog({
       action: 'Sales Target Updated',
-      actor,
+      actor: actorName,
       time: 'Just now',
       details: `Updated sales target "${targetName}"`,
     })
@@ -145,19 +187,22 @@ export function updateTarget(
   return updated
 }
 
-export function deleteTarget(id: string, actor: string = 'Alex Morgan'): boolean {
-  let deletedTarget: SalesTarget | undefined
+export function deleteTarget(
+  id: string,
+  actor: string | { id?: string; name?: string; role?: string } = 'Alex Morgan'
+): boolean {
   const current = targetsStore.get()
   const found = current.find((t) => t.id === id)
 
   if (found) {
-    deletedTarget = found
+    assertTargetMutationScope(actor, found, 'delete')
+    const actorName = typeof actor === 'object' && actor ? actor.name || 'User' : actor
     targetsStore.update((list) => list.filter((t) => t.id !== id))
     addAuditLog({
       action: 'Sales Target Deleted',
-      actor,
+      actor: actorName,
       time: 'Just now',
-      details: `Deleted sales target "${deletedTarget.name}" (assigned to ${deletedTarget.repName})`,
+      details: `Deleted sales target "${found.name}" (assigned to ${found.repName})`,
     })
     return true
   }

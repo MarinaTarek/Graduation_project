@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FileSpreadsheet } from 'lucide-react'
 import { Drawer } from '@/ui/design-system/components/Drawer'
 import { Modal } from '@/ui/design-system/components/Modal'
 import { Button } from '@/ui/design-system/components/Button'
@@ -10,11 +11,12 @@ import { canPerformAction, useAuth } from '@/lib/auth'
 import { localizedName, useT } from '@/lib/i18n'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { useStore } from '@/data/mock/store'
-import { invoicesStore, updateInvoice } from '@/data/mock/invoices'
+import { invoicesStore, updateInvoice, approveInvoice, rejectInvoice } from '@/data/mock/invoices'
 import { salesOrdersStore } from '@/data/mock/sales-orders'
 import { customersStore } from '@/data/mock/customers'
 import { addAuditLog } from '@/data/mock/audit'
 import { addNotification } from '@/data/mock/notifications'
+import { exportSingleInvoiceToExcel } from '@/lib/export/excelInvoiceExport'
 
 export interface InvoiceReviewPageProps {
   invoiceName?: string | null
@@ -113,6 +115,14 @@ export default function InvoiceReviewPage({
   const handleApprove = () => {
     // Prevent duplicate approval actions
     if (loadingAction || !isPending) return
+    if (!canReview || user?.role !== 'admin') {
+      alert(
+        lang === 'ar'
+          ? 'غير مصرح: اعتماد الفواتير مخصص للمدير العام فقط.'
+          : 'Unauthorized: Only Executive Administrators are authorized to approve invoices.'
+      )
+      return
+    }
     if (!linkedOrder && (!invoiceOriginalAmount || invoiceOriginalAmount <= 0)) {
       alert(
         lang === 'ar'
@@ -123,27 +133,7 @@ export default function InvoiceReviewPage({
     }
     setLoadingAction('approve')
     try {
-      const now = new Date().toISOString()
-      const newHistory = [
-        ...(invoice.approval_history || []),
-        {
-          action: 'Approved' as const,
-          actor: user?.name || 'Unknown',
-          timestamp: now,
-        },
-      ]
-      updateInvoice(invoice.name, {
-        status: 'Approved',
-        approval_history: newHistory,
-      })
-      addAuditLog({
-        action: 'Invoice Approved',
-        actor: user?.name || 'Unknown',
-        time: 'Just now',
-        details: linkedOrder
-          ? `Approved ${invoice.name} from sales order ${linkedOrder.id}`
-          : `Approved ${invoice.name}`,
-      })
+      approveInvoice(invoice.id, user || 'Admin')
       addNotification({
         title: 'Invoice Approved',
         message: `${invoice.name} has been approved by ${user?.name || 'Unknown'}.`,
@@ -166,32 +156,20 @@ export default function InvoiceReviewPage({
     }
     // Prevent duplicate actions
     if (loadingAction || !isPending) return
+    if (!canReview || user?.role !== 'admin') {
+      alert(
+        lang === 'ar'
+          ? 'غير مصرح: رفض الفواتير مخصص للمدير العام فقط.'
+          : 'Unauthorized: Only Executive Administrators are authorized to reject invoices.'
+      )
+      return
+    }
     setLoadingAction('reject')
     try {
-      const now = new Date().toISOString()
-      const newHistory = [
-        ...(invoice.approval_history || []),
-        {
-          action: 'Rejected' as const,
-          actor: user?.name || 'Unknown',
-          timestamp: now,
-          reason: rejectReason.trim(),
-        },
-      ]
-      updateInvoice(invoice.name, {
-        status: 'Rejected',
-        rejection_reason: rejectReason.trim(),
-        approval_history: newHistory,
-      })
-      addAuditLog({
-        action: 'Invoice Rejected',
-        actor: user?.name || 'Unknown',
-        time: 'Just now',
-        details: `Rejected ${invoice.name}: ${rejectReason.trim()}`,
-      })
+      rejectInvoice(invoice.id, rejectReason.trim(), user || 'Admin')
       addNotification({
         title: 'Invoice Rejected',
-        message: `${invoice.name} was rejected by ${user?.name || 'Unknown'}: ${rejectReason.trim()}`,
+        message: `${invoice.name} has been rejected by ${user?.name || 'Unknown'}. Reason: ${rejectReason.trim()}`,
         category: 'invoices',
         priority: 'warning',
         time: 'Just now',
@@ -416,23 +394,33 @@ export default function InvoiceReviewPage({
         </div>
       )}
 
-      {/* Already Processed Notice */}
-      {!isPending && !isRejected && (
-        <div
-          style={{
-            margin: '0 24px 16px',
-            padding: '10px 14px',
-            borderRadius: '10px',
-            background: 'var(--surface-raised)',
-            border: '1px solid var(--border-soft)',
-            fontSize: '13px',
-            color: 'var(--muted-text)',
-            textAlign: 'center',
-          }}
+      {/* Already Processed Notice & Export Action */}
+      <div style={{ margin: '0 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+        <Button
+          variant="secondary"
+          onClick={() => exportSingleInvoiceToExcel(invoice)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          title={lang === 'ar' ? 'تصدير بيانات هذه الفاتورة إلى ملف إكسيل' : 'Export this invoice to Excel'}
         >
-          {t('invoices.alreadyProcessed')}
-        </div>
-      )}
+          <FileSpreadsheet size={15} color="#16a34a" />
+          <span>{lang === 'ar' ? 'تصدير لإكسيل (XML)' : 'Export to Excel (XML)'}</span>
+        </Button>
+
+        {!isPending && !isRejected && (
+          <div
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              background: 'var(--surface-raised)',
+              border: '1px solid var(--border-soft)',
+              fontSize: '12px',
+              color: 'var(--muted-text)',
+            }}
+          >
+            {t('invoices.alreadyProcessed')}
+          </div>
+        )}
+      </div>
 
       {/* Action Buttons for Pending */}
       {isPending && canReview && (

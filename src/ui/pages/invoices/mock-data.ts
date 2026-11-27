@@ -4,6 +4,9 @@ export interface InvoiceLineItem {
   quantity: number
   unitPrice: number
   total: number
+  unit?: string
+  discount?: number
+  tax?: number
 }
 
 export interface InvoiceRecord {

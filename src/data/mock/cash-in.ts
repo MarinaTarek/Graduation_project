@@ -4,6 +4,7 @@ import { addNotification } from './notifications'
 import { invoicesStore, type StoredInvoice, updateInvoice } from './invoices'
 import { resolveCustomerId } from './customerResolution'
 import { getSystemCurrentDate, getSystemCurrentYearMonth } from '@/lib/dateUtils'
+import { findAuthoritativeUser } from '@/lib/approval/approvalEngine'
 
 export interface CollectionInvoice {
   id: string
@@ -639,6 +640,13 @@ export function voidCollectionPayment(
   reason: string,
   actor: string,
 ): boolean {
+  if (actor) {
+    const authUser = findAuthoritativeUser(actor)
+    if (authUser && (authUser.role === 'rep' || authUser.role === 'marketing_manager')) {
+      throw new Error(`Unauthorized: Role "${authUser.role}" cannot void collection payment records.`)
+    }
+  }
+
   let success = false
   let targetPayment: PaymentRecord | undefined
 

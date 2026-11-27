@@ -9,12 +9,14 @@ import AdminTerritoriesPage from './territories'
 import AdminAuditLogPage from './audit-log'
 import AdminSettingsPage from './settings'
 
+import type { UserRole } from '@/lib/auth/types'
+
 export interface AdminPageProps {
   initialSubpage?: string
   filter?: string | null
   currentUserName?: string
   currentUserEmail?: string
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   dark?: boolean
   onToggleDark?: () => void
   onAction?: (msg: string) => void
@@ -100,7 +102,7 @@ export default function AdminPage({
         <AdminSettingsPage
           currentUserName={currentUserName}
           currentUserEmail={currentUserEmail}
-          role={role}
+          role={role === 'admin' ? 'admin' : 'rep'}
           dark={dark}
           onToggleDark={onToggleDark}
           onAction={onAction}

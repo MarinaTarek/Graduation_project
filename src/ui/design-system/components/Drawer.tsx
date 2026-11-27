@@ -21,10 +21,9 @@ export function Drawer({
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <aside
         className={`side-sheet ${className}`}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="sheet-head">
           <div>

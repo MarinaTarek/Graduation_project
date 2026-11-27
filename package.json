@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "test": "node --loader ./tests/loader.mjs --experimental-strip-types --test tests/financial-logic.test.ts tests/inventory-logic.test.ts tests/cross-module-consistency.test.ts tests/phase3-targeted-corrections.test.ts tests/phase4-workflows.test.ts tests/backend-readiness.test.ts tests/date-dashboard-sync.test.ts"
+    "test": "node --loader ./tests/loader.mjs --experimental-strip-types --test tests/financial-logic.test.ts tests/inventory-logic.test.ts tests/cross-module-consistency.test.ts tests/phase3-targeted-corrections.test.ts tests/phase4-workflows.test.ts tests/backend-readiness.test.ts tests/date-dashboard-sync.test.ts tests/feature-updates.test.ts tests/hierarchy-location-roles.test.ts tests/client-tabs-summary.test.ts tests/double-visit-regional-participants.test.ts tests/visit-plan-calendar-alarm.test.ts tests/three-enhancements.test.ts tests/hierarchy-approval-engine.test.ts tests/role-dashboard-reports.test.ts tests/authorization-permission-integrity.test.ts tests/action-response-ui-consistency.test.ts tests/phase1-canonical-consolidation.test.ts tests/phase2-complete-implementation.test.ts tests/master-regression-suite.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

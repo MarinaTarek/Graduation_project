@@ -17,6 +17,8 @@ import { batchesStore, stockMovementsStore, getBatchesNearExpiry, deriveBatches 
 import { usersStore } from './users'
 import { productsStore } from './products'
 import { salesOrdersStore } from './sales-orders'
+import { getAuthorizedScope } from './dataScope'
+import type { UserRole } from '@/lib/auth/types'
 
 // ── Receivables Aging & Top Late Accounts ───────────────────────────────────
 
@@ -164,7 +166,31 @@ export interface AuthoritativeRepScorecard {
   samplesDistributed: number
 }
 
-export function getAuthoritativeRepScorecard(repNameOrId: string): AuthoritativeRepScorecard {
+export function getAuthoritativeRepScorecard(
+  repNameOrId: string,
+  currentUser?: { id?: string; name?: string; role?: UserRole | string; businessUnit?: string }
+): AuthoritativeRepScorecard {
+  if (currentUser) {
+    const scope = getAuthorizedScope(currentUser)
+    if (scope.isMarketingOnly) {
+      throw new Error('Unauthorized: Marketing Managers do not have access to representative performance scorecards.')
+    }
+    const reqLower = repNameOrId.toLowerCase()
+    if (currentUser.role === 'rep') {
+      const isOwn = (currentUser.id && currentUser.id.toLowerCase() === reqLower) ||
+                    (currentUser.name && currentUser.name.toLowerCase() === reqLower)
+      if (!isOwn) {
+        throw new Error('Unauthorized: Medical Representatives can only view their own performance scorecard.')
+      }
+    } else if (!scope.isCompanyWide && scope.repIds !== 'ALL') {
+      const idMatch = (scope.repIds as string[]).some((id) => id.toLowerCase() === reqLower)
+      const nameMatch = (scope.repNames as string[]).some((n) => n.toLowerCase() === reqLower)
+      if (!idMatch && !nameMatch) {
+        throw new Error(`Unauthorized: User "${currentUser.name}" cannot view scorecard for representative "${repNameOrId}" outside their authorized organizational scope.`)
+      }
+    }
+  }
+
   const users = usersStore.get()
   const user = users.find(
     (u) => u.id === repNameOrId || u.name.toLowerCase() === repNameOrId.toLowerCase()
@@ -235,7 +261,15 @@ export interface AuthoritativeInvoicesApprovalsSummary {
   rejectionReasons: Array<{ reason: string; count: number; pct: number }>
 }
 
-export function getAuthoritativeInvoicesApprovalsSummary(): AuthoritativeInvoicesApprovalsSummary {
+export function getAuthoritativeInvoicesApprovalsSummary(
+  currentUser?: { id?: string; name?: string; role?: UserRole | string; businessUnit?: string }
+): AuthoritativeInvoicesApprovalsSummary {
+  if (currentUser) {
+    if (currentUser.role === 'marketing_manager' || currentUser.role === 'rep') {
+      throw new Error(`Unauthorized: Role "${currentUser.role}" does not have access to Invoices & Approvals reporting.`)
+    }
+  }
+
   const invoices = invoicesStore.get().filter((inv) => !inv.needsReconciliation)
   const totalCount = invoices.length
   const totalAmount = invoices.reduce((sum, inv) => sum + (inv.originalAmount || 0), 0)
@@ -305,8 +339,16 @@ const BRAND_COLORS: Record<string, string> = {
 }
 
 export function getAuthoritativeSalesPerformance(
-  filters?: { reps?: string[]; regions?: string[]; products?: string[] }
+  filters?: { reps?: string[]; regions?: string[]; products?: string[] },
+  currentUser?: { id?: string; name?: string; role?: UserRole | string; businessUnit?: string }
 ): AuthoritativeSalesPerformance {
+  if (currentUser) {
+    const scope = getAuthorizedScope(currentUser)
+    if (scope.isMarketingOnly) {
+      throw new Error('Unauthorized: Marketing Managers do not have commercial access to Sales Performance reports.')
+    }
+  }
+
   const users = usersStore.get()
   const invoices = invoicesStore.get().filter(
     (inv) => !inv.needsReconciliation && inv.status !== 'Rejected' && inv.status !== 'Voided'
@@ -319,7 +361,13 @@ export function getAuthoritativeSalesPerformance(
     (u) => u.roleType === 'rep' || u.role.toLowerCase().includes('rep') || u.name === 'Alex Morgan'
   )
 
+  const scope = currentUser ? getAuthorizedScope(currentUser) : null
   const filteredUsers = fieldUsers.filter((u) => {
+    if (scope && !scope.isCompanyWide && scope.repIds !== 'ALL') {
+      const idMatch = (scope.repIds as string[]).some((id) => id.toLowerCase() === u.id.toLowerCase())
+      const nameMatch = (scope.repNames as string[]).some((n) => n.toLowerCase() === u.name.toLowerCase())
+      if (!idMatch && !nameMatch) return false
+    }
     if (filters?.reps && filters.reps.length > 0 && !filters.reps.includes(u.name)) return false
     if (
       filters?.regions &&
@@ -472,8 +520,16 @@ export interface AuthoritativeVisitCoverage {
 }
 
 export function getAuthoritativeVisitCoverage(
-  filters?: { reps?: string[]; regions?: string[] }
+  filters?: { reps?: string[]; regions?: string[] },
+  currentUser?: { id?: string; name?: string; role?: UserRole | string; businessUnit?: string }
 ): AuthoritativeVisitCoverage {
+  if (currentUser) {
+    const scope = getAuthorizedScope(currentUser)
+    if (scope.isMarketingOnly) {
+      throw new Error('Unauthorized: Marketing Managers do not have access to Visit Coverage reports.')
+    }
+  }
+
   const users = usersStore.get()
   const visits = visitsStore.get()
   const customers = customersStore.get().filter((c) => !c.deleted_at && c.active !== false)
@@ -482,7 +538,13 @@ export function getAuthoritativeVisitCoverage(
     (u) => u.roleType === 'rep' || u.role.toLowerCase().includes('rep') || u.name === 'Alex Morgan'
   )
 
+  const scope = currentUser ? getAuthorizedScope(currentUser) : null
   const filteredUsers = fieldUsers.filter((u) => {
+    if (scope && !scope.isCompanyWide && scope.repIds !== 'ALL') {
+      const idMatch = (scope.repIds as string[]).some((id) => id.toLowerCase() === u.id.toLowerCase())
+      const nameMatch = (scope.repNames as string[]).some((n) => n.toLowerCase() === u.name.toLowerCase())
+      if (!idMatch && !nameMatch) return false
+    }
     if (filters?.reps && filters.reps.length > 0 && !filters.reps.includes(u.name)) return false
     if (
       filters?.regions &&
@@ -516,6 +578,13 @@ export function getAuthoritativeVisitCoverage(
 
   const now = new Date()
   const filteredCustomers = customers.filter((c) => {
+    if (scope && !scope.isCompanyWide && scope.repIds !== 'ALL') {
+      const custRepId = (c.rep_id || '').toLowerCase()
+      const custRepName = (c.repName || '').toLowerCase()
+      const idMatch = custRepId && (scope.repIds as string[]).some((id) => id.toLowerCase() === custRepId)
+      const nameMatch = custRepName && (scope.repNames as string[]).some((n) => n.toLowerCase() === custRepName)
+      if (!idMatch && !nameMatch) return false
+    }
     if (filters?.reps && filters.reps.length > 0 && (!c.repName || !filters.reps.includes(c.repName))) return false
     if (
       filters?.regions &&

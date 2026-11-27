@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Check } from 'lucide-react'
 import { Avatar } from '@/ui/design-system/components/Avatar'
 import { FilterDropdown } from '@/ui/design-system/components/FilterDropdown'
 import { useT } from '@/lib/i18n'
+import { usersStore } from '@/data/mock/users'
+import { getScopedUsers } from '@/lib/analytics/roleAnalytics'
+import type { UserRole } from '@/lib/auth/types'
 
 export interface ReportFiltersState {
   month: string
@@ -16,8 +19,11 @@ export interface ReportFiltersState {
 export interface ReportFiltersProps {
   filters: ReportFiltersState
   onChangeFilters: (f: ReportFiltersState) => void
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
+  availableFilters?: Array<'month' | 'region' | 'rep' | 'product'>
 }
 
 const ALL_MONTHS = [
@@ -29,8 +35,7 @@ const ALL_MONTHS = [
   'Q2 2026 (Apr - Jun)',
   'YTD 2026',
 ]
-const ALL_REGIONS = ['Central District', 'North District', 'West District', 'East District', 'South District']
-const ALL_REPS = ['Alex Morgan', 'Maya Patel', 'Olivia Martin', 'James Wilson', 'Sofia Chen']
+const ALL_REGIONS_DEFAULT = ['Central District', 'North District', 'West District', 'East District', 'South District']
 const ALL_PRODUCTS = ['Bevato', 'Naviro D3 50,000 IU', 'Naviro D3 10,000 IU', 'Naviro D3 Drops', 'Navigen Product 5']
 
 export function ReportFilters({
@@ -38,14 +43,61 @@ export function ReportFilters({
   onChangeFilters,
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
+  availableFilters,
 }: ReportFiltersProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [openDropdown, setOpenDropdown] = useState<'month' | 'region' | 'rep' | 'product' | null>(null)
 
   const [draftMonth, setDraftMonth] = useState(filters.month)
   const [draftRegions, setDraftRegions] = useState<string[]>(filters.regions)
   const [draftReps, setDraftReps] = useState<string[]>(filters.reps)
   const [draftProducts, setDraftProducts] = useState<string[]>(filters.products)
+
+  // Determine authorized field reps based on user role & direct reporting hierarchy
+  const authorizedReps = useMemo(() => {
+    if (role === 'rep') {
+      return [currentUserName]
+    }
+    if (role === 'marketing_manager') {
+      return []
+    }
+    const scoped = getScopedUsers({
+      id: currentUserId,
+      name: currentUserName,
+      role,
+      businessUnit,
+    })
+    const repUsers = scoped.filter((u) => u.roleType === 'rep' || u.role?.toLowerCase().includes('rep'))
+    const names = Array.from(new Set(repUsers.map((u) => u.name))).filter(Boolean)
+    if (names.length > 0) return names
+
+    // Fallback if scoped is empty
+    return role === 'admin'
+      ? ['Alex Morgan', 'Maya Patel', 'Olivia Martin', 'Ahmed Samir', 'Sara Ali']
+      : [currentUserName]
+  }, [role, currentUserId, currentUserName, businessUnit])
+
+  // Determine authorized regions based on role
+  const authorizedRegions = useMemo(() => {
+    if (role === 'admin' || role === 'marketing_manager') {
+      return ALL_REGIONS_DEFAULT
+    }
+    const scoped = getScopedUsers({
+      id: currentUserId,
+      name: currentUserName,
+      role,
+      businessUnit,
+    })
+    const regions = Array.from(new Set(scoped.map((u) => u.region))).filter(Boolean) as string[]
+    return regions.length > 0 ? regions : ALL_REGIONS_DEFAULT
+  }, [role, currentUserId, currentUserName, businessUnit])
+
+  const showMonth = !availableFilters || availableFilters.includes('month')
+  const showRegion = !availableFilters || availableFilters.includes('region')
+  const showRep = (!availableFilters || availableFilters.includes('rep')) && role !== 'marketing_manager' && role !== 'rep'
+  const showProduct = !availableFilters || availableFilters.includes('product')
 
   const openFilter = (type: 'month' | 'region' | 'rep' | 'product') => {
     if (openDropdown === type) {
@@ -138,90 +190,94 @@ export function ReportFilters({
       : t('reports.filters.productsCount', { count: filters.products.length })
 
   return (
-    <div className="reports-filters-row">
+    <div className="reports-filters-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
       {/* 1. Month Dropdown */}
-      <FilterDropdown
-        label={monthLabel}
-        active={filters.month !== 'October 2026'}
-        isOpen={openDropdown === 'month'}
-        onToggle={() => openFilter('month')}
-        onClose={() => setOpenDropdown(null)}
-        title={t('reports.filters.selectMonth')}
-        width={240}
-        onReset={handleClearMonth}
-        resetLabel={t('common.reset')}
-        onApply={handleApplyMonth}
-      >
-        {ALL_MONTHS.map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setDraftMonth(m)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 10px',
-              borderRadius: '8px',
-              border: 'none',
-              background: draftMonth === m ? 'var(--blue-tint)' : 'transparent',
-              color: draftMonth === m ? 'var(--ocean)' : 'var(--card-text)',
-              fontSize: '13px',
-              fontWeight: draftMonth === m ? 700 : 500,
-              cursor: 'pointer',
-              textAlign: 'start',
-            }}
-          >
-            <span>{m}</span>
-            {draftMonth === m && <Check style={{ width: '14px', height: '14px' }} />}
-          </button>
-        ))}
-      </FilterDropdown>
-
-      {/* 2. Regions Dropdown */}
-      <FilterDropdown
-        label={regionsLabel}
-        active={filters.regions.length > 0}
-        isOpen={openDropdown === 'region'}
-        onToggle={() => openFilter('region')}
-        onClose={() => setOpenDropdown(null)}
-        title={t('reports.filters.filterRegions')}
-        width={260}
-        onReset={handleClearRegions}
-        resetLabel={t('common.clear')}
-        onApply={handleApplyRegions}
-      >
-        {ALL_REGIONS.map((reg) => {
-          const checked = draftRegions.includes(reg)
-          return (
-            <label
-              key={reg}
+      {showMonth && (
+        <FilterDropdown
+          label={monthLabel}
+          active={filters.month !== 'October 2026'}
+          isOpen={openDropdown === 'month'}
+          onToggle={() => openFilter('month')}
+          onClose={() => setOpenDropdown(null)}
+          title={t('reports.filters.selectMonth')}
+          width={240}
+          onReset={handleClearMonth}
+          resetLabel={t('common.reset')}
+          onApply={handleApplyMonth}
+        >
+          {ALL_MONTHS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setDraftMonth(m)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                justifyContent: 'space-between',
                 padding: '8px 10px',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                border: 'none',
+                background: draftMonth === m ? 'var(--blue-tint)' : 'transparent',
+                color: draftMonth === m ? 'var(--ocean)' : 'var(--card-text)',
                 fontSize: '13px',
-                color: 'var(--card-text)',
-                background: checked ? 'var(--blue-tint)' : 'transparent',
+                fontWeight: draftMonth === m ? 700 : 500,
+                cursor: 'pointer',
+                textAlign: 'start',
               }}
             >
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggleMultiSelect(reg, draftRegions, setDraftRegions)}
-                style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
-              />
-              <span>{reg}</span>
-            </label>
-          )
-        })}
-      </FilterDropdown>
+              <span>{m}</span>
+              {draftMonth === m && <Check style={{ width: '14px', height: '14px' }} />}
+            </button>
+          ))}
+        </FilterDropdown>
+      )}
 
-      {/* 3. Reps Dropdown (Disabled/Locked if role === 'rep') */}
-      {role === 'admin' && (
+      {/* 2. Regions Dropdown */}
+      {showRegion && (
+        <FilterDropdown
+          label={regionsLabel}
+          active={filters.regions.length > 0}
+          isOpen={openDropdown === 'region'}
+          onToggle={() => openFilter('region')}
+          onClose={() => setOpenDropdown(null)}
+          title={t('reports.filters.filterRegions')}
+          width={260}
+          onReset={handleClearRegions}
+          resetLabel={t('common.clear')}
+          onApply={handleApplyRegions}
+        >
+          {authorizedRegions.map((reg) => {
+            const checked = draftRegions.includes(reg)
+            return (
+              <label
+                key={reg}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: 'var(--card-text)',
+                  background: checked ? 'var(--blue-tint)' : 'transparent',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleMultiSelect(reg, draftRegions, setDraftRegions)}
+                  style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
+                />
+                <span>{reg}</span>
+              </label>
+            )
+          })}
+        </FilterDropdown>
+      )}
+
+      {/* 3. Reps Dropdown (Scoped to direct reports or BU reps) */}
+      {showRep && (
         <FilterDropdown
           label={repsLabel}
           active={filters.reps.length > 0}
@@ -234,7 +290,7 @@ export function ReportFilters({
           resetLabel={t('common.clear')}
           onApply={handleApplyReps}
         >
-          {ALL_REPS.map((r, idx) => {
+          {authorizedReps.map((r) => {
             const checked = draftReps.includes(r)
             const initials = r.split(' ').map((n) => n[0]).join('')
             return (
@@ -258,7 +314,7 @@ export function ReportFilters({
                   onChange={() => toggleMultiSelect(r, draftReps, setDraftReps)}
                   style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
                 />
-                <Avatar initials={initials} variant="rep" repIndex={idx} size="sm" />
+                <Avatar initials={initials} size="sm" />
                 <span>{r}</span>
               </label>
             )
@@ -267,64 +323,47 @@ export function ReportFilters({
       )}
 
       {/* 4. Products Dropdown */}
-      <FilterDropdown
-        label={productsLabel}
-        active={filters.products.length > 0}
-        isOpen={openDropdown === 'product'}
-        onToggle={() => openFilter('product')}
-        onClose={() => setOpenDropdown(null)}
-        title={t('reports.filters.productPortfolio')}
-        width={260}
-        onReset={handleClearProducts}
-        resetLabel={t('common.clear')}
-        onApply={handleApplyProducts}
-      >
-        {ALL_PRODUCTS.map((prod) => {
-          const checked = draftProducts.includes(prod)
-          return (
-            <label
-              key={prod}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                color: 'var(--card-text)',
-                background: checked ? 'var(--blue-tint)' : 'transparent',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggleMultiSelect(prod, draftProducts, setDraftProducts)}
-                style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
-              />
-              <span>{prod}</span>
-            </label>
-          )
-        })}
-      </FilterDropdown>
-
-      {/* Active Filter Removable Tags */}
-      {(filters.regions.length > 0 || filters.reps.length > 0 || filters.products.length > 0) && (
-        <button
-          type="button"
-          onClick={() => onChangeFilters({ ...filters, regions: [], reps: [], products: [] })}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--ocean)',
-            fontSize: '12px',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-            whiteSpace: 'nowrap',
-          }}
+      {showProduct && (
+        <FilterDropdown
+          label={productsLabel}
+          active={filters.products.length > 0}
+          isOpen={openDropdown === 'product'}
+          onToggle={() => openFilter('product')}
+          onClose={() => setOpenDropdown(null)}
+          title={lang === 'ar' ? 'تصفية المنتجات' : 'Filter Products'}
+          width={260}
+          onReset={handleClearProducts}
+          resetLabel={t('common.clear')}
+          onApply={handleApplyProducts}
         >
-          {t('reports.filters.resetAll')}
-        </button>
+          {ALL_PRODUCTS.map((p) => {
+            const checked = draftProducts.includes(p)
+            return (
+              <label
+                key={p}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: 'var(--card-text)',
+                  background: checked ? 'var(--blue-tint)' : 'transparent',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleMultiSelect(p, draftProducts, setDraftProducts)}
+                  style={{ cursor: 'pointer', accentColor: 'var(--ocean)' }}
+                />
+                <span>{p}</span>
+              </label>
+            )
+          })}
+        </FilterDropdown>
       )}
     </div>
   )

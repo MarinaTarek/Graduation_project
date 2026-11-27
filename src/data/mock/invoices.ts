@@ -4,6 +4,8 @@ import { createStore } from './store'
 import { resolveCustomerId } from './customerResolution'
 import { customersStore } from './customers'
 import { getSystemNow, getSystemCurrentDate } from '@/lib/dateUtils'
+import { findAuthoritativeUser } from '@/lib/approval/approvalEngine'
+import type { UserRole } from '@/lib/auth/types'
 
 export type { InvoiceLineItem } from '@/ui/pages/invoices/mock-data'
 
@@ -36,6 +38,12 @@ export type StoredInvoice = InvoiceRecord & {
   overpaid?: boolean
   overpaidAmount?: number
   discountAmount?: number
+  supplierName?: string
+  paymentTerms?: string
+  subtotal?: number
+  totalDiscount?: number
+  totalTax?: number
+  rawImageUrl?: string
   /**
    * D-03: Set to true when this invoice was imported from legacy data and
    * one or more critical fields (amount, customer identity, dates) could not
@@ -197,6 +205,12 @@ export interface AddInvoiceInput {
   paidAmount?: number
   remainingBalance?: number
   paymentStatus?: string
+  supplierName?: string
+  paymentTerms?: string
+  subtotal?: number
+  totalDiscount?: number
+  totalTax?: number
+  rawImageUrl?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -240,7 +254,40 @@ export function validateLineItemReconciliation(
   }
 }
 
-export function addInvoice(input: AddInvoiceInput): StoredInvoice {
+export function addInvoice(
+  input: AddInvoiceInput,
+  actor?: string | { id?: string; name?: string; role?: string; email?: string }
+): StoredInvoice {
+  // Authorization validation
+  if (actor) {
+    const actorObj = typeof actor === 'object' && actor ? actor : null
+    const authUser = findAuthoritativeUser(actor)
+    const actorRole = (authUser?.role || actorObj?.role || (typeof actor === 'string' && actor.toLowerCase().includes('admin') ? 'admin' : 'rep')) as UserRole
+    const actorId = authUser?.id || actorObj?.id || ''
+    const actorName = authUser?.name || actorObj?.name || (typeof actor === 'string' ? actor : '')
+
+    if (actorRole === 'marketing_manager') {
+      throw new Error('Unauthorized invoice upload: Marketing Managers cannot upload or create commercial invoices.')
+    }
+
+    if (actorRole === 'business_unit_manager' || actorRole === 'first_line_manager') {
+      throw new Error(`Unauthorized invoice upload: Role "${actorRole}" is not authorized to create or upload invoices.`)
+    }
+
+    if (actorRole === 'rep') {
+      const repIdMatch = !input.repId || !actorId || input.repId.toLowerCase() === actorId.toLowerCase()
+      const repNameMatch = !input.repName || !actorName || input.repName.toLowerCase() === actorName.toLowerCase()
+
+      if (!repIdMatch || !repNameMatch) {
+        throw new Error('Unauthorized invoice upload: Medical Representatives can only upload invoices for themselves.')
+      }
+
+      // Enforce rep identity
+      if (actorId) input.repId = actorId
+      if (actorName) input.repName = actorName
+    }
+  }
+
   if (!input.customerId || !input.customerId.trim()) {
     throw new Error('Customer ID is required for invoice creation.')
   }
@@ -342,7 +389,127 @@ export function addInvoice(input: AddInvoiceInput): StoredInvoice {
   return invoice
 }
 
-export function updateInvoice(identifier: string, patch: Partial<StoredInvoice>) {
+export function approveInvoice(
+  identifier: string,
+  actor: string | { id?: string; name?: string; role?: string },
+  notes?: string
+): StoredInvoice {
+  const invoice = getInvoice(identifier)
+  if (!invoice) throw new Error(`Invoice ${identifier} not found.`)
+
+  const authUser = findAuthoritativeUser(actor)
+  const actorRole = authUser?.role || (typeof actor === 'object' && actor?.role ? actor.role : 'rep')
+  const actorName = authUser?.name || (typeof actor === 'object' && actor?.name ? actor.name : typeof actor === 'string' ? actor : 'Unknown')
+
+  if (actorRole !== 'admin') {
+    throw new Error(`Unauthorized: User "${actorName}" (${actorRole}) cannot approve invoices. Only Executive Administrators are authorized to approve invoices.`)
+  }
+
+  if (invoice.status === 'Approved' || invoice.status === 'Paid') {
+    throw new Error(`Invoice ${invoice.invoiceNumber || invoice.id} is already ${invoice.status}.`)
+  }
+
+  const at = getSystemNow().toISOString()
+  const historyEntry: ApprovalHistoryEntry = {
+    action: 'Approved',
+    actor: actorName,
+    timestamp: at,
+    reason: notes,
+  }
+
+  const updatedInvoice: StoredInvoice = {
+    ...invoice,
+    status: 'Approved',
+    approval_history: [...(invoice.approval_history || []), historyEntry],
+    updated_at: at,
+  }
+
+  invoicesStore.update((list) =>
+    list.map((inv) =>
+      inv.id === invoice.id || inv.name === invoice.name || inv.invoiceNumber === invoice.invoiceNumber
+        ? updatedInvoice
+        : inv
+    )
+  )
+
+  addAuditLog({
+    action: 'Invoice Approved',
+    actor: actorName,
+    time: 'Just now',
+    details: `Approved invoice ${invoice.invoiceNumber || invoice.id} by ${actorName}`,
+  })
+
+  return updatedInvoice
+}
+
+export function rejectInvoice(
+  identifier: string,
+  reason: string,
+  actor: string | { id?: string; name?: string; role?: string }
+): StoredInvoice {
+  const invoice = getInvoice(identifier)
+  if (!invoice) throw new Error(`Invoice ${identifier} not found.`)
+  if (!reason || !reason.trim()) throw new Error('A rejection reason is required to reject an invoice.')
+
+  const authUser = findAuthoritativeUser(actor)
+  const actorRole = authUser?.role || (typeof actor === 'object' && actor?.role ? actor.role : 'rep')
+  const actorName = authUser?.name || (typeof actor === 'object' && actor?.name ? actor.name : typeof actor === 'string' ? actor : 'Unknown')
+
+  if (actorRole !== 'admin') {
+    throw new Error(`Unauthorized: User "${actorName}" (${actorRole}) cannot reject invoices. Only Executive Administrators are authorized to reject invoices.`)
+  }
+
+  const at = getSystemNow().toISOString()
+  const historyEntry: ApprovalHistoryEntry = {
+    action: 'Rejected',
+    actor: actorName,
+    timestamp: at,
+    reason: reason.trim(),
+  }
+
+  const updatedInvoice: StoredInvoice = {
+    ...invoice,
+    status: 'Rejected',
+    rejection_reason: reason.trim(),
+    approval_history: [...(invoice.approval_history || []), historyEntry],
+    updated_at: at,
+  }
+
+  invoicesStore.update((list) =>
+    list.map((inv) =>
+      inv.id === invoice.id || inv.name === invoice.name || inv.invoiceNumber === invoice.invoiceNumber
+        ? updatedInvoice
+        : inv
+    )
+  )
+
+  addAuditLog({
+    action: 'Invoice Rejected',
+    actor: actorName,
+    time: 'Just now',
+    details: `Rejected invoice ${invoice.invoiceNumber || invoice.id} by ${actorName}: ${reason.trim()}`,
+  })
+
+  return updatedInvoice
+}
+
+export function updateInvoice(
+  identifier: string,
+  patch: Partial<StoredInvoice>,
+  actor?: string | { id?: string; name?: string; role?: string }
+) {
+  // If mutating approval status, enforce Admin role
+  if (patch.status === 'Approved' || patch.status === 'Rejected') {
+    if (actor) {
+      const authUser = findAuthoritativeUser(actor)
+      const actorRole = authUser?.role || (typeof actor === 'object' && actor?.role ? actor.role : 'rep')
+      if (actorRole !== 'admin') {
+        const actorName = authUser?.name || (typeof actor === 'object' && actor?.name ? actor.name : typeof actor === 'string' ? actor : 'User')
+        throw new Error(`Unauthorized: User "${actorName}" (${actorRole}) cannot approve or reject invoices. Only Executive Administrators are authorized.`)
+      }
+    }
+  }
+
   invoicesStore.update((list) =>
     list.map((inv) =>
       inv.id === identifier || inv.name === identifier || inv.invoiceNumber === identifier

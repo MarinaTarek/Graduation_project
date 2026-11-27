@@ -3,7 +3,7 @@ import { Check, X, Search, ChevronDown, Building2, Package, ClipboardCheck, Aler
 import { Button } from './Button'
 import { Avatar } from './Avatar'
 import { FieldError } from './FieldError'
-import { addCustomer } from '@/data/mock/customers'
+import { addCustomer, validateCustomerClassification } from '@/data/mock/customers'
 import { addProduct } from '@/lib/productService'
 import { useT } from '@/lib/i18n'
 import { EGYPT_REGIONS } from '@/data/regions'
@@ -11,13 +11,14 @@ import { productsStore } from '@/data/mock/products'
 import { batchesStore, stockMovementsStore, addStockMovement, deriveProductStock } from '@/data/mock/stockDerived'
 import { warehousesStore } from '@/data/mock/warehouses'
 import { addAuditLog } from '@/data/mock/audit'
+import { useStore } from '@/data/mock/store'
 
 export interface RecordFormDrawerProps {
   title: string
   isOpen?: boolean
   onClose: () => void
   onSave: (message?: string) => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUser?: { id: string; name: string; role?: string } | null
 }
 
@@ -55,16 +56,19 @@ export function RecordFormDrawer({
   const [pharmacyClassification, setPharmacyClassification] = useState('Class A')
 
   // Stock Count Form State
-  const availableProducts = useMemo(() => productsStore.get(), [])
-  const availableWarehouses = useMemo(() => warehousesStore.get(), [])
+  const availableProducts = useStore(productsStore)
+  const availableWarehouses = useStore(warehousesStore)
+  const allBatches = useStore(batchesStore)
+  const allStockMovements = useStore(stockMovementsStore)
   const [scProduct, setScProduct] = useState(availableProducts[0]?.name || 'Bevato')
   const [scWarehouse, setScWarehouse] = useState(availableWarehouses[0]?.name || 'Cairo Central Logistics Hub')
   
   // Derived batches for selected stock count product
   const derivedBatches = useMemo(() => {
-    const derived = deriveProductStock(scProduct, stockMovementsStore.get(), batchesStore.get(), role, currentUser?.name)
+    const legacyRole: 'admin' | 'rep' = role === 'admin' ? 'admin' : 'rep'
+    const derived = deriveProductStock(scProduct, allStockMovements, allBatches, legacyRole, currentUser?.name)
     return derived.batches
-  }, [scProduct, role, currentUser])
+  }, [scProduct, allStockMovements, allBatches, role, currentUser])
 
   const [scBatch, setScBatch] = useState(derivedBatches[0]?.batch_no || '')
   
@@ -189,6 +193,11 @@ export function RecordFormDrawer({
         return
       }
 
+      if (!docClassification || !docClassification.trim()) {
+        setGenericError('Classification is required')
+        return
+      }
+
       const repToSave = role === 'rep' && currentUser ? initialRep : selectedRep
       const newCustomer = {
         id: `c-${Date.now()}`,
@@ -241,6 +250,12 @@ export function RecordFormDrawer({
     if (isPharmacy) {
       if (!pharmacyName.trim()) {
         setGenericError(lang === 'ar' ? 'اسم الصيدلية / المؤسسة مطلوب' : 'Pharmacy name is required')
+        return
+      }
+
+      const classVal = validateCustomerClassification(pharmacyClassification)
+      if (!classVal.valid) {
+        setGenericError(lang === 'ar' ? 'التصنيف مطلوب' : 'Classification is required')
         return
       }
 
@@ -314,8 +329,8 @@ export function RecordFormDrawer({
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <aside className="side-sheet" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <aside className="side-sheet">
         <div className="sheet-head">
           <div>
             <span className="eyebrow">NEW RECORD</span>
@@ -366,7 +381,7 @@ export function RecordFormDrawer({
               </select>
             </label>
             <label>
-              Classification
+              Classification *
               <select value={docClassification} onChange={(e) => setDocClassification(e.target.value)}>
                 <option>Class A</option>
                 <option>Class B</option>
@@ -682,7 +697,7 @@ export function RecordFormDrawer({
             </label>
 
             <label>
-              Classification
+              Classification *
               <select value={pharmacyClassification} onChange={(e) => setPharmacyClassification(e.target.value)}>
                 <option>Class A</option>
                 <option>Class B</option>

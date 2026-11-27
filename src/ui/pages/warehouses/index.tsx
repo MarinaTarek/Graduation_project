@@ -30,8 +30,10 @@ import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
 import { formatCurrency } from '@/lib/format'
 
+import type { UserRole } from '@/lib/auth/types'
+
 export interface WarehousesPageProps {
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
   onAction?: (msg: string) => void
 }
@@ -53,7 +55,12 @@ export default function WarehousesPage({
   const warehouses = useStore(warehousesStore)
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      return 'cards'
+    }
+    return 'list'
+  })
   const [activeFilters, setActiveFilters] = useState<WarehouseFiltersState>({
     area: 'All areas',
     status: 'All statuses',
@@ -433,8 +440,8 @@ export default function WarehousesPage({
                   </div>
                 </div>
 
-                {/* Area & Governorate */}
-                <div style={{ flex: 1 }}>
+                {/* Area & Governorate (hidden on small tablet portrait) */}
+                <div className="wh-col-area" style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <MapPin size={14} style={{ color: 'var(--muted-text)' }} />
                     <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--heading-text)' }}>

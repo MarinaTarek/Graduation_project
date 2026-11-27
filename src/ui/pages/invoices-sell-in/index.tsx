@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FileText, ArrowUpRight, Plus, Receipt, CheckCircle2 } from 'lucide-react'
+import { FileText, ArrowUpRight, Plus, Receipt, CheckCircle2, FileSpreadsheet } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Chip } from '@/ui/design-system/components/Chip'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
@@ -7,6 +7,7 @@ import { Toast } from '@/ui/design-system/components/Toast'
 import { InvoiceToolbar, type InvoiceFiltersState, STATUS_KEYS, DATE_KEYS, SOURCE_KEYS } from '@/ui/pages/invoices/components/InvoiceToolbar'
 import { InvoiceListItem } from '@/ui/pages/invoices/components/InvoiceListItem'
 import { invoicesStore, type StoredInvoice } from '@/data/mock/invoices'
+import { exportAllConfirmedInvoicesToExcel } from '@/lib/export/excelInvoiceExport'
 import {
   collectionsStore,
   getInvoicePaymentSummary,
@@ -28,7 +29,7 @@ export interface InvoicesSellInPageProps {
   onItemInvoice?: (invoice: StoredInvoice) => void
   invoiceFilter?: string | null
   onClearInvoiceFilter?: () => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
   onAction?: (message: string) => void
 }
@@ -184,11 +185,29 @@ export default function InvoicesSellInPage({
           <p className="story">{t('invoicesSellIn.story')}</p>
         </div>
 
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {activeTab === 'invoices' ? (
-            <Button variant="primary" onClick={onAddInvoice}>
-              <Plus data-icon="inline-start" /> {t('invoices.addNew')}
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const res = exportAllConfirmedInvoicesToExcel(roleScopedInvoices)
+                  if (!res.exported) {
+                    notify(lang === 'ar' ? 'لا توجد فواتير مؤكدة متاحة للتصدير.' : 'No confirmed invoices available to export.')
+                  } else {
+                    notify(lang === 'ar' ? `تم تصدير ${res.count} فاتورة مؤكدة بنجاح.` : `Exported ${res.count} confirmed invoice(s) to Excel XML.`)
+                  }
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                title={lang === 'ar' ? 'تصدير كافة الفواتير المؤكدة إلى ملف إكسيل' : 'Export all confirmed invoices to Excel XML'}
+              >
+                <FileSpreadsheet size={15} color="#16a34a" />
+                <span>{lang === 'ar' ? 'تصدير الفواتير المؤكدة (إكسيل)' : 'Export Confirmed (Excel)'}</span>
+              </Button>
+              <Button variant="primary" onClick={onAddInvoice}>
+                <Plus data-icon="inline-start" /> {t('invoices.addNew')}
+              </Button>
+            </>
           ) : activeTab === 'sell-in' ? (
             <Button variant="primary" onClick={() => setCreateOrderOpen(true)}>
               <Plus data-icon="inline-start" /> {t('salesOrders.createTitle')}
@@ -435,7 +454,7 @@ export default function InvoicesSellInPage({
           <PaidInvoicesView
             paidInvoices={paidInvoices}
             onItemInvoice={onItemInvoice}
-            role={role}
+            role={role === 'admin' ? 'admin' : 'rep'}
           />
         </div>
       )}

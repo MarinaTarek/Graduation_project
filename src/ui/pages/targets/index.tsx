@@ -31,19 +31,25 @@ import {
 import { invoicesStore } from '@/data/mock/invoices'
 import { salesOrdersStore } from '@/data/mock/sales-orders'
 import { usersStore } from '@/data/mock/users'
+import { filterTargetsByScope } from '@/data/mock/dataScope'
+import type { UserRole } from '@/lib/auth/types'
 import { TargetCard } from './components/TargetCard'
 import { TargetFormModal } from './components/TargetFormModal'
 import { TargetDeleteModal } from './components/TargetDeleteModal'
 
 export interface TargetsPageProps {
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
   onAction?: (msg: string) => void
 }
 
 export default function TargetsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
   onAction,
 }: TargetsPageProps) {
   const { t, lang } = useT()
@@ -79,13 +85,10 @@ export default function TargetsPage({
     return list.map((r) => r.name)
   }, [users])
 
-  // Role scoping: Reps see their assigned targets by default
+  // Role scoping: Reps see own targets; FLM/BUM see team/BU targets; Admin sees all; Marketing sees none
   const roleScopedTargets = useMemo(() => {
-    if (role === 'rep') {
-      return targets.filter((tgt) => tgt.repName.toLowerCase() === currentUserName.toLowerCase())
-    }
-    return targets
-  }, [targets, role, currentUserName])
+    return filterTargetsByScope(targets, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [targets, role, currentUserId, currentUserName, businessUnit])
 
   // Filtered targets
   const filteredTargets = useMemo(() => {
@@ -135,6 +138,11 @@ export default function TargetsPage({
     }
   }, [roleScopedTargets, invoices, salesOrders])
 
+  const currentActorObj = useMemo(
+    () => ({ id: currentUserId, name: currentUserName, role }),
+    [currentUserId, currentUserName, role]
+  )
+
   // Handlers for Target Management
   const handleOpenCreate = () => {
     setEditingTarget(null)
@@ -148,14 +156,14 @@ export default function TargetsPage({
 
   const handleSaveTarget = (data: Omit<SalesTarget, 'id' | 'createdAt'>) => {
     if (editingTarget) {
-      updateTarget(editingTarget.id, data, currentUserName)
+      updateTarget(editingTarget.id, data, currentActorObj)
       showToast(
         lang === 'ar'
           ? `تم تحديث المستهدف "${data.name}" بنجاح`
           : `Target "${data.name}" updated successfully`,
       )
     } else {
-      createTarget(data, currentUserName)
+      createTarget(data, currentActorObj)
       showToast(
         lang === 'ar'
           ? `تم إنشاء المستهدف "${data.name}" بنجاح`
@@ -165,7 +173,7 @@ export default function TargetsPage({
   }
 
   const handleDeleteConfirm = (id: string) => {
-    const success = deleteTarget(id, currentUserName)
+    const success = deleteTarget(id, currentActorObj)
     if (success) {
       showToast(
         lang === 'ar'

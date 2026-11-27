@@ -34,22 +34,36 @@ import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
 import { formatDate } from '@/lib/format'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
+import {
+  filterWarehouseSellOutByScope,
+  calculateTeamSellOutPerformance,
+  type TeamSellOutSummary,
+} from '@/data/mock/dataScope'
+import type { UserRole } from '@/lib/auth/types'
 
 export interface SellOutPageProps {
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
   onAction?: (msg: string) => void
 }
 
 export default function SellOutPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
   onAction,
 }: SellOutPageProps) {
   const { t, lang } = useT()
   const reports = useStore(warehouseSellOutStore)
   const allWarehouses = useStore(warehousesStore)
   const allProducts = useStore(productsStore)
+
+  const scopedReports = useMemo(() => {
+    return filterWarehouseSellOutByScope(reports, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [reports, currentUserId, currentUserName, role, businessUnit])
 
   const [activeTab, setActiveTab] = useState<'warehouse-view' | 'area-aggregation'>('warehouse-view')
 
@@ -61,6 +75,15 @@ export default function SellOutPage({
     repId: 'All Representatives',
     productName: 'All Products',
   })
+
+  const isManagerRole = role === 'admin' || role === 'first_line_manager' || role === 'business_unit_manager'
+  const teamPerformance = useMemo<TeamSellOutSummary | null>(() => {
+    if (!isManagerRole) return null
+    return calculateTeamSellOutPerformance(
+      { id: currentUserId, name: currentUserName, role, businessUnit },
+      activeFilters.reportingMonth === 'All Months' ? undefined : activeFilters.reportingMonth
+    )
+  }, [isManagerRole, currentUserId, currentUserName, role, businessUnit, activeFilters.reportingMonth])
 
   // Drawers & Selected report
   const [isEntryDrawerOpen, setIsEntryDrawerOpen] = useState(false)
@@ -77,19 +100,19 @@ export default function SellOutPage({
   // Derive unique filter lists
   const availableMonths = useMemo(() => {
     const set = new Set<string>()
-    reports.forEach((r) => set.add(r.reportingMonth))
+    scopedReports.forEach((r) => set.add(r.reportingMonth))
     return Array.from(set).sort().reverse()
-  }, [reports])
+  }, [scopedReports])
 
   const availableAreas = useMemo(() => {
     const map = new Map<string, string>()
-    reports.forEach((r) => {
+    scopedReports.forEach((r) => {
       const id = r.area || r.governorate
       const name = lang === 'ar' && r.area_ar ? r.area_ar : r.area
       map.set(id, name)
     })
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }))
-  }, [reports, lang])
+  }, [scopedReports, lang])
 
   const availableWarehouses = useMemo(() => {
     return allWarehouses.map((w) => ({
@@ -109,7 +132,7 @@ export default function SellOutPage({
 
   // Filtered reports matching user query & toolbar filters
   const filteredReports = useMemo(() => {
-    return reports.filter((r) => {
+    return scopedReports.filter((r) => {
       // 1. Month filter
       if (activeFilters.reportingMonth !== 'All Months') {
         if (r.reportingMonth !== activeFilters.reportingMonth) return false
@@ -470,6 +493,68 @@ export default function SellOutPage({
         </div>
       </div>
 
+      {/* Team Performance vs Targets (Manager Scope) */}
+      {teamPerformance && teamPerformance.reps.length > 0 && (
+        <div className="panel" style={{ padding: '20px', marginTop: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <span className="eyebrow" style={{ fontSize: '11px' }}>
+                {lang === 'ar' ? 'أداء الفريق مقابل المستهدفات' : 'Team Performance vs Targets'}
+              </span>
+              <h3 style={{ margin: '4px 0 0', fontSize: '16px' }}>
+                {lang === 'ar' ? 'متابعة مبيعات المندوبين والمستهدف الشهري' : 'Team Sell-out & Target Achievement'}
+              </h3>
+            </div>
+            <div style={{ textAlign: 'end' }}>
+              <span style={{ fontSize: '13px', color: 'var(--muted-text)' }}>
+                {lang === 'ar' ? 'إجمالي الفريق' : 'Team Total'}:{' '}
+                <strong style={{ color: 'var(--navy)' }}>{teamPerformance.totalActual.toLocaleString()} / {teamPerformance.totalTarget.toLocaleString()}</strong> ({teamPerformance.totalAchievementRate}%)
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+            {teamPerformance.reps.map((rep) => (
+              <div
+                key={rep.repId}
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-soft)',
+                  background: 'var(--surface)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <strong style={{ fontSize: '13px' }}>{rep.repName}</strong>
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: rep.achievementRate >= 100 ? '#16a34a' : rep.achievementRate >= 80 ? '#2563eb' : '#d97706',
+                    }}
+                  >
+                    {rep.achievementRate}%
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--muted-text)', marginBottom: '6px' }}>
+                  {rep.actualUnits.toLocaleString()} / {rep.targetUnits.toLocaleString()} {lang === 'ar' ? 'علبة' : 'units'}
+                  {rep.remainingUnits > 0 && ` (${lang === 'ar' ? 'متبقي' : 'remaining'}: ${rep.remainingUnits.toLocaleString()})`}
+                </div>
+                <div style={{ height: '6px', width: '100%', background: 'var(--border-soft)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${Math.min(100, rep.achievementRate)}%`,
+                      background: rep.achievementRate >= 100 ? '#16a34a' : rep.achievementRate >= 80 ? '#2563eb' : '#d97706',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Internal Navigation Tabs (Warehouse-Level vs Area Aggregation) */}
       <div
         role="tablist"
@@ -728,7 +813,7 @@ export default function SellOutPage({
         onSave={handleSaveReport}
         existingReport={editingReport}
         currentUserName={currentUserName}
-        role={role}
+        role={role === 'rep' ? 'rep' : 'admin'}
       />
 
       {/* Toast Feedback */}

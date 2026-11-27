@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Toast } from '@/ui/design-system/components/Toast'
 import { RecordFormDrawer } from '@/ui/design-system/components/RecordFormDrawer'
 import { Header } from '@/ui/layout/Header'
@@ -9,6 +9,7 @@ import { BottomDock } from '@/ui/layout/BottomDock'
 import { MenuSheet } from '@/ui/layout/MenuSheet'
 import { CommandPalette } from '@/ui/layout/CommandPalette'
 import { NotificationsDrawer } from '@/ui/layout/NotificationsDrawer'
+import { TabletNavigationDrawer } from '@/ui/layout/TabletNavigationDrawer'
 import { runBackHandlers } from '@/lib/useBackHandler'
 
 // Self-contained page imports
@@ -41,6 +42,14 @@ import ReportsPage from '@/ui/pages/reports'
 import ProfilePage from '@/ui/pages/profile'
 import { AuthProvider, useAuth, canAccessPage } from '@/lib/auth'
 import { LanguageProvider, useT } from '@/lib/i18n'
+import { VisitAlarmModal } from '@/ui/design-system/components/VisitAlarmModal'
+import {
+  visitAlarmsStore,
+  dismissVisitAlarm,
+  snoozeVisitAlarm,
+  checkAndTriggerImportantVisitAlarms,
+} from '@/data/mock/visitAlarm'
+import { useStore } from '@/data/mock/store'
 
 function AppContent() {
   const { user, role, signOut, isLoading } = useAuth()
@@ -54,7 +63,63 @@ function AppContent() {
   const [notice, setNotice] = useState('')
   const [dark, setDark] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [tabletMenuOpen, setTabletMenuOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  // Tablet Landscape responsiveness: default to collapsed on screens < 1200px
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleInitialResponsive = () => {
+      if (window.innerWidth >= 769 && window.innerWidth < 1200) {
+        setSidebarCollapsed(true)
+      }
+    }
+    handleInitialResponsive()
+  }, [])
+
+  // Visit Alarm state
+  // alarmDismissedIds tracks locally-dismissed alarms (hides modal even before store update propagates)
+  const visitAlarms = useStore(visitAlarmsStore)
+  const [alarmDismissedIds, setAlarmDismissedIds] = useState<Set<string>>(new Set())
+  const [snoozedUntilMap, setSnoozedUntilMap] = useState<Record<string, number>>({})
+
+  const activeAlarm = useMemo(() => {
+    const now = Date.now()
+    return (
+      visitAlarms.find(
+        (a) =>
+          !a.dismissed &&
+          !alarmDismissedIds.has(a.id) &&
+          (!snoozedUntilMap[a.id] || snoozedUntilMap[a.id] <= now),
+      ) || null
+    )
+  }, [visitAlarms, alarmDismissedIds, snoozedUntilMap])
+
+  // Re-check snoozed alarms periodically so they resurface after snooze expires
+  useEffect(() => {
+    if (Object.keys(snoozedUntilMap).length === 0) return
+    const timer = window.setInterval(() => {
+      setSnoozedUntilMap((prev) => {
+        const now = Date.now()
+        const updated = { ...prev }
+        let changed = false
+        for (const id of Object.keys(updated)) {
+          if (updated[id] <= now) {
+            delete updated[id]
+            changed = true
+          }
+        }
+        return changed ? updated : prev
+      })
+    }, 15000)
+    return () => window.clearInterval(timer)
+  }, [snoozedUntilMap])
+
+  // Check and trigger important alarms on system open / user login
+  useEffect(() => {
+    if (!user) return
+    checkAndTriggerImportantVisitAlarms(user)
+  }, [user])
 
   // Navigation history stack
   type NavEntry = { page: string; filter: string | null; overlay: string | null }
@@ -200,6 +265,7 @@ function AppContent() {
   const currentUserEmail = user.email
   const greetingName = user.name.split(' ')[0]
   const userInitials = user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+  const legacyRole: 'admin' | 'rep' = role === 'admin' ? 'admin' : 'rep'
 
   return (
     <div className={`app-shell ${dark ? 'dark-mode' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
@@ -231,6 +297,7 @@ function AppContent() {
           onOpenProfile={() => setProfileOpen((prev) => !prev)}
           activePage={active}
           onBack={goBack}
+          onOpenMenu={() => setTabletMenuOpen(true)}
         />
 
         {/* Primary Page Views */}
@@ -258,6 +325,8 @@ function AppContent() {
               onClearFilter={() => clearPageFilter('Clients')}
               role={role}
               currentUserName={currentUserName}
+              currentUserId={user.id}
+              businessUnit={user.businessUnit}
             />
           )}
           {active === 'Distribution Overview' && canAccessPage('Distribution Overview', role, user) && (
@@ -302,6 +371,8 @@ function AppContent() {
             <SellOutPage
               role={role}
               currentUserName={currentUserName}
+              currentUserId={user.id}
+              businessUnit={user.businessUnit}
               onAction={action}
             />
           )}
@@ -323,7 +394,9 @@ function AppContent() {
           {active === 'Targets' && canAccessPage('Targets', role, user) && (
             <TargetsPage
               role={role}
-              currentUserName={user?.name || 'Alex Morgan'}
+              currentUserName={user.name}
+              currentUserId={user.id}
+              businessUnit={user.businessUnit}
               onAction={action}
             />
           )}
@@ -334,10 +407,18 @@ function AppContent() {
               onClearFilter={() => clearPageFilter('Visits')}
               role={role}
               currentUserName={currentUserName}
+              currentUserId={user.id}
+              businessUnit={user.businessUnit}
             />
           )}
           {active === 'Visit plan' && canAccessPage('Visit plan', role, user) && (
-            <VisitPlanPage role={role} currentUserName={currentUserName} />
+            <VisitPlanPage
+              role={role}
+              currentUserName={currentUserName}
+              currentUserId={user.id}
+              businessUnit={user.businessUnit}
+              filter={pageFilter['Visit plan']}
+            />
           )}
           {active === 'Budgets' && canAccessPage('Budgets', role, user) && (
             <BudgetsPage role={role} currentUserName={currentUserName} />
@@ -346,6 +427,10 @@ function AppContent() {
             <ReportsPage
               role={role}
               currentUserName={currentUserName}
+              currentUserId={user.id}
+              businessUnit={user.businessUnit}
+              initialReportId={pageFilter['Reports'] || undefined}
+              onClearFilter={() => clearPageFilter('Reports')}
               onAction={action}
             />
           )}
@@ -398,12 +483,12 @@ function AppContent() {
       {profileOpen && (
         <div
           className="profile-menu-backdrop"
-          onClick={() => setProfileOpen(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 11 }}
         />
       )}
       <MenuSheet
         isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
         dark={dark}
         onToggleDark={() => setDark(!dark)}
         onOpenLogout={() => {
@@ -416,6 +501,19 @@ function AppContent() {
 
       {/* Mobile Bottom Navigation (<768px) */}
       <BottomDock active={profileOpen ? 'More' : active} onSelect={selectNav} user={user} role={role} />
+
+      {/* Tablet Slide-out Full Navigation Drawer */}
+      <TabletNavigationDrawer
+        isOpen={tabletMenuOpen}
+        onClose={() => setTabletMenuOpen(false)}
+        active={active}
+        onSelect={selectNav}
+        user={user}
+        role={role}
+        dark={dark}
+        onToggleDark={() => setDark(!dark)}
+        onOpenLogout={() => open('logout')}
+      />
 
       {/* Floating Feedback Toast */}
       {notice && <Toast message={notice} />}
@@ -473,6 +571,9 @@ function AppContent() {
         isOpen={overlay === 'upload invoice'}
         onClose={() => setOverlay(null)}
         onSave={save}
+        role={role}
+        currentUserName={currentUserName}
+        currentUserId={user?.id}
       />
 
       {/* Invoice Review Detail */}
@@ -500,7 +601,7 @@ function AppContent() {
       <StockDetailSheet
         isOpen={overlay === 'stock detail'}
         productName={selectedStockProduct}
-        role={role}
+        role={legacyRole}
         currentUserName={currentUserName}
         onClose={() => setOverlay(null)}
         onOpenStockCount={() => open('stock count')}
@@ -510,13 +611,50 @@ function AppContent() {
       <NewVisitWizard
         isOpen={overlay === 'new visit'}
         initialClientId={selectedCustomerId}
-        role={role}
+        role={role || legacyRole}
         currentUserName={currentUserName}
         onClose={() => setOverlay(null)}
         onSave={() => action(t('app.toastVisitSaved'))}
         onViewVisit={(_visitId) => {
           setOverlay(null)
           navigateTo('Visits')
+        }}
+      />
+
+      {/* Visit Alarm Modal */}
+      <VisitAlarmModal
+        alarm={activeAlarm}
+        isOpen={Boolean(activeAlarm)}
+        onClose={() => {
+          // X button / backdrop: locally dismiss so modal doesn't immediately reopen
+          if (activeAlarm) {
+            dismissVisitAlarm(activeAlarm.id)
+            setAlarmDismissedIds((prev) => new Set([...prev, activeAlarm.id]))
+          }
+        }}
+        onDismiss={(alarmId) => {
+          dismissVisitAlarm(alarmId)
+          setAlarmDismissedIds((prev) => new Set([...prev, alarmId]))
+        }}
+        onSnooze={(alarmId, minutes = 15) => {
+          snoozeVisitAlarm(alarmId, minutes)
+          setSnoozedUntilMap((prev) => ({
+            ...prev,
+            [alarmId]: Date.now() + minutes * 60 * 1000,
+          }))
+        }}
+        onNavigateToCalendar={() => {
+          setActive('Visit plan')
+          if (activeAlarm) {
+            setAlarmDismissedIds((prev) => new Set([...prev, activeAlarm.id]))
+          }
+        }}
+        onNavigateToCustomer={(customerId) => {
+          setSelectedCustomerId(customerId)
+          open('doctor profile')
+          if (activeAlarm) {
+            setAlarmDismissedIds((prev) => new Set([...prev, activeAlarm.id]))
+          }
         }}
       />
     </div>

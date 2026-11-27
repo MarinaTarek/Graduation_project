@@ -1,4 +1,6 @@
-import { useState } from 'react'
+'use client'
+
+import { useState, useEffect } from 'react'
 import {
   ArrowLeft,
   BarChart2,
@@ -7,6 +9,7 @@ import {
   FileSpreadsheet,
   FileText,
   Printer,
+  ShieldAlert,
 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Skeleton } from '@/ui/design-system/components/Skeleton'
@@ -22,23 +25,51 @@ import { InvoicesApprovalsReport } from './components/InvoicesApprovalsReport'
 import { RepScorecardReport } from './components/RepScorecardReport'
 import { useBackHandler } from '@/lib/useBackHandler'
 import { useT } from '@/lib/i18n'
+import { isReportAuthorizedForRole, REPORT_CATALOG } from './reportCatalog'
+import { exportReportToExcel, validateExportPermission } from '@/lib/export/reportExport'
+import {
+  getAuthoritativeSalesPerformance,
+  getAuthoritativeVisitCoverage,
+  getAuthoritativeInvoicesApprovalsSummary,
+  getAuthoritativeRepScorecard,
+} from '@/data/mock/reportingAnalytics'
+import { batchesStore, stockMovementsStore, getBatchesNearExpiry } from '@/data/mock/stockDerived'
+import type { UserRole } from '@/lib/auth/types'
 
 export interface ReportsPageProps {
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
+  initialReportId?: string
+  onClearFilter?: () => void
   onAction?: (msg: string) => void
 }
 
 export default function ReportsPage({
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
+  initialReportId,
+  onClearFilter,
   onAction,
 }: ReportsPageProps) {
-  const { t } = useT()
-  // If rep, default to 'rep-scorecard' directly or show only scorecard card
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(
-    role === 'rep' ? 'rep-scorecard' : null
-  )
+  const { t, lang } = useT()
+
+  // Determine authorized initial report ID
+  const defaultReportId = role === 'rep'
+    ? 'rep-scorecard'
+    : (initialReportId && isReportAuthorizedForRole(initialReportId, role) ? initialReportId : null)
+
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(defaultReportId)
+
+  // React to initialReportId changes (e.g. from Dashboard drilldown)
+  useEffect(() => {
+    if (initialReportId && isReportAuthorizedForRole(initialReportId, role)) {
+      setSelectedReportId(initialReportId)
+    }
+  }, [initialReportId, role])
 
   const [filters, setFilters] = useState<ReportFiltersState>({
     month: 'October 2026',
@@ -60,10 +91,122 @@ export default function ReportsPage({
   }
 
   const handleExport = (type: 'Excel' | 'PDF') => {
-    if (onAction) {
-      onAction(t('reports.exportUnavailableToast'))
+    // 1. Validate export permission
+    const currentUserObj = {
+      id: currentUserId,
+      name: currentUserName,
+      role,
+      businessUnit,
+    }
+    const authCheck = validateExportPermission(currentUserObj, selectedReportId || undefined)
+
+    if (!authCheck.allowed) {
+      const msg = lang === 'ar'
+        ? (authCheck.error || 'غير مصرح بتصدير البيانات والتقارير المالية أو التشغيلية.')
+        : (authCheck.error || 'Permission Denied: Medical Representatives are not permitted to export data.')
+      if (onAction) onAction(msg)
+      else alert(msg)
+      return
+    }
+
+    if (type === 'PDF') {
+      window.print()
+      return
+    }
+
+    // 2. Perform Excel SpreadsheetML export for selected report
+    if (!selectedReportId) return
+
+    let columns: Array<{ key: string; label: string; type?: 'string' | 'number' | 'currency' | 'percent'; width?: number }> = []
+    let data: Record<string, any>[] = []
+
+    if (selectedReportId === 'sales-performance') {
+      const perf = getAuthoritativeSalesPerformance(filters, currentUserObj)
+      columns = [
+        { key: 'rep', label: 'Representative', width: 140 },
+        { key: 'territory', label: 'Territory', width: 120 },
+        { key: 'target', label: 'Target (EGP)', type: 'currency', width: 110 },
+        { key: 'actual', label: 'Actual Sales (EGP)', type: 'currency', width: 110 },
+        { key: 'achievementRate', label: 'Achievement %', type: 'percent', width: 100 },
+        { key: 'topProduct', label: 'Top Product', width: 130 },
+      ]
+      data = perf.reps.map((r) => ({
+        ...r,
+        target: r.target,
+        actual: r.actual,
+        achievementRate: r.achievementRate,
+      }))
+    } else if (selectedReportId === 'visit-coverage') {
+      const cov = getAuthoritativeVisitCoverage(filters, currentUserObj)
+      columns = [
+        { key: 'rep', label: 'Representative', width: 140 },
+        { key: 'planned', label: 'Planned Visits', type: 'number', width: 100 },
+        { key: 'completed', label: 'Completed Visits', type: 'number', width: 100 },
+        { key: 'missed', label: 'Missed Visits', type: 'number', width: 100 },
+        { key: 'coveragePct', label: 'Coverage %', type: 'percent', width: 100 },
+      ]
+      data = cov.repCoverage
+    } else if (selectedReportId === 'stock-expiry') {
+      const batches = batchesStore.get()
+      const movements = stockMovementsStore.get()
+      const nearExpiry = getBatchesNearExpiry(movements, batches, 90)
+      columns = [
+        { key: 'productName', label: 'Product Name', width: 160 },
+        { key: 'batchNumber', label: 'Batch #', width: 110 },
+        { key: 'currentStock', label: 'Units Left', type: 'number', width: 100 },
+        { key: 'expiryDate', label: 'Expiry Date', width: 110 },
+        { key: 'daysToExpiry', label: 'Days to Expiry', type: 'number', width: 110 },
+      ]
+      data = nearExpiry.map((b) => ({
+        productName: b.productName,
+        batchNumber: b.batch_no,
+        currentStock: b.qty_physical,
+        expiryDate: b.expiry_date,
+        daysToExpiry: b.days_to_expiry,
+      }))
+    } else if (selectedReportId === 'rep-scorecard') {
+      const rep = getAuthoritativeRepScorecard(filters.reps[0] || currentUserName, currentUserObj)
+      columns = [
+        { key: 'metric', label: 'KPI Metric', width: 180 },
+        { key: 'target', label: 'Target Benchmark', width: 130 },
+        { key: 'actual', label: 'Actual Achieved', width: 130 },
+        { key: 'rate', label: 'Attainment %', width: 100 },
+      ]
+      data = [
+        { metric: 'Sales Revenue', target: `EGP ${rep.salesTarget.toLocaleString()}`, actual: `EGP ${rep.sales.toLocaleString()}`, rate: `${rep.targetPct}%` },
+        { metric: 'Visits Logged', target: `${rep.visitsTarget} visits`, actual: `${rep.visitsLogged} visits`, rate: `${rep.visitsTarget > 0 ? Math.round((rep.visitsLogged / rep.visitsTarget) * 100) : 0}%` },
+        { metric: 'Samples Distributed', target: '400 units', actual: `${rep.samplesDistributed} units`, rate: '100%' },
+      ]
     } else {
-      alert(t('reports.exportUnavailableToast'))
+      // Generic fallback for other reports
+      columns = [
+        { key: 'title', label: 'Report', width: 160 },
+        { key: 'exportedAt', label: 'Date', width: 140 },
+        { key: 'status', label: 'Status', width: 100 },
+      ]
+      data = [{ title: getReportTitle(selectedReportId), exportedAt: new Date().toISOString().slice(0, 10), status: 'Generated' }]
+    }
+
+    const res = exportReportToExcel({
+      reportId: selectedReportId,
+      reportTitle: getReportTitle(selectedReportId),
+      columns,
+      data,
+      user: {
+        id: currentUserId,
+        name: currentUserName,
+        role,
+        businessUnit,
+      },
+    })
+
+    if (res.success) {
+      const msg = lang === 'ar' ? `تم تصدير تقرير ${getReportTitle(selectedReportId)} بنجاح.` : `Exported ${getReportTitle(selectedReportId)} to Excel successfully.`
+      if (onAction) onAction(msg)
+    } else {
+      const err = res.error || (lang === 'ar' ? 'فشل التصدير' : 'Export failed')
+      if (onAction) onAction(err)
+      else alert(err)
     }
   }
 
@@ -82,10 +225,11 @@ export default function ReportsPage({
   // Check if current filter produces empty results
   const isEmptyPeriod = filters.month === 'Q2 2026 (Apr - Jun)' && filters.regions.length > 3
 
-  // Register back handler: if a report is open and admin, go back to hub
+  // Register back handler: if a report is open and not rep, go back to hub
   useBackHandler(() => {
-    if (selectedReportId && role === 'admin') {
+    if (selectedReportId && role !== 'rep') {
       setSelectedReportId(null)
+      onClearFilter?.()
       return true
     }
     return false
@@ -110,6 +254,8 @@ export default function ReportsPage({
     }
   }
 
+  const activeReportMeta = REPORT_CATALOG.find((r) => r.id === selectedReportId)
+
   return (
     <section className="content" style={{ paddingBottom: '60px' }}>
       {/* Page Header */}
@@ -132,10 +278,13 @@ export default function ReportsPage({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {selectedReportId && (
             <>
-              {role === 'admin' && (
+              {role !== 'rep' && (
                 <Button
                   variant="secondary"
-                  onClick={() => setSelectedReportId(null)}
+                  onClick={() => {
+                    setSelectedReportId(null)
+                    onClearFilter?.()
+                  }}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   <ArrowLeft style={{ width: '15px', height: '15px' }} />
@@ -145,8 +294,14 @@ export default function ReportsPage({
               <Button
                 variant="secondary"
                 onClick={() => handleExport('Excel')}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title={t('reports.exportExcelTitle')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: role === 'rep' ? 0.6 : 1,
+                  cursor: role === 'rep' ? 'not-allowed' : 'pointer',
+                }}
+                title={role === 'rep' ? (lang === 'ar' ? 'التصدير غير مصرح للمندوبين' : 'Export not permitted for Representatives') : t('reports.exportExcelTitle')}
               >
                 <FileSpreadsheet style={{ width: '15px', height: '15px' }} />
                 {t('reports.exportExcel')}
@@ -154,8 +309,14 @@ export default function ReportsPage({
               <Button
                 variant="secondary"
                 onClick={() => handleExport('PDF')}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title={t('reports.exportPdfTitle')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: role === 'rep' ? 0.6 : 1,
+                  cursor: role === 'rep' ? 'not-allowed' : 'pointer',
+                }}
+                title={role === 'rep' ? (lang === 'ar' ? 'التصدير غير مصرح للمندوبين' : 'Export not permitted for Representatives') : t('reports.exportPdfTitle')}
               >
                 <Download style={{ width: '15px', height: '15px' }} />
                 {t('reports.exportPdf')}
@@ -184,7 +345,7 @@ export default function ReportsPage({
         />
       )}
 
-      {/* HUB VIEW: Grid of 6 Report Cards (Admin) or 1 Card (Rep) */}
+      {/* HUB VIEW: Scoped Grid of Report Cards for the Authenticated Role */}
       {!selectedReportId && (
         <div>
           {/* Hub Filters */}
@@ -193,6 +354,8 @@ export default function ReportsPage({
             onChangeFilters={handleFilterChange}
             role={role}
             currentUserName={currentUserName}
+            currentUserId={currentUserId}
+            businessUnit={businessUnit}
           />
 
           {isLoading ? (
@@ -235,6 +398,9 @@ export default function ReportsPage({
             onChangeFilters={handleFilterChange}
             role={role}
             currentUserName={currentUserName}
+            currentUserId={currentUserId}
+            businessUnit={businessUnit}
+            availableFilters={activeReportMeta?.availableFilters}
           />
 
           {/* Loading Skeleton during data reload */}
@@ -298,6 +464,8 @@ export default function ReportsPage({
                   filters={filters}
                   role={role}
                   currentUserName={currentUserName}
+                  currentUserId={currentUserId}
+                  businessUnit={businessUnit}
                 />
               )}
             </div>

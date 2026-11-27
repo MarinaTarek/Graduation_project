@@ -26,7 +26,7 @@ import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
 import { getSystemCurrentYearMonth, getRecentMonthOptions } from '@/lib/dateUtils'
 
 export interface PerformanceAnalyticsPageProps {
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
   onAction?: (msg: string) => void
 }

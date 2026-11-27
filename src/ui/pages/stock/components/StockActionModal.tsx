@@ -297,10 +297,9 @@ export function StockActionModal({
   const config = titles[actionType]
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <aside
         className="side-sheet"
-        onClick={(e) => e.stopPropagation()}
         style={{
           display: 'flex',
           flexDirection: 'column',

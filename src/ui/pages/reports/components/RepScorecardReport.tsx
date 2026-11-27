@@ -27,18 +27,24 @@ import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { useT } from '@/lib/i18n'
 import { formatCurrency } from '@/lib/format'
+import { getScopedUsers } from '@/lib/analytics/roleAnalytics'
+import type { UserRole } from '@/lib/auth/types'
 import type { ReportFiltersState } from './ReportFilters'
 
 export interface RepScorecardReportProps {
   filters: ReportFiltersState
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
 }
 
 export function RepScorecardReport({
   filters,
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
 }: RepScorecardReportProps) {
   const { t, lang } = useT()
   const [selectedRepName, setSelectedRepName] = useState<string>(
@@ -46,9 +52,18 @@ export function RepScorecardReport({
   )
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Scoped list of authorized reps based on reporting hierarchy
+  const scopedUserNames = useMemo(() => {
+    if (role === 'admin') return null
+    if (role === 'rep') return new Set([currentUserName.toLowerCase()])
+    const scoped = getScopedUsers({ id: currentUserId, name: currentUserName, role, businessUnit })
+    return new Set(scoped.map((u) => u.name.toLowerCase()))
+  }, [role, currentUserId, currentUserName, businessUnit])
+
   // Current active rep profile
   const repList = Object.values(REP_SCORECARD_MOCK).filter((r) => {
-    if (role === 'rep') return r.name === currentUserName
+    if (role === 'rep') return r.name.toLowerCase() === currentUserName.toLowerCase()
+    if (scopedUserNames && !scopedUserNames.has(r.name.toLowerCase())) return false
     if (filters.reps.length > 0 && !filters.reps.includes(r.name)) return false
     return true
   })

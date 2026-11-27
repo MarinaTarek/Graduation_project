@@ -145,8 +145,8 @@ body { margin: 0; color: var(--body-text); background: var(--body-bg); font-fami
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
-.app-shell { min-height: 100vh; background: var(--body-bg); color: var(--body-text); display: flex; }
-.app-main-viewport { flex: 1 1 auto; min-width: 0; margin-left: 260px; transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; }
+.app-shell { min-height: 100vh; background: var(--body-bg); color: var(--body-text); display: flex; overflow-x: hidden; }
+.app-main-viewport { flex: 1 1 auto; min-width: 0; margin-left: 260px; transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; overflow-x: hidden; }
 .app-shell.sidebar-collapsed .app-main-viewport { margin-left: 72px; }
 .page-content-wrapper { flex: 1 1 auto; min-width: 0; }
 
@@ -171,7 +171,7 @@ button { cursor: pointer; }
 .switch-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--ocean); display: flex; align-items: center; justify-content: center; color: white; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 .switch-thumb.dark { transform: translateX(24px); background: var(--sky); color: var(--navy); }
 .switch-icon { width: 13px; height: 13px; }
-.header-bell-btn { position: relative; border: 0; background: transparent; color: var(--steel); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; transition: background 0.18s, color 0.18s; }
+.header-bell-btn { position: relative; border: 0; background: transparent; color: var(--steel); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; transition: background 0.18s, color 0.18s; }
 .header-bell-btn:hover { background: var(--card-bg); color: var(--heading-text); }
 .header-bell-btn svg { width: 18px; height: 18px; }
 .bell-rose-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--rose); border-radius: 50%; border: 2px solid var(--body-bg); box-sizing: content-box; }
@@ -188,7 +188,7 @@ button { cursor: pointer; }
 .sidebar-profile-info { display: flex; flex-direction: column; align-items: center; }
 .sidebar-user-name { font-size: 15px; font-weight: 700; color: var(--sidebar-text-bright); }
 .sidebar-user-email { font-size: 12px; color: var(--sidebar-text-sub); margin-top: 3px; }
-.sidebar-collapse-btn { position: absolute; top: 20px; right: -14px; width: 28px; height: 28px; border-radius: 50%; background: #1B3554; border: 2px solid var(--body-bg); color: var(--mist); display: grid; place-items: center; cursor: pointer; z-index: 30; box-shadow: 0 4px 12px rgba(0, 15, 34, 0.3); transition: transform 0.15s, color 0.15s; }
+.sidebar-collapse-btn { position: absolute; top: 20px; right: -14px; width: 34px; height: 34px; border-radius: 50%; background: #1B3554; border: 2px solid var(--body-bg); color: var(--mist); display: grid; place-items: center; cursor: pointer; z-index: 30; box-shadow: 0 4px 12px rgba(0, 15, 34, 0.3); transition: transform 0.15s, color 0.15s; }
 .sidebar-collapse-btn:hover { transform: scale(1.1); color: var(--sidebar-text-bright); }
 .sidebar-collapse-btn svg { width: 15px; height: 15px; }
 
@@ -287,7 +287,7 @@ button { cursor: pointer; }
 .section-heading h2 { color: var(--heading-text); font-size: 22px; letter-spacing: -.04em; margin: 7px 0 0; }
 .text-button { gap: 6px; border: 0; background: none; color: var(--link-text); font-size: 12px; font-weight: 700; }
 .text-button svg { width: 14px; }
-.attention-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+.attention-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 28px; }
 .attention-card { display: flex; align-items: center; gap: 14px; width: 100%; text-align: start; border: 1px solid var(--border-card); border-radius: 20px; padding: 18px; color: var(--card-text); background: var(--card-bg); box-shadow: var(--card-shadow); }
 .attention-card > svg { width: 16px; color: var(--sky); margin-inline-start: auto; }
 .attention-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 15px; }
@@ -421,6 +421,13 @@ button { cursor: pointer; }
 .story button { border: 0; background: transparent; padding: 0; color: inherit; }
 
 .side-sheet { right: 0; top: 0; bottom: 0; width: min(480px, 100vw); padding: 32px; overflow: auto; border-radius: 28px 0 0 28px; }
+@media (max-width: 768px) {
+  .side-sheet {
+    width: 100vw !important;
+    border-radius: 0 !important;
+    padding: 20px 16px;
+  }
+}
 .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
 .sheet-head h2 { font-size: 28px; letter-spacing: -.06em; margin: 8px 0 0; color: var(--heading-text); }
 .sheet-copy { color: var(--muted-text); line-height: 1.6; }
@@ -433,7 +440,7 @@ button { cursor: pointer; }
 .form-grid input:not([type="checkbox"]):not([type="radio"]), .form-grid select, .form-grid textarea, .block-label select { width: 100%; min-width: 0; border: 1px solid var(--border-input); border-radius: 12px; padding: 12px; color: var(--input-text); background: var(--input-bg); outline: 0; }
 .form-grid textarea { min-height: 110px; resize: vertical; }
 
-.sheet-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 16px; position: sticky; bottom: 0; background: var(--card-bg); z-index: 5; border-top: 1px solid var(--border-subtle); }
+.sheet-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding: 16px 0; padding-bottom: max(16px, env(safe-area-inset-bottom, 16px)); position: sticky; bottom: 0; background: var(--card-bg); z-index: 5; border-top: 1px solid var(--border-subtle); }
 .secondary-button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--secondary-btn-border); border-radius: 99px; padding: 12px 16px; background: var(--secondary-btn-bg); color: var(--secondary-btn-text); font-weight: 700; font-size: 12px; }
 .secondary-button svg { width: 15px; }
 .full-button { width: 100%; justify-content: center; margin-top: 24px; }
@@ -480,11 +487,24 @@ button { cursor: pointer; }
 .batch-list em.rose { color: var(--rose); }
 .batch-list em.green { color: var(--story-em); }
 
-.visit-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 30px; }
-.visit-steps div { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--muted-text); font-size: 10px; }
-.visit-steps div:before { content: ""; width: 24px; height: 24px; border-radius: 50%; background: var(--border-subtle); }
+.visit-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 24px; }
+.visit-steps div { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--muted-text); font-size: 10px; text-align: center; }
+.visit-steps div:before { content: ""; width: 24px; height: 24px; border-radius: 50%; background: var(--border-subtle); flex-shrink: 0; }
 .visit-steps .step-active { color: var(--ocean); font-weight: 800; }
 .visit-steps .step-active:before { background: var(--ocean); }
+
+@media (max-width: 640px) {
+  .visit-steps { gap: 2px; }
+  .visit-steps div span { display: none; }
+  .visit-steps div.step-active span {
+    display: block;
+    position: absolute;
+    bottom: -18px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .visit-steps div { position: relative; }
+}
 
 .collection-toolbar { display: flex; gap: 10px; margin: 38px 0 20px; }
 .search-inline { display: flex; align-items: center; gap: 8px; flex: 1; border: 1px solid var(--border-input); border-radius: 99px; background: var(--card-bg); padding: 0 14px; }
@@ -597,6 +617,12 @@ button { cursor: pointer; }
 .home-range-segmented button.active { background: var(--ocean); color: #FFFFFF; font-weight: 600; box-shadow: 0 2px 8px rgba(63, 101, 147, 0.28); }
 
 @media (max-width: 768px) {
+  .tablet-menu-trigger {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 768px) {
   .app-sidebar { display: none !important; }
   .app-main-viewport { margin-left: 0 !important; padding-bottom: 95px; }
   .page-header { height: 70px; padding: 0 20px; }
@@ -649,6 +675,10 @@ button { cursor: pointer; }
 }
 .pharma-bento .span-2 { grid-column: span 2; }
 .pharma-bento .span-3 { grid-column: span 3; }
+.bento-span-2 { grid-column: span 2; }
+@media (max-width: 900px) {
+  .bento-span-2 { grid-column: span 1; }
+}
 @media (max-width: 1023px) {
   .pharma-bento { grid-template-columns: repeat(2, 1fr); }
   .pharma-bento .span-2 { grid-column: span 2; }
@@ -657,7 +687,23 @@ button { cursor: pointer; }
 @media (max-width: 640px) {
   .pharma-bento { grid-template-columns: 1fr; }
   .pharma-bento .span-2, .pharma-bento .span-3 { grid-column: span 1; }
-  .kpi-strip { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ── KPI Strip: 4 cols on desktop, 2 cols on tablet, 1 col on small screens ── */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 1023px) {
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .kpi-strip {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── RTL & Arabic Typography ────────────────────────────────────── */
@@ -797,11 +843,22 @@ body[dir="rtl"],
 
 
 
+@media (max-width: 900px) {
+  .wh-col-area {
+    display: none !important;
+  }
+}
+
 /* Wide variant for multi-column form drawers (e.g. create sales order) */
 .side-sheet--wide { width: min(600px, 100vw); }
+@media (max-width: 768px) {
+  .side-sheet--wide {
+    width: 100vw !important;
+  }
+}
 
 /* Mobile: the sidebar is hidden in favour of the bottom dock in both directions */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   [dir="rtl"] .app-main-viewport {
     margin-right: 0 !important;
     margin-left: 0 !important;
@@ -1042,7 +1099,7 @@ body[dir="rtl"],
 .returns-reason-bar > div { height: 100%; border-radius: 99px; background: var(--ocean); }
 
 /* ── Mobile top banner: wrap controls instead of overflowing the viewport ── */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .page-header {
     height: auto;
     min-height: 64px;

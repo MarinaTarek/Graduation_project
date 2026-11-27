@@ -23,7 +23,7 @@ export interface StockPageProps {
   onSelectProduct?: (name: string) => void
   filter?: string | null
   onClearFilter?: () => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
 }
 
@@ -61,8 +61,9 @@ export default function StockPage({
   // Precompute derived stock for all products
   const derivedMap = useMemo(() => {
     const map: Record<string, DerivedProductStock> = {}
+    const legacyRole: 'admin' | 'rep' = role === 'admin' ? 'admin' : 'rep'
     stockProductsMockData.forEach((p) => {
-      map[p.name] = deriveProductStock(p.name, movements, batches, role, currentUserName)
+      map[p.name] = deriveProductStock(p.name, movements, batches, legacyRole, currentUserName)
     })
     return map
   }, [stockProductsMockData, movements, batches, role, currentUserName])
@@ -357,7 +358,7 @@ export default function StockPage({
         actionType={activeAction}
         onClose={() => setActiveAction(null)}
         onSuccess={showToast}
-        role={role}
+        role={role === 'admin' ? 'admin' : 'rep'}
         currentUserName={currentUserName}
       />
 

@@ -19,7 +19,9 @@ import { EmptyState } from '@/ui/design-system/components/EmptyState'
 import { StatusPill } from '@/ui/design-system/components/StatusPill'
 import { VisitListItem } from './components/VisitListItem'
 import { VisitDetailDrawer } from './components/VisitDetailDrawer'
-import { visitsStore } from '@/data/mock/visits'
+import { visitsStore, type StoredVisit } from '@/data/mock/visits'
+import { filterVisitsByScope } from '@/data/mock/dataScope'
+import type { UserRole } from '@/lib/auth/types'
 import { useStore } from '@/data/mock/store'
 import { useT } from '@/lib/i18n'
 import { formatRepName, formatDate } from '@/lib/format'
@@ -29,8 +31,10 @@ export interface VisitsPageProps {
   onNewVisit: () => void
   filterRep?: string | null
   onClearFilter?: () => void
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
 }
 
 export default function VisitsPage({
@@ -39,6 +43,8 @@ export default function VisitsPage({
   onClearFilter,
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
 }: VisitsPageProps) {
   const { t, lang } = useT()
   const visitsMockData = useStore(visitsStore)
@@ -48,12 +54,10 @@ export default function VisitsPage({
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
   const [statusFilter, setStatusFilter] = useState<'all' | 'Completed' | 'Scheduled'>('all')
 
-  // 1. Role-based scoping: reps only see their own visits
+  // 1. Role-based scoping: reps see own visits; managers see team/BU visits; admin sees all
   const roleScopedVisits = useMemo(() => {
-    return role === 'rep'
-      ? visitsMockData.filter((v) => v.repName.toLowerCase() === currentUserName.toLowerCase())
-      : visitsMockData
-  }, [visitsMockData, role, currentUserName])
+    return filterVisitsByScope(visitsMockData, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [visitsMockData, role, currentUserId, currentUserName, businessUnit])
 
   // 2. Search, Status, and Rep filters
   const displayedVisits = useMemo(() => {
@@ -320,6 +324,23 @@ export default function VisitsPage({
                             <MapPin size={10} /> GPS Verified
                           </span>
                         )}
+                        {visit.isDoubleVisit && (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(2, 132, 199, 0.12)',
+                              color: 'var(--ocean)',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            👥 Double Visit ({visit.jointVisitStatus || 'Pending'})
+                          </span>
+                        )}
                       </div>
 
                       <p style={{ fontSize: '12.5px', color: 'var(--body-text)', margin: '8px 0 0', lineHeight: 1.4 }}>
@@ -375,7 +396,9 @@ export default function VisitsPage({
       <VisitDetailDrawer
         isOpen={Boolean(selectedVisit)}
         onClose={() => setSelectedVisit(null)}
-        visit={selectedVisit}
+        visit={selectedVisit ? visitsMockData.find((v) => v.id === selectedVisit.id) || selectedVisit : null}
+        currentUserName={currentUserName}
+        role={role}
       />
     </section>
   )

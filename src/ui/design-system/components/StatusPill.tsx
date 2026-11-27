@@ -7,6 +7,7 @@ export interface StatusPillProps {
 
 const STATUS_AR: Record<string, string> = {
   pending: 'قيد المراجعة',
+  'pending-approval': 'بانتظار الاعتماد',
   approved: 'تمت الموافقة',
   rejected: 'مرفوض',
   active: 'نشط',

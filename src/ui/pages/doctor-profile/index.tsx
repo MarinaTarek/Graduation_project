@@ -18,7 +18,7 @@ export interface DoctorProfilePageProps {
   onClose: () => void
   onNewVisit: () => void
   onSave?: () => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
 }
 

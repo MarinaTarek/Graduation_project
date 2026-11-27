@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useMemo } from 'react'
 import {
   ChevronLeft,
@@ -10,6 +12,11 @@ import {
   Briefcase,
   AlertCircle,
   Eye,
+  Route,
+  Bell,
+  Activity,
+  Hash,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/ui/design-system/components/Button'
 import { Modal } from '@/ui/design-system/components/Modal'
@@ -20,6 +27,23 @@ import { useStore } from '@/data/mock/store'
 import { visitsStore, updateVisit, type StoredVisit } from '@/data/mock/visits'
 import { vacationsStore, type VacationRequest } from '@/data/mock/vacations'
 import { customersStore } from '@/data/mock/customers'
+import {
+  visitPlansStore,
+  deriveCalendarEntriesFromVisitPlans,
+  type VisitPlan,
+} from '@/data/mock/visit-plans'
+import {
+  filterVisitPlansByScope,
+  filterVisitsByScope,
+  filterCustomersByScope,
+  getAuthorizedScope,
+} from '@/data/mock/dataScope'
+import {
+  getVisitAlarmDetails,
+  triggerVisitAlarm,
+  type VisitAlarmDetails,
+} from '@/data/mock/visitAlarm'
+import type { UserRole } from '@/lib/auth/types'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
 
 export type CalendarView = 'month' | 'week' | 'day'
@@ -29,13 +53,19 @@ export interface CalendarEvent {
   title: string
   date: string // YYYY-MM-DD
   time?: string
-  type: 'visit_scheduled' | 'visit_completed' | 'follow_up' | 'vacation'
+  type: 'visit_scheduled' | 'visit_completed' | 'follow_up' | 'vacation' | 'planned_visit'
   repName: string
   clientName?: string
   status: string
   detail?: string
   notes?: string
   rawItem?: any
+  planId?: string
+  planName?: string
+  stopId?: string
+  priority?: string
+  purpose?: string
+  isPlannedVisit?: boolean
 }
 
 function parseToIso(dateStr: string): string {
@@ -47,11 +77,26 @@ function parseToIso(dateStr: string): string {
   return dateStr
 }
 
-export function PlanCalendar() {
+export interface PlanCalendarProps {
+  role?: UserRole | string
+  currentUserName?: string
+  currentUserId?: string
+  businessUnit?: string
+  onTriggerAlarm?: (details: VisitAlarmDetails) => void
+}
+
+export function PlanCalendar({
+  role = 'admin',
+  currentUserName = 'Alex Morgan',
+  currentUserId,
+  businessUnit,
+  onTriggerAlarm,
+}: PlanCalendarProps = {}) {
   const { t, lang } = useT()
   const visits = useStore(visitsStore)
   const vacations = useStore(vacationsStore)
   const customers = useStore(customersStore)
+  const visitPlans = useStore(visitPlansStore)
 
   // Current calendar navigation date (defaults to Nov 2026 to match data)
   const [currentDate, setCurrentDate] = useState(new Date('2026-11-04'))
@@ -60,13 +105,39 @@ export function PlanCalendar() {
   const [selectedType, setSelectedType] = useState<string>('All')
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null)
   const [rescheduleDate, setRescheduleDate] = useState('')
+  const [alarmNotice, setAlarmNotice] = useState<string | null>(null)
+
+  // 1. Role-based scoping for all data sources
+  const scopedVisits = useMemo(() => {
+    return filterVisitsByScope(visits, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [visits, currentUserId, currentUserName, role, businessUnit])
+
+  const scopedCustomers = useMemo(() => {
+    return filterCustomersByScope(customers, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [customers, currentUserId, currentUserName, role, businessUnit])
+
+  const scopedPlans = useMemo(() => {
+    return filterVisitPlansByScope(visitPlans, { id: currentUserId, name: currentUserName, role, businessUnit })
+  }, [visitPlans, currentUserId, currentUserName, role, businessUnit])
+
+  const scopedVacations = useMemo(() => {
+    const scope = getAuthorizedScope({ id: currentUserId, name: currentUserName, role, businessUnit })
+    if (scope.isCompanyWide) return vacations
+    if (scope.isMarketingOnly) return []
+    return vacations.filter((vac) => {
+      if (currentUserId && vac.employeeId && vac.employeeId === currentUserId) return true
+      if (scope.repIds !== 'ALL' && vac.employeeId && scope.repIds.includes(vac.employeeId)) return true
+      if (scope.repNames !== 'ALL' && scope.repNames.some((n) => n.toLowerCase() === vac.employeeName.toLowerCase())) return true
+      return false
+    })
+  }, [vacations, currentUserId, currentUserName, role, businessUnit])
 
   // Aggregate all events into unified structure
   const allEvents = useMemo(() => {
     const list: CalendarEvent[] = []
 
-    // 1. Visits from visitsStore
-    for (const v of visits) {
+    // 1. Visits from visitsStore (scoped)
+    for (const v of scopedVisits) {
       const iso = parseToIso(v.date)
       const isCompleted = v.status === 'Completed'
       list.push({
@@ -84,8 +155,8 @@ export function PlanCalendar() {
       })
     }
 
-    // 2. Customer Follow-up Activities
-    for (const c of customers) {
+    // 2. Customer Follow-up Activities (scoped)
+    for (const c of scopedCustomers) {
       if (c.followUpHistory) {
         for (const [idx, fu] of c.followUpHistory.entries()) {
           list.push({
@@ -102,8 +173,8 @@ export function PlanCalendar() {
       }
     }
 
-    // 3. Employee Vacations
-    for (const vac of vacations) {
+    // 3. Employee Vacations (scoped)
+    for (const vac of scopedVacations) {
       list.push({
         id: `vac-${vac.id}`,
         title: `${vac.employeeName} (${vac.vacationType} Leave)`,
@@ -117,10 +188,34 @@ export function PlanCalendar() {
       })
     }
 
-    return list
-  }, [visits, vacations, customers])
+    // 4. Approved & Active Visit Plan Scheduled Stops (dynamically derived)
+    const plannedEntries = deriveCalendarEntriesFromVisitPlans(scopedPlans)
+    for (const pe of plannedEntries) {
+      list.push({
+        id: pe.id,
+        title: pe.title,
+        date: pe.date,
+        time: pe.time,
+        type: 'planned_visit',
+        repName: pe.repName,
+        clientName: pe.clientName,
+        status: pe.status,
+        detail: pe.detail,
+        notes: pe.notes,
+        rawItem: pe.rawItem,
+        planId: pe.planId,
+        planName: pe.planName,
+        stopId: pe.stopId,
+        priority: pe.priority,
+        purpose: pe.purpose,
+        isPlannedVisit: true,
+      })
+    }
 
-  // Filter events
+    return list
+  }, [scopedVisits, scopedCustomers, vacations, scopedPlans])
+
+  // Filter events by rep and type
   const filteredEvents = useMemo(() => {
     return allEvents.filter((ev) => {
       if (selectedRep !== 'All' && ev.repName !== selectedRep) {
@@ -131,6 +226,7 @@ export function PlanCalendar() {
         if (selectedType === 'visit_completed' && ev.type !== 'visit_completed') return false
         if (selectedType === 'follow_up' && ev.type !== 'follow_up') return false
         if (selectedType === 'vacation' && ev.type !== 'vacation') return false
+        if (selectedType === 'planned_visit' && ev.type !== 'planned_visit') return false
       }
       return true
     })
@@ -221,16 +317,53 @@ export function PlanCalendar() {
         return { background: 'rgba(147, 51, 234, 0.15)', color: '#7c3aed', border: '1px solid rgba(147, 51, 234, 0.3)' }
       case 'vacation':
         return { background: 'rgba(245, 158, 11, 0.15)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.3)' }
+      case 'planned_visit':
+        return { background: 'rgba(14, 165, 233, 0.15)', color: '#0284c7', border: '1px solid rgba(14, 165, 233, 0.35)' }
     }
   }
 
   const handleRescheduleConfirm = () => {
     if (!activeEvent || !rescheduleDate) return
-    if (activeEvent.rawItem && activeEvent.rawItem.id) {
+    if (activeEvent.rawItem && activeEvent.rawItem.id && activeEvent.type === 'visit_scheduled') {
       updateVisit(activeEvent.rawItem.id, { date: rescheduleDate })
       setActiveEvent(null)
       setRescheduleDate('')
     }
+  }
+
+  // Authoritative alarm details for currently selected event
+  const currentAlarmDetails: VisitAlarmDetails | null = useMemo(() => {
+    if (!activeEvent || !activeEvent.clientName) return null
+    return getVisitAlarmDetails({
+      doctorName: activeEvent.clientName,
+      clientName: activeEvent.clientName,
+      scheduledDate: activeEvent.date,
+      scheduledTime: activeEvent.time,
+      visitId: activeEvent.stopId || activeEvent.id,
+      lang,
+    })
+  }, [activeEvent, lang])
+
+  const handleTriggerAlarm = () => {
+    if (!activeEvent || !currentAlarmDetails) return
+    triggerVisitAlarm({
+      visitId: activeEvent.stopId || activeEvent.id,
+      planId: activeEvent.planId,
+      stopId: activeEvent.stopId,
+      doctorId: currentAlarmDetails.doctorId,
+      doctorName: currentAlarmDetails.doctorName,
+      scheduledDate: activeEvent.date,
+      scheduledTime: activeEvent.time,
+      repName: activeEvent.repName,
+      details: currentAlarmDetails,
+    })
+    onTriggerAlarm?.(currentAlarmDetails)
+    setAlarmNotice(
+      lang === 'ar'
+        ? `تم تفعيل تنبيه الزيارة للدكتور ${currentAlarmDetails.doctorName}`
+        : `Visit alarm triggered for ${currentAlarmDetails.doctorName}`
+    )
+    window.setTimeout(() => setAlarmNotice(null), 3000)
   }
 
   return (
@@ -322,6 +455,7 @@ export function PlanCalendar() {
             }}
           >
             <option value="All">{lang === 'ar' ? 'جميع الأنشطة' : 'All Event Types'}</option>
+            <option value="planned_visit">{lang === 'ar' ? 'زيارات الخطة المعتمدة' : 'Approved Planned Visits'}</option>
             <option value="visit_scheduled">{lang === 'ar' ? 'زيارات مجدولة' : 'Scheduled Visits'}</option>
             <option value="visit_completed">{lang === 'ar' ? 'زيارات مكتملة' : 'Completed Visits'}</option>
             <option value="follow_up">{lang === 'ar' ? 'أنشطة متابعة' : 'Follow-up Activities'}</option>
@@ -331,6 +465,10 @@ export function PlanCalendar() {
 
         {/* Legend */}
         <div style={{ marginInlineStart: 'auto', display: 'flex', gap: '10px', fontSize: '11px', flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284c7' }} />
+            {lang === 'ar' ? 'خطة معتمدة' : 'Planned Visit'}
+          </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }} />
             {lang === 'ar' ? 'مجدولة' : 'Scheduled'}
@@ -350,9 +488,17 @@ export function PlanCalendar() {
         </div>
       </div>
 
+      {/* Notice feedback */}
+      {alarmNotice && (
+        <div style={{ padding: '8px 14px', marginBottom: '12px', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.1)', color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>
+          {alarmNotice}
+        </div>
+      )}
+
       {/* MONTH VIEW */}
       {view === 'month' && (
-        <div style={{ border: '1px solid var(--border-soft)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ border: '1px solid var(--border-soft)', borderRadius: '10px', overflowX: 'auto' }}>
+          <div style={{ minWidth: '640px' }}>
           {/* Day Headers */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--surface-raised)', borderBottom: '1px solid var(--border-soft)', textAlign: 'center', padding: '8px 0', fontSize: '12px', fontWeight: 600, color: 'var(--muted-text)' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
@@ -408,6 +554,7 @@ export function PlanCalendar() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                     {dayEvents.slice(0, 3).map((ev) => {
                       const badgeStyle = getEventBadgeStyle(ev.type)
+                      const prefixIcon = ev.type === 'planned_visit' ? '📋 ' : ev.time ? `${ev.time} ` : ''
                       return (
                         <button
                           key={ev.id}
@@ -415,7 +562,6 @@ export function PlanCalendar() {
                           onClick={() => setActiveEvent(ev)}
                           style={{
                             ...badgeStyle,
-                            border: 'none',
                             borderRadius: '4px',
                             padding: '2px 4px',
                             fontSize: '10px',
@@ -430,7 +576,7 @@ export function PlanCalendar() {
                           }}
                           title={`${ev.time ? ev.time + ' · ' : ''}${ev.title}`}
                         >
-                          {ev.time ? `${ev.time} ` : ''}{ev.clientName || ev.title}
+                          {prefixIcon}{ev.clientName || ev.title}
                         </button>
                       )
                     })}
@@ -443,6 +589,7 @@ export function PlanCalendar() {
                 </div>
               )
             })}
+          </div>
           </div>
         </div>
       )}
@@ -482,12 +629,19 @@ export function PlanCalendar() {
                         flexShrink: 0,
                       }}
                     >
-                      {ev.type === 'vacation' ? <Briefcase size={18} /> : <Stethoscope size={18} />}
+                      {ev.type === 'vacation' ? (
+                        <Briefcase size={18} />
+                      ) : ev.type === 'planned_visit' ? (
+                        <Route size={18} />
+                      ) : (
+                        <Stethoscope size={18} />
+                      )}
                     </div>
                     <div>
                       <strong style={{ fontSize: '14px', display: 'block' }}>{ev.title}</strong>
                       <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
                         📅 {formatDate(ev.date, lang)} {ev.time ? `· ⏰ ${ev.time}` : ''} · 👤 {ev.repName}
+                        {ev.planName && ` · 📋 ${ev.planName}`}
                       </span>
                     </div>
                   </div>
@@ -509,7 +663,7 @@ export function PlanCalendar() {
       {/* Event Detail Modal */}
       <Modal isOpen={Boolean(activeEvent)} onClose={() => setActiveEvent(null)}>
         {activeEvent && (
-          <div style={{ padding: '24px', maxWidth: '480px' }}>
+          <div style={{ padding: '24px', maxWidth: '520px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
               <div>
                 <span
@@ -523,7 +677,9 @@ export function PlanCalendar() {
                     ...getEventBadgeStyle(activeEvent.type),
                   }}
                 >
-                  {activeEvent.type.replace('_', ' ').toUpperCase()}
+                  {activeEvent.type === 'planned_visit'
+                    ? (lang === 'ar' ? 'خطة زيارات معتمدة' : 'APPROVED VISIT PLAN')
+                    : activeEvent.type.replace('_', ' ').toUpperCase()}
                 </span>
                 <h3 style={{ margin: '8px 0 2px', fontSize: '16px' }}>{activeEvent.title}</h3>
               </div>
@@ -531,23 +687,39 @@ export function PlanCalendar() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', margin: '14px 0', borderTop: '1px solid var(--border-soft)', borderBottom: '1px solid var(--border-soft)', padding: '12px 0' }}>
+              {activeEvent.planName && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Route size={14} style={{ color: 'var(--ocean)' }} />
+                  <span><strong>{lang === 'ar' ? 'خطة الزيارات:' : 'Visit Plan:'}</strong> {activeEvent.planName}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Stethoscope size={14} style={{ color: 'var(--muted-text)' }} />
+                <span><strong>{lang === 'ar' ? 'العميل / الطبيب:' : 'HCP / HCO:'}</strong> {activeEvent.clientName}</span>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CalendarIcon size={14} style={{ color: 'var(--muted-text)' }} />
-                <span><strong>Date:</strong> {formatDate(activeEvent.date, lang)}</span>
+                <span><strong>{lang === 'ar' ? 'التاريخ المحدد:' : 'Scheduled Date:'}</strong> {formatDate(activeEvent.date, lang)}</span>
               </div>
               {activeEvent.time && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Clock size={14} style={{ color: 'var(--muted-text)' }} />
-                  <span><strong>Time:</strong> {activeEvent.time}</span>
+                  <span><strong>{lang === 'ar' ? 'الوقت المحدد:' : 'Scheduled Time:'}</strong> {activeEvent.time}</span>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <User size={14} style={{ color: 'var(--muted-text)' }} />
-                <span><strong>Representative:</strong> {activeEvent.repName}</span>
+                <span><strong>{lang === 'ar' ? 'المندوب المعين:' : 'Assigned Rep:'}</strong> {activeEvent.repName}</span>
               </div>
+              {activeEvent.priority && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertCircle size={14} style={{ color: 'var(--muted-text)' }} />
+                  <span><strong>{lang === 'ar' ? 'الفئة / الأولوية:' : 'Priority:'}</strong> {activeEvent.priority}</span>
+                </div>
+              )}
               {activeEvent.detail && (
                 <div style={{ marginTop: '4px', color: 'var(--muted-text)' }}>
-                  <strong>Details:</strong> {activeEvent.detail}
+                  <strong>{lang === 'ar' ? 'الغرض / التفاصيل:' : 'Purpose / Details:'}</strong> {activeEvent.detail}
                 </div>
               )}
               {activeEvent.notes && (
@@ -557,7 +729,82 @@ export function PlanCalendar() {
               )}
             </div>
 
-            {/* Reschedule Visit if active event is a visit */}
+            {/* Visit Alarm & Doctor Details Section */}
+            {currentAlarmDetails && (
+              <div
+                style={{
+                  marginTop: '12px',
+                  padding: '14px',
+                  borderRadius: '12px',
+                  background: 'var(--surface-raised)',
+                  border: '1px solid var(--border-soft)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Bell size={16} style={{ color: 'var(--ocean)' }} />
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--heading-text)' }}>
+                      {lang === 'ar' ? 'تنبيه موعد الزيارة وبيانات التغطية' : 'Visit Alarm & Doctor Coverage'}
+                    </span>
+                  </div>
+                  <Button
+                    variant="primary"
+                    style={{ fontSize: '11px', padding: '3px 8px', height: '26px' }}
+                    onClick={handleTriggerAlarm}
+                  >
+                    <Bell size={12} data-icon="inline-start" /> {lang === 'ar' ? 'تفعيل التنبيه' : 'Trigger Alarm'}
+                  </Button>
+                </div>
+
+                {/* 1. Prominent Doctor Name */}
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--muted-text)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                    {lang === 'ar' ? 'اسم الطبيب' : 'Doctor Name'}
+                  </span>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--heading-text)', marginTop: '2px' }}>
+                    {currentAlarmDetails.doctorName}
+                  </div>
+                </div>
+
+                {/* 2. Call Number, Coverage, Frequency Cards */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--muted-text)' }}>
+                      <Hash size={12} /> {lang === 'ar' ? 'رقم الزيارة' : 'Call Number'}
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--heading-text)', marginTop: '4px' }}>
+                      {currentAlarmDetails.callNumber}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--muted-text)' }}>
+                      <Activity size={12} /> {lang === 'ar' ? 'التغطية' : 'Coverage'}
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: currentAlarmDetails.isOverdue ? '#ef4444' : '#16a34a', marginTop: '4px' }}>
+                      {currentAlarmDetails.coverage}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--muted-text)' }}>
+                      <CalendarIcon size={12} /> {lang === 'ar' ? 'المعدل المطلوب' : 'Frequency'}
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)', marginTop: '4px' }}>
+                      {currentAlarmDetails.frequency}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reschedule Visit if active event is a visit from visitsStore */}
             {activeEvent.rawItem && activeEvent.rawItem.id && activeEvent.type === 'visit_scheduled' && (
               <div style={{ marginTop: '12px', padding: '10px 12px', borderRadius: '8px', background: 'var(--surface-raised)' }}>
                 <span style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>

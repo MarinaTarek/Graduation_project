@@ -1,6 +1,11 @@
 import { createStore } from './store'
 import { addAuditLog } from './audit'
 import { visitsStore, updateVisit, type StoredVisit } from './visits'
+import {
+  findAuthoritativeUser,
+  resolveApproverForRequest,
+  validateApprovalAuthority,
+} from '@/lib/approval/approvalEngine'
 
 export type VacationType = 'Annual' | 'Sick' | 'Emergency' | 'Unpaid' | 'Training'
 export type VacationStatus = 'Pending' | 'Approved' | 'Rejected'
@@ -18,6 +23,11 @@ export interface VacationRequest {
   rejectionReason?: string
   created_at: string
   updated_at?: string
+  assignedApproverId?: string
+  approvedBy?: string
+  approvedById?: string
+  rejectedBy?: string
+  rejectedById?: string
 }
 
 const SEED_VACATIONS: VacationRequest[] = [
@@ -176,11 +186,56 @@ export function addVacationRequest(input: AddVacationInput): { vacation: Vacatio
 
 export function approveVacation(
   id: string,
-  actor: string
+  actor: string | { id?: string; name?: string; role?: string; email?: string }
 ): { affectedVisits: StoredVisit[]; warning?: string } {
   const req = vacationsStore.get().find((v) => v.id === id)
   if (!req) throw new Error(`Vacation request ${id} not found.`)
   if (req.status !== 'Pending') throw new Error(`Only pending vacation requests can be approved.`)
+
+  // Resolve authoritative employee
+  const employee = findAuthoritativeUser({ id: req.employeeId, name: req.employeeName })
+  const employeeId = employee?.id || req.employeeId
+  const employeeName = employee?.name || req.employeeName
+
+  // Resolve actor user
+  let actorObj = typeof actor === 'object' && actor ? actor : null
+  const authoritativeActor = findAuthoritativeUser(actor)
+  const actorUser = authoritativeActor || {
+    id: actorObj?.id || `u-${(actorObj?.name || (typeof actor === 'string' ? actor : 'unknown')).toLowerCase().replace(/\s+/g, '-')}`,
+    name: actorObj?.name || (typeof actor === 'string' ? actor : 'Unknown User'),
+    role: actorObj?.role || (typeof actor === 'string' && actor.toLowerCase().includes('admin') ? 'admin' : 'rep'),
+  }
+
+  // Prevent self-approval strictly using both ID and Name
+  if (
+    (actorUser.id && (actorUser.id.toLowerCase() === employeeId.toLowerCase() || actorUser.id.toLowerCase() === req.employeeId.toLowerCase())) ||
+    (actorUser.name && (actorUser.name.toLowerCase() === employeeName.toLowerCase() || actorUser.name.toLowerCase() === req.employeeName.toLowerCase()))
+  ) {
+    throw new Error('Self-approval prohibited: An employee cannot approve their own vacation request.')
+  }
+
+  // Resolve authorized approver based on reporting hierarchy
+  let resolvedApproverId: string | undefined
+  try {
+    const resolved = resolveApproverForRequest(
+      { id: employeeId, name: employeeName },
+      'leave_request'
+    )
+    resolvedApproverId = resolved.approverId
+  } catch (e) {
+    throw new Error(`Cannot resolve authorized approver for employee ${employeeName}: ${(e as Error).message}`)
+  }
+
+  // Validate approval authority (checks role permissions and branch/assigned isolation)
+  const authCheck = validateApprovalAuthority(actorUser, {
+    createdById: employeeId,
+    createdByName: employeeName,
+    assignedApproverId: resolvedApproverId,
+    requestType: 'leave_request',
+  })
+  if (!authCheck.valid || !authCheck.actor) {
+    throw new Error(authCheck.error || 'Unauthorized approval attempt.')
+  }
 
   // Ensure no overlapping approved vacation exists
   const overlap = hasOverlappingApprovedVacation(req.employeeName, req.startDate, req.endDate, req.id)
@@ -195,7 +250,18 @@ export function approveVacation(
   const at = now()
 
   vacationsStore.update((list) =>
-    list.map((v) => (v.id === id ? { ...v, status: 'Approved', updated_at: at } : v))
+    list.map((v) =>
+      v.id === id
+        ? {
+            ...v,
+            status: 'Approved',
+            updated_at: at,
+            approvedBy: authCheck.actor?.name || actorUser.name,
+            approvedById: authCheck.actor?.id || actorUser.id,
+            assignedApproverId: resolvedApproverId,
+          }
+        : v
+    )
   )
 
   let warning: string | undefined
@@ -205,33 +271,89 @@ export function approveVacation(
 
   addAuditLog({
     action: 'Vacation Approved',
-    actor,
+    actor: authCheck.actor?.name || actorUser.name,
     time: 'Just now',
-    details: `Approved vacation ${id} for ${req.employeeName} (${req.startDate} to ${req.endDate}). ${affectedVisits.length} visits affected.`,
+    details: `Approved vacation ${id} for ${req.employeeName} (${req.startDate} to ${req.endDate}) by ${authCheck.actor?.name || actorUser.name}. ${affectedVisits.length} visits affected.`,
   })
 
   return { affectedVisits, warning }
 }
 
-export function rejectVacation(id: string, reason: string, actor: string) {
+export function rejectVacation(
+  id: string,
+  reason: string,
+  actor: string | { id?: string; name?: string; role?: string; email?: string }
+) {
   const req = vacationsStore.get().find((v) => v.id === id)
   if (!req) throw new Error(`Vacation request ${id} not found.`)
   if (req.status !== 'Pending') throw new Error(`Only pending vacation requests can be rejected.`)
-  if (!reason.trim()) throw new Error('A rejection reason is required.')
+  if (!reason || !reason.trim()) throw new Error('A rejection reason is required.')
+
+  const employee = findAuthoritativeUser({ id: req.employeeId, name: req.employeeName })
+  const employeeId = employee?.id || req.employeeId
+  const employeeName = employee?.name || req.employeeName
+
+  let actorObj = typeof actor === 'object' && actor ? actor : null
+  const authoritativeActor = findAuthoritativeUser(actor)
+  const actorUser = authoritativeActor || {
+    id: actorObj?.id || `u-${(actorObj?.name || (typeof actor === 'string' ? actor : 'unknown')).toLowerCase().replace(/\s+/g, '-')}`,
+    name: actorObj?.name || (typeof actor === 'string' ? actor : 'Unknown User'),
+    role: actorObj?.role || (typeof actor === 'string' && actor.toLowerCase().includes('admin') ? 'admin' : 'rep'),
+  }
+
+  // Prevent self-action strictly
+  if (
+    (actorUser.id && (actorUser.id.toLowerCase() === employeeId.toLowerCase() || actorUser.id.toLowerCase() === req.employeeId.toLowerCase())) ||
+    (actorUser.name && (actorUser.name.toLowerCase() === employeeName.toLowerCase() || actorUser.name.toLowerCase() === req.employeeName.toLowerCase()))
+  ) {
+    throw new Error('Self-action prohibited: An employee cannot reject their own vacation request.')
+  }
+
+  let resolvedApproverId: string | undefined
+  try {
+    const resolved = resolveApproverForRequest(
+      { id: employeeId, name: employeeName },
+      'leave_request'
+    )
+    resolvedApproverId = resolved.approverId
+  } catch (e) {
+    throw new Error(`Cannot resolve authorized approver for employee ${employeeName}: ${(e as Error).message}`)
+  }
+
+  const authCheck = validateApprovalAuthority(actorUser, {
+    createdById: employeeId,
+    createdByName: employeeName,
+    assignedApproverId: resolvedApproverId,
+    requestType: 'leave_request',
+  })
+  if (!authCheck.valid || !authCheck.actor) {
+    throw new Error(authCheck.error || 'Unauthorized rejection attempt.')
+  }
 
   const at = now()
+  const trimmedReason = reason.trim()
 
   vacationsStore.update((list) =>
     list.map((v) =>
-      v.id === id ? { ...v, status: 'Rejected', rejectionReason: reason.trim(), updated_at: at } : v
+      v.id === id
+        ? {
+            ...v,
+            status: 'Rejected',
+            rejectionReason: trimmedReason,
+            updated_at: at,
+            rejectedBy: authCheck.actor?.name || actorUser.name,
+            rejectedById: authCheck.actor?.id || actorUser.id,
+            assignedApproverId: resolvedApproverId,
+          }
+        : v
     )
   )
 
   addAuditLog({
     action: 'Vacation Rejected',
-    actor,
+    actor: authCheck.actor?.name || actorUser.name,
     time: 'Just now',
-    details: `Rejected vacation ${id} for ${req.employeeName}: ${reason.trim()}`,
+    details: `Rejected vacation ${id} for ${req.employeeName} by ${authCheck.actor?.name || actorUser.name}: ${trimmedReason}`,
   })
 }
 

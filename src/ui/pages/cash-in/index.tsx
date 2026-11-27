@@ -33,9 +33,11 @@ import { OutstandingInvoicesView } from './components/OutstandingInvoicesView'
 import { CustomerStatementView } from './components/CustomerStatementView'
 import { OverdueCollectionsView } from './components/OverdueCollectionsView'
 import { ALL_MOCK_REPS } from '@/ui/design-system/components/RecordFormDrawer'
+import { getAuthorizedScope } from '@/data/mock/dataScope'
+import type { UserRole } from '@/lib/auth/types'
 
 export interface CashInPageProps {
-  role?: 'admin' | 'rep'
+  role?: UserRole | string
   currentUserName?: string
   onAction?: (msg: string) => void
 }
@@ -50,10 +52,17 @@ export default function CashInPage({
   // Reactive Stores: shared invoices store as the single source of truth
   const storedInvoices = useStore(invoicesStore)
   const invoices = useMemo(() => {
+    const scope = getAuthorizedScope({ name: currentUserName, role })
     return storedInvoices
-      .filter((inv) => inv.status !== 'Rejected')
+      .filter((inv) => {
+        if (inv.status === 'Rejected') return false
+        if (scope.isCompanyWide) return true
+        if (scope.isMarketingOnly) return false
+        const names = new Set((scope.repNames as string[]).map((n) => n.toLowerCase()))
+        return Boolean(inv.repName && names.has(inv.repName.toLowerCase()))
+      })
       .map(toCollectionInvoice)
-  }, [storedInvoices])
+  }, [storedInvoices, currentUserName, role])
   const payments = useStore(collectionsStore)
 
   // Page Tabs: Outstanding Invoices, Customer Statement, Overdue Collections
@@ -523,7 +532,7 @@ export default function CashInPage({
           payments={payments}
           onCollectInvoice={handleOpenCollectForInvoice}
           searchQuery={searchQuery}
-          role={role}
+          role={role === 'admin' ? 'admin' : 'rep'}
           currentUserName={currentUserName}
         />
       )}
@@ -546,7 +555,7 @@ export default function CashInPage({
           payments={payments}
           onCollectInvoice={handleOpenCollectForInvoice}
           searchQuery={searchQuery}
-          role={role}
+          role={role === 'admin' ? 'admin' : 'rep'}
           currentUserName={currentUserName}
         />
       )}
@@ -563,7 +572,7 @@ export default function CashInPage({
         allPayments={payments}
         availableCustomers={availableCustomers}
         currentUserName={currentUserName}
-        role={role}
+        role={role === 'admin' ? 'admin' : 'rep'}
         preselectedCustomerId={preselectedCustomerId}
       />
 

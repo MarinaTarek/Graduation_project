@@ -27,7 +27,11 @@ export const moreLinksMockData: MoreLinkItem[] = [
   { name: 'Performance Analytics', name_ar: 'تحليلات الأداء', icon: TrendingUp, targetPage: 'Performance Analytics' },
   { name: 'Cash In', name_ar: 'التحصيلات النقدية', icon: BadgeDollarSign, targetPage: 'Cash In' },
   { name: 'Visits', name_ar: 'الزيارات', icon: Stethoscope, targetPage: 'Visits' },
+  { name: 'Visit plan', name_ar: 'خطة الزيارات', icon: Target, targetPage: 'Visit plan' },
   { name: 'Targets', name_ar: 'الأهداف', icon: Target, targetPage: 'Targets' },
+  { name: 'Returns', name_ar: 'المرتجعات', icon: Target, targetPage: 'Returns' },
+  { name: 'Budgets', name_ar: 'الميزانيات', icon: BadgeDollarSign, targetPage: 'Budgets' },
+  { name: 'Reports', name_ar: 'التقارير', icon: TrendingUp, targetPage: 'Reports' },
   { name: 'Admin panel', name_ar: 'لوحة الإدارة', icon: Settings2, targetPage: 'Admin', adminOnly: true },
   { name: 'Settings', name_ar: 'الإعدادات', icon: SlidersHorizontal, targetPage: 'Settings' },
 ]

@@ -5,7 +5,7 @@ import { MoreGrid } from './components/MoreGrid'
 export interface MorePageProps {
   onSelectPage: (page: string) => void
   onAction: (actionText: string) => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
 }
 
 export default function MorePage({ onSelectPage, onAction, role = 'admin' }: MorePageProps) {

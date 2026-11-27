@@ -9,6 +9,8 @@ import {
   Bell,
   ShieldCheck,
   Server,
+  Target,
+  Boxes,
 } from 'lucide-react'
 import { useT } from '@/lib/i18n'
 import { AccountProfileSection } from './components/AccountProfileSection'
@@ -17,6 +19,8 @@ import { LanguageRegionSection } from './components/LanguageRegionSection'
 import { NotificationsPrefSection } from './components/NotificationsPrefSection'
 import { SecurityAccessSection } from './components/SecurityAccessSection'
 import { SystemInfoSection } from './components/SystemInfoSection'
+import { VisitFrequencySection } from './components/VisitFrequencySection'
+import { SampleQuotaSection } from './components/SampleQuotaSection'
 
 export interface AdminSettingsPageProps {
   currentUserName?: string
@@ -37,11 +41,13 @@ export default function AdminSettingsPage({
 }: AdminSettingsPageProps) {
   const { t, lang } = useT()
   const [activeSection, setActiveSection] = useState<
-    'account' | 'appearance' | 'language' | 'notifications' | 'security' | 'system'
+    'account' | 'visit-frequency' | 'sample-quota' | 'appearance' | 'language' | 'notifications' | 'security' | 'system'
   >('account')
 
   const sections = [
     { id: 'account' as const, label: lang === 'ar' ? 'الحساب والملف الشخصي' : 'Account & Profile', icon: User },
+    { id: 'visit-frequency' as const, label: lang === 'ar' ? 'تكرار وأهداف الزيارات' : 'Visit Frequency & Targets', icon: Target },
+    { id: 'sample-quota' as const, label: lang === 'ar' ? 'حصص العينات والتجاوزات' : 'Doctor Sample Quotas', icon: Boxes },
     { id: 'appearance' as const, label: lang === 'ar' ? 'المظهر والسمة' : 'Appearance', icon: SunMoon },
     { id: 'language' as const, label: lang === 'ar' ? 'اللغة والمنطقة' : 'Language & Region', icon: Languages },
     { id: 'notifications' as const, label: lang === 'ar' ? 'تفضيلات الإشعارات' : 'Notifications', icon: Bell },
@@ -119,6 +125,18 @@ export default function AdminSettingsPage({
               role={role}
               onAction={onAction}
             />
+          )}
+
+          {activeSection === 'visit-frequency' && (
+            <VisitFrequencySection
+              role={role}
+              currentUserName={currentUserName}
+              onAction={onAction}
+            />
+          )}
+
+          {activeSection === 'sample-quota' && (
+            <SampleQuotaSection />
           )}
 
           {activeSection === 'appearance' && (

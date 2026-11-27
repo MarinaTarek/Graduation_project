@@ -13,7 +13,7 @@ export interface EditCustomerDrawerProps {
   onClose: () => void
   onSave?: (updated: Customer, previous: Customer) => void
   onDelete?: (customer: Customer) => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
   currentUserName?: string
 }
 
@@ -174,10 +174,9 @@ function EditCustomerDrawerInner({
   }
 
   return (
-    <div className="modal-backdrop" onClick={handleClose}>
+    <div className="modal-backdrop">
       <aside
         className="side-sheet"
-        onClick={(e) => e.stopPropagation()}
         style={{
           display: 'flex',
           flexDirection: 'column',

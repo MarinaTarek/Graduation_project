@@ -187,8 +187,8 @@ export function CreateSalesOrderDrawer({
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <aside className="side-sheet side-sheet--wide" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <aside className="side-sheet side-sheet--wide">
         <div className="sheet-head">
           <div>
             <span className="eyebrow">{t('sellIn.eyebrow')}</span>

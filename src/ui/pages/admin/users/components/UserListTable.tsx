@@ -11,11 +11,17 @@ import {
   ALL_STANDARD_PAGES,
   ALL_ADMIN_PAGES,
   getDefaultPermissions,
+  sanitizeRolePermissions,
 } from '@/lib/auth/permissions'
+import {
+  ROLE_LABELS,
+  BUSINESS_UNITS,
+  validateReportingHierarchy,
+} from '@/data/mock/dataScope'
 import { updateMockUser } from '@/lib/auth/auth-service'
 import { getStoredUsers, saveStoredUsers, storedUsersStore, type MockUserRecord } from '@/lib/auth/mock-users'
 import { addAuditLog } from '@/data/mock/audit'
-import { addUser, deleteUser, updateUser, usersStore } from '@/data/mock/users'
+import { addUser, deleteUser, updateUser, usersStore, approveSignUpRequest, rejectSignUpRequest } from '@/data/mock/users'
 import { useStore } from '@/data/mock/store'
 import { addNotification } from '@/data/mock/notifications'
 import { type AdminUserRecord } from '../mock-data'
@@ -29,6 +35,7 @@ export interface UserListTableProps {
 export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const { t } = useT()
   const { user: currentUser } = useAuth()
+  const isAdminActor = currentUser?.role === 'admin'
   const [activeTab, setActiveTab] = useState<'all' | 'pending'>(initialTab)
 
   useEffect(() => {
@@ -42,6 +49,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const [approvingUser, setApprovingUser] = useState<MockUserRecord | null>(null)
   const [approveRole, setApproveRole] = useState<UserRole>('rep')
   const [approveRegion, setApproveRegion] = useState('Central region')
+  const [approveManagerId, setApproveManagerId] = useState('')
+  const [approveBusinessUnit, setApproveBusinessUnit] = useState<string>('Cardio-Metabolic')
   const [approvePermissions, setApprovePermissions] = useState<UserPermissions>(getDefaultPermissions('rep'))
   const [confirmAdminGrant, setConfirmAdminGrant] = useState(false)
   const [isSavingApprove, setIsSavingApprove] = useState(false)
@@ -62,6 +71,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const [addEmail, setAddEmail] = useState('')
   const [addRole, setAddRole] = useState<UserRole>('rep')
   const [addRegion, setAddRegion] = useState('Central region')
+  const [addManagerId, setAddManagerId] = useState('')
+  const [addBusinessUnit, setAddBusinessUnit] = useState<string>('Cardio-Metabolic')
   const [addEmailError, setAddEmailError] = useState<string | null>(null)
   const [isSavingAdd, setIsSavingAdd] = useState(false)
 
@@ -71,6 +82,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const [editEmail, setEditEmail] = useState('')
   const [editRoleType, setEditRoleType] = useState<UserRole>('rep')
   const [editRegion, setEditRegion] = useState('North region')
+  const [editManagerId, setEditManagerId] = useState('')
+  const [editBusinessUnit, setEditBusinessUnit] = useState<string>('Cardio-Metabolic')
   const [editStatus, setEditStatus] = useState('Active')
   const [editPermissions, setEditPermissions] = useState<UserPermissions>(getDefaultPermissions('rep'))
   const [editError, setEditError] = useState<string | null>(null)
@@ -105,6 +118,8 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
     setEditEmail(user.email)
     setEditRoleType(user.roleType)
     setEditRegion(user.region || 'North region')
+    setEditManagerId(user.managerId || '')
+    setEditBusinessUnit(user.businessUnit || 'Cardio-Metabolic')
     setEditStatus(user.status || 'Active')
     setEditPermissions(user.permissions || getDefaultPermissions(user.roleType))
     setEditError(null)
@@ -113,8 +128,7 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   // Role selector change inside Edit Drawer
   const handleEditRoleChange = (newRole: UserRole) => {
     setEditRoleType(newRole)
-    // Changing the role pre-fills the defaults; individual checkboxes override them
-    setEditPermissions(getDefaultPermissions(newRole))
+    setEditPermissions((prev) => sanitizeRolePermissions(newRole, prev))
   }
 
   // Toggle page permission checkbox
@@ -144,6 +158,11 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault()
     setEditError(null)
+
+    if (!isAdminActor) {
+      setEditError('Unauthorized: Only Admin users can modify user accounts, roles, or permissions.')
+      return
+    }
 
     if (!editingUser) return
 
@@ -191,15 +210,23 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       }
     }
 
+    const hierCheck = validateReportingHierarchy(editingUser.id, editManagerId || undefined)
+    if (!hierCheck.valid) {
+      setEditError(hierCheck.error || 'Invalid reporting relationship')
+      return
+    }
+
     setIsSavingEdit(true)
 
     const updatedUser: AdminUserRecord = {
       ...editingUser,
       name: editName.trim(),
       email: editEmail.trim(),
-      role: editRoleType === 'admin' ? 'Admin' : 'Medical Representative',
+      role: ROLE_LABELS[editRoleType] || 'Medical Representative',
       roleType: editRoleType,
       region: editRegion,
+      businessUnit: editBusinessUnit,
+      managerId: editManagerId || undefined,
       status: editStatus,
       permissions: editPermissions,
     }
@@ -224,6 +251,11 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
 
   // Delete Handler with Safety Check
   const handleDelete = (user: AdminUserRecord) => {
+    if (currentUser?.role !== 'admin') {
+      showToast('Only administrators can delete user accounts.')
+      return
+    }
+
     // Safety check: Cannot delete the only active admin
     if (user.roleType === 'admin' && user.status === 'Active') {
       const otherAdmins = countOtherActiveAdmins(user.id || user.email)
@@ -268,20 +300,34 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
     e.preventDefault()
     setAddEmailError(null)
 
+    if (currentUser?.role !== 'admin') {
+      setAddEmailError('Only administrators can create user accounts.')
+      return
+    }
+
     if (!addEmail.includes('@') || !addEmail.includes('.')) {
       setAddEmailError('Please enter a valid work email address')
+      return
+    }
+
+    const newUserId = `u-${Date.now()}`
+    const hierCheck = validateReportingHierarchy(newUserId, addManagerId || undefined)
+    if (!hierCheck.valid) {
+      setAddEmailError(hierCheck.error || 'Invalid reporting relationship')
       return
     }
 
     setIsSavingAdd(true)
     setTimeout(() => {
       const newUser: AdminUserRecord = {
-        id: `u-${Date.now()}`,
+        id: newUserId,
         name: addName.trim(),
         email: addEmail.trim(),
-        role: addRole === 'admin' ? 'Admin' : 'Medical Representative',
+        role: ROLE_LABELS[addRole] || 'Medical Representative',
         roleType: addRole,
         region: addRegion,
+        businessUnit: addBusinessUnit,
+        managerId: addManagerId || undefined,
         status: 'Active',
         permissions: getDefaultPermissions(addRole),
       }
@@ -313,16 +359,19 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       return
     }
     setApprovingUser(user)
-    setApproveRole('rep')
+    const initialRole = (user.role as UserRole) || 'rep'
+    setApproveRole(initialRole)
     setApproveRegion(user.region || 'Central region')
-    setApprovePermissions(getDefaultPermissions('rep'))
+    setApproveManagerId(user.managerId || '')
+    setApproveBusinessUnit(user.businessUnit || 'Cardio-Metabolic')
+    setApprovePermissions(getDefaultPermissions(initialRole))
     setConfirmAdminGrant(false)
     setApproveError(null)
   }
 
   const handleApproveRoleChange = (newRole: UserRole) => {
     setApproveRole(newRole)
-    setApprovePermissions(getDefaultPermissions(newRole))
+    setApprovePermissions((prev) => sanitizeRolePermissions(newRole, prev))
     if (newRole !== 'admin') {
       setConfirmAdminGrant(false)
     }
@@ -360,63 +409,43 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
       return
     }
 
+    const hierCheck = validateReportingHierarchy(approvingUser.id, approveManagerId || undefined)
+    if (!hierCheck.valid) {
+      setApproveError(hierCheck.error || 'Invalid reporting relationship')
+      return
+    }
+
     setIsSavingApprove(true)
 
     setTimeout(() => {
-      const allStored = getStoredUsers()
-      const targetIdx = allStored.findIndex(
-        (u) => u.id === approvingUser.id || u.email.toLowerCase() === approvingUser.email.toLowerCase()
-      )
+      try {
+        const approvedUser = approveSignUpRequest(
+          approvingUser.id,
+          {
+            role: approveRole,
+            region: approveRegion,
+            managerId: approveManagerId || undefined,
+            businessUnit: approveBusinessUnit,
+            permissions: approvePermissions,
+          },
+          currentUser || 'Admin'
+        )
 
-      const updatedRecord: MockUserRecord = {
-        ...approvingUser,
-        role: approveRole,
-        region: approveRegion,
-        status: 'active',
-        permissions: approvePermissions,
+        addNotification({
+          title: 'Account Approved',
+          message: `Account approved for ${approvingUser.name} as ${approvedUser.role}`,
+          category: 'system',
+          priority: 'info',
+          time: 'Just now',
+          targetPage: 'Users',
+        })
+        showToast(`Account approved for ${approvingUser.name} as ${approvedUser.role}`)
+      } catch (err: any) {
+        showToast(`Approval failed: ${err.message}`)
+      } finally {
+        setIsSavingApprove(false)
+        setApprovingUser(null)
       }
-
-      if (targetIdx !== -1) {
-        allStored[targetIdx] = updatedRecord
-      } else {
-        allStored.unshift(updatedRecord)
-      }
-      saveStoredUsers(allStored)
-
-      const roleLabel = approveRole === 'admin' ? 'Admin' : 'Medical Representative'
-      const newAdminUser: AdminUserRecord = {
-        id: approvingUser.id,
-        name: approvingUser.name,
-        name_ar: approvingUser.name_ar,
-        email: approvingUser.email,
-        role: roleLabel,
-        roleType: approveRole,
-        region: approveRegion,
-        status: 'Active',
-        permissions: approvePermissions,
-      }
-
-      addUser(newAdminUser)
-
-      addAuditLog({
-        action: 'Account Approved',
-        actor: currentUser?.name || 'Admin',
-        time: 'Just now',
-        details: `Account approved for ${approvingUser.name} as ${roleLabel}`,
-      })
-
-      addNotification({
-        title: 'Account Approved',
-        message: `Account approved for ${approvingUser.name} as ${roleLabel}`,
-        category: 'system',
-        priority: 'info',
-        time: 'Just now',
-        targetPage: 'Users',
-      })
-      showToast(`Account approved for ${approvingUser.name} as ${roleLabel}`)
-
-      setIsSavingApprove(false)
-      setApprovingUser(null)
     }, 300)
   }
 
@@ -438,62 +467,23 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
     const userToReject = rejectingUser
     const reasonText = rejectReason.trim()
 
-    const allStored = getStoredUsers()
-    const targetIdx = allStored.findIndex(
-      (u) => u.id === userToReject.id || u.email.toLowerCase() === userToReject.email.toLowerCase()
-    )
-    if (targetIdx !== -1) {
-      allStored[targetIdx] = { ...allStored[targetIdx], status: 'rejected' }
-      saveStoredUsers(allStored)
+    try {
+      rejectSignUpRequest(userToReject.id, reasonText, currentUser || 'Admin')
+      addNotification({
+        title: 'Account Rejected',
+        message: `Account request rejected for ${userToReject.name}`,
+        category: 'system',
+        priority: 'warning',
+        time: 'Just now',
+        targetPage: 'Users',
+      })
+      showToast(`Account request rejected for ${userToReject.name}`)
+    } catch (err: any) {
+      showToast(`Rejection failed: ${err.message}`)
+    } finally {
+      setIsSavingReject(false)
+      setRejectingUser(null)
     }
-
-    const adminUser = usersStore.get().find(
-      (u) => u.id === userToReject.id || u.email.toLowerCase() === userToReject.email.toLowerCase()
-    )
-    if (adminUser) {
-      updateUser(adminUser.id, { status: 'Rejected' }, currentUser?.name || 'Admin')
-    }
-
-    addAuditLog({
-      action: 'Account Rejected',
-      actor: currentUser?.name || 'Admin',
-      time: 'Just now',
-      details: `Account request rejected for ${userToReject.name}${reasonText ? `: ${reasonText}` : ''}`,
-    })
-
-    trigger(
-      `Account request rejected for ${userToReject.name}`,
-      () => {},
-      () => {
-        const currentStored = getStoredUsers()
-        const idx = currentStored.findIndex((u) => u.id === userToReject.id)
-        if (idx !== -1) {
-          currentStored[idx] = { ...currentStored[idx], status: 'pending' }
-          saveStoredUsers(currentStored)
-        }
-        if (adminUser) {
-          updateUser(adminUser.id, { status: 'Pending' }, currentUser?.name || 'Admin')
-        }
-      }
-    )
-
-    showToast(`Account request rejected for ${userToReject.name}`, () => {
-      undo()
-      const currentStored = getStoredUsers()
-      const idx = currentStored.findIndex((u) => u.id === userToReject.id)
-      if (idx !== -1) {
-        currentStored[idx] = { ...currentStored[idx], status: 'pending' }
-        saveStoredUsers(currentStored)
-      }
-      if (adminUser) {
-        updateUser(adminUser.id, { status: 'Pending' }, currentUser?.name || 'Admin')
-      }
-      setToastMessage(`Restored ${userToReject.name} request`)
-      setTimeout(() => setToastMessage(null), 3000)
-    })
-
-    setIsSavingReject(false)
-    setRejectingUser(null)
   }
 
   return (
@@ -701,8 +691,13 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                   border: 'none',
                   cursor: 'pointer',
                   color: 'var(--muted-text)',
-                  padding: '6px',
-                  borderRadius: '6px',
+                  padding: '10px',
+                  minWidth: '40px',
+                  minHeight: '40px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
                 }}
               >
                 <Trash2 style={{ width: '15px', height: '15px' }} />
@@ -807,19 +802,49 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                     value={editRoleType}
                     onChange={(e) => handleEditRoleChange(e.target.value as UserRole)}
                   >
-                    <option value="admin">Admin</option>
                     <option value="rep">Medical Representative</option>
+                    <option value="first_line_manager">First Line Manager</option>
+                    <option value="business_unit_manager">Business Unit Manager</option>
+                    <option value="marketing_manager">Marketing Manager</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </label>
 
                 <label>
                   {t('admin.users.regionLabel')}
                   <select value={editRegion} onChange={(e) => setEditRegion(e.target.value)}>
-                    <option value="HQ - Global">HQ - Global</option>
                     <option value="North region">North region</option>
                     <option value="West region">West region</option>
                     <option value="Central region">Central region</option>
                     <option value="East region">East region</option>
+                    <option value="HQ - Global">HQ - Global</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <label>
+                  Direct Manager
+                  <select value={editManagerId} onChange={(e) => setEditManagerId(e.target.value)}>
+                    <option value="">(None / Unassigned)</option>
+                    {users
+                      .filter((u) => u.id !== editingUser?.id && (u.roleType === 'admin' || u.roleType === 'first_line_manager' || u.roleType === 'business_unit_manager'))
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.role})
+                        </option>
+                      ))}
+                  </select>
+                </label>
+
+                <label>
+                  Business Unit
+                  <select value={editBusinessUnit} onChange={(e) => setEditBusinessUnit(e.target.value)}>
+                    {BUSINESS_UNITS.map((bu) => (
+                      <option key={bu} value={bu}>
+                        {bu}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>
@@ -1095,6 +1120,9 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                 {t('admin.users.roleLabel')}
                 <select value={addRole} onChange={(e) => setAddRole(e.target.value as UserRole)}>
                   <option value="rep">Medical Representative</option>
+                  <option value="first_line_manager">First Line Manager</option>
+                  <option value="business_unit_manager">Business Unit Manager</option>
+                  <option value="marketing_manager">Marketing Manager</option>
                   <option value="admin">Admin</option>
                 </select>
               </label>
@@ -1106,6 +1134,31 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                   <option value="Central region">Central region</option>
                   <option value="East region">East region</option>
                   <option value="HQ - Global">HQ - Global</option>
+                </select>
+              </label>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <label>
+                Direct Manager
+                <select value={addManagerId} onChange={(e) => setAddManagerId(e.target.value)}>
+                  <option value="">(None / Unassigned)</option>
+                  {users
+                    .filter((u) => u.roleType === 'admin' || u.roleType === 'first_line_manager' || u.roleType === 'business_unit_manager')
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.role})
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Business Unit
+                <select value={addBusinessUnit} onChange={(e) => setAddBusinessUnit(e.target.value)}>
+                  {BUSINESS_UNITS.map((bu) => (
+                    <option key={bu} value={bu}>
+                      {bu}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
@@ -1198,6 +1251,9 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                     disabled={isSavingApprove}
                   >
                     <option value="rep">Medical Representative</option>
+                    <option value="first_line_manager">First Line Manager</option>
+                    <option value="business_unit_manager">Business Unit Manager</option>
+                    <option value="marketing_manager">Marketing Manager</option>
                     <option value="admin">Admin</option>
                   </select>
                 </label>
@@ -1214,6 +1270,41 @@ export function UserListTable({ initialTab = 'all' }: UserListTableProps) {
                     <option value="Central region">Central region</option>
                     <option value="East region">East region</option>
                     <option value="HQ - Global">HQ - Global</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <label>
+                  Direct Manager
+                  <select
+                    value={approveManagerId}
+                    onChange={(e) => setApproveManagerId(e.target.value)}
+                    disabled={isSavingApprove}
+                  >
+                    <option value="">(None / Unassigned)</option>
+                    {users
+                      .filter((u) => u.id !== approvingUser?.id && (u.roleType === 'admin' || u.roleType === 'first_line_manager' || u.roleType === 'business_unit_manager'))
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} ({m.role})
+                        </option>
+                      ))}
+                  </select>
+                </label>
+
+                <label>
+                  Business Unit
+                  <select
+                    value={approveBusinessUnit}
+                    onChange={(e) => setApproveBusinessUnit(e.target.value)}
+                    disabled={isSavingApprove}
+                  >
+                    {BUSINESS_UNITS.map((bu) => (
+                      <option key={bu} value={bu}>
+                        {bu}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>

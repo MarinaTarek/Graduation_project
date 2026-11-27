@@ -8,7 +8,7 @@ import {
   Power, RotateCcw, Settings2, Shield, Stethoscope, Target, TrendingUp, User, Users,
   Warehouse, Wallet, BadgeDollarSign,
 } from 'lucide-react'
-import { canAccessPage, type User as AuthUser } from '@/lib/auth'
+import { canAccessPage, type User as AuthUser, type UserRole } from '@/lib/auth'
 import { storedUsersStore } from '@/lib/auth/mock-users'
 import { invoicesStore } from '@/data/mock/invoices'
 import { useStore } from '@/data/mock/store'
@@ -47,7 +47,7 @@ const NAV_LABEL_MAP: Record<string, TranslationKey> = {
 export interface SidebarProps {
   active: string
   onSelect: (label: string) => void
-  role?: 'admin' | 'rep'
+  role?: UserRole
   collapsed?: boolean
   onToggleCollapse?: () => void
   onOpenLogout: () => void

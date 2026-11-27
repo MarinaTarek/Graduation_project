@@ -21,8 +21,25 @@ export function VisitListItem({ item, onClick }: VisitListItemProps) {
         <Stethoscope />
       </div>
       <div>
-        <strong>{clientName}</strong>
-        <span>{repName} · {date} · {detail}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <strong>{clientName}</strong>
+          {item.isDoubleVisit && (
+            <span
+              style={{
+                fontSize: '10px',
+                padding: '1px 6px',
+                borderRadius: '8px',
+                background: 'rgba(2, 132, 199, 0.1)',
+                color: 'var(--ocean, #0284c7)',
+                fontWeight: 600,
+              }}
+            >
+              👥 {lang === 'ar' ? 'زيارة مشتركة' : 'Double Visit'}
+              {item.jointVisitStatus ? ` · ${item.jointVisitStatus}` : ''}
+            </span>
+          )}
+        </div>
+        <span>{repName}{item.jointRepName ? ` + ${item.jointRepName}` : ''} · {date} · {detail}</span>
       </div>
       <StatusPill status={item.status} />
       <ChevronRight />

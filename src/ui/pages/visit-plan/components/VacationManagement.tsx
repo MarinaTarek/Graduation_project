@@ -21,19 +21,21 @@ import {
 import type { StoredVisit } from '@/data/mock/visits'
 
 export interface VacationManagementProps {
-  role?: 'admin' | 'rep'
+  role?: string
   currentUserName?: string
+  currentUserId?: string
   onAction?: (msg: string) => void
 }
 
 export function VacationManagement({
   role = 'admin',
   currentUserName = 'Alex Morgan',
+  currentUserId,
   onAction,
 }: VacationManagementProps) {
   const { t, lang } = useT()
   const vacations = useStore(vacationsStore)
-  const isManager = role === 'admin'
+  const isManager = role !== 'rep'
 
   // Request modal state
   const [requestOpen, setRequestOpen] = useState(false)
@@ -101,7 +103,11 @@ export function VacationManagement({
 
   const handleApprove = (vacation: VacationRequest) => {
     try {
-      const result = approveVacation(vacation.id, currentUserName)
+      const result = approveVacation(vacation.id, {
+        id: currentUserId,
+        name: currentUserName,
+        role,
+      })
       if (result.warning) {
         setApprovalWarning({
           msg: result.warning,
@@ -122,7 +128,11 @@ export function VacationManagement({
       return
     }
     try {
-      rejectVacation(rejectId, rejectReason.trim(), currentUserName)
+      rejectVacation(rejectId, rejectReason.trim(), {
+        id: currentUserId,
+        name: currentUserName,
+        role,
+      })
       setRejectId(null)
       setRejectReason('')
       setRejectError(null)

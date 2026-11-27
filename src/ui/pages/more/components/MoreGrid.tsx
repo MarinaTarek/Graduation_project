@@ -5,7 +5,7 @@ import { moreLinksMockData } from '../mock-data'
 export interface MoreGridProps {
   onSelectPage: (page: string) => void
   onAction: (actionText: string) => void
-  role?: 'admin' | 'rep'
+  role?: import('@/lib/auth/types').UserRole | string
 }
 
 export function MoreGrid({ onSelectPage, onAction, role = 'admin' }: MoreGridProps) {

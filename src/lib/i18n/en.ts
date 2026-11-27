@@ -1,7 +1,7 @@
 export const en = {
   // Navigation / Sidebar
   'nav.dashboard': 'Dashboard',
-  'nav.clients': 'Clients',
+  'nav.clients': 'HCPs & HCOs',
   'nav.invoices': 'Invoices',
   'nav.stock': 'Stock',
   'nav.sellIn': 'Sell-in',
@@ -268,7 +268,7 @@ export const en = {
   'home.attention.accountRequests': 'Account requests',
   'home.attention.pendingReview': '{count} pending review',
   'home.attention.actionOpeningPendingInvoices': 'Opening pending invoices',
-  'home.attention.actionOpeningOverdueClients': 'Opening overdue clients',
+  'home.attention.actionOpeningOverdueClients': 'Opening overdue HCPs & HCOs',
   'home.attention.actionOpeningExpiringBatch': 'Opening expiring batch details',
   'home.attention.actionOpeningPendingRequests': 'Opening pending user requests',
   'home.attention.actionOpening': 'Opening {label}',
@@ -364,7 +364,7 @@ export const en = {
 
   // Clients Page
   'clients.eyebrow': 'RELATIONSHIPS',
-  'clients.title': 'Clients',
+  'clients.title': 'HCPs & HCOs',
   'clients.subtitle': 'Every relationship, remembered.',
   'clients.addNew': 'Add new',
   'clients.activeFilters': 'Active filters:',
@@ -388,6 +388,13 @@ export const en = {
   'clients.toolbar.switchToList': 'Switch to List view',
   'clients.toolbar.cards': 'Cards',
   'clients.toolbar.list': 'List',
+  'clients.tabs.all': 'All Clients',
+  'clients.tabs.hcps': 'Healthcare Professionals (HCP)',
+  'clients.tabs.hcos': 'Healthcare Organizations (HCO)',
+  'clients.kpi.totalClients': 'Total Clients',
+  'clients.kpi.totalHcps': 'Total HCPs',
+  'clients.kpi.totalHcos': 'Total HCOs',
+  'clients.kpi.activeClients': 'Active Clients',
 
   // Edit Customer Drawer
   'clients.edit.editDoctor': 'EDIT DOCTOR',
