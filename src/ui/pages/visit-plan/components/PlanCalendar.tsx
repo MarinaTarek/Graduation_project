@@ -310,15 +310,15 @@ export function PlanCalendar({
   const getEventBadgeStyle = (type: CalendarEvent['type']) => {
     switch (type) {
       case 'visit_completed':
-        return { background: 'rgba(16, 185, 129, 0.15)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.3)' }
+        return { background: 'rgba(16, 185, 129, 0.15)', color: 'var(--green-text, #059669)', border: '1px solid rgba(16, 185, 129, 0.3)' }
       case 'visit_scheduled':
-        return { background: 'rgba(37, 99, 235, 0.15)', color: '#2563eb', border: '1px solid rgba(37, 99, 235, 0.3)' }
+        return { background: 'rgba(37, 99, 235, 0.15)', color: 'var(--link-text, #2563eb)', border: '1px solid rgba(37, 99, 235, 0.3)' }
       case 'follow_up':
-        return { background: 'rgba(147, 51, 234, 0.15)', color: '#7c3aed', border: '1px solid rgba(147, 51, 234, 0.3)' }
+        return { background: 'rgba(147, 51, 234, 0.15)', color: 'var(--purple-text, #7c3aed)', border: '1px solid rgba(147, 51, 234, 0.3)' }
       case 'vacation':
-        return { background: 'rgba(245, 158, 11, 0.15)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.3)' }
+        return { background: 'rgba(245, 158, 11, 0.15)', color: 'var(--amber-text, #d97706)', border: '1px solid rgba(245, 158, 11, 0.3)' }
       case 'planned_visit':
-        return { background: 'rgba(14, 165, 233, 0.15)', color: '#0284c7', border: '1px solid rgba(14, 165, 233, 0.35)' }
+        return { background: 'rgba(14, 165, 233, 0.15)', color: 'var(--sky, #0284c7)', border: '1px solid rgba(14, 165, 233, 0.35)' }
     }
   }
 
@@ -531,7 +531,7 @@ export function PlanCalendar({
                       style={{
                         fontSize: '11px',
                         fontWeight: isToday ? 800 : 500,
-                        color: isToday ? 'var(--ocean)' : 'var(--heading-text)',
+                        color: isToday ? 'var(--link-text, var(--ocean))' : 'var(--heading-text)',
                         width: '20px',
                         height: '20px',
                         borderRadius: '50%',

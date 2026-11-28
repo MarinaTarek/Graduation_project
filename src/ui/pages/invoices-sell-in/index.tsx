@@ -251,7 +251,7 @@ export default function InvoicesSellInPage({
               ? 'rgba(27, 53, 84, 0.10)'
               : 'var(--surface)',
             color: activeTab === 'invoices'
-              ? 'var(--navy, #1B3554)'
+              ? 'var(--heading-text, #1B3554)'
               : 'var(--muted-text)',
             whiteSpace: 'nowrap',
           }}

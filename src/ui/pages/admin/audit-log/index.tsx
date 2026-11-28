@@ -299,7 +299,7 @@ export default function AdminAuditLogPage() {
                       </td>
 
                       {/* Affected Record */}
-                      <td style={{ padding: '14px 18px', color: 'var(--navy, #1B3554)', fontWeight: 600 }}>
+                      <td style={{ padding: '14px 18px', color: 'var(--heading-text, #1B3554)', fontWeight: 600 }}>
                         {log.affectedRecord || '—'}
                       </td>
 

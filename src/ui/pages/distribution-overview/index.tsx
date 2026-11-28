@@ -35,14 +35,14 @@ export default function DistributionOverviewPage({
       page: 'Invoices & Sell-in',
       icon: FileText,
       badge: pendingInvoices.length > 0 ? `${pendingInvoices.length} pending` : undefined,
-      color: '#1B3554',
+      color: 'var(--link-text, var(--ocean, #1B3554))',
     },
     {
       title: t('nav.warehouses'),
       desc: lang === 'ar' ? 'إدارة المخزون والمستودعات الإقليمية' : 'Fulfillment hubs, stock balance & batch tracking',
       page: 'Warehouses',
       icon: Warehouse,
-      color: '#059669',
+      color: 'var(--green-text, #059669)',
     },
     {
       title: t('nav.sellOut'),
@@ -259,7 +259,7 @@ export default function DistributionOverviewPage({
                   )}
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px', color: 'var(--navy, #1B3554)' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px', color: 'var(--heading-text, #1B3554)' }}>
                     {link.title}
                   </h3>
                   <p style={{ fontSize: '12px', color: 'var(--muted-text)', margin: 0, lineHeight: 1.4 }}>

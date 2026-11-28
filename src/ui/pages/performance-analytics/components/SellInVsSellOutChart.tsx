@@ -91,7 +91,7 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
                 width: '12px',
                 height: '12px',
                 borderRadius: '3px',
-                background: '#1B3554',
+                background: 'var(--link-text, #1B3554)',
               }}
             />
             <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--heading-text)' }}>
@@ -106,7 +106,7 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
                 width: '12px',
                 height: '12px',
                 borderRadius: '3px',
-                background: '#059669',
+                background: 'var(--green-text, #059669)',
               }}
             />
             <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--heading-text)' }}>
@@ -163,9 +163,9 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '4px' }}>
                   <span style={{ color: 'var(--muted-text)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <DollarSign size={12} style={{ color: '#1B3554' }} /> Sell-in:
+                    <DollarSign size={12} style={{ color: 'var(--link-text, #1B3554)' }} /> Sell-in:
                   </span>
-                  <strong style={{ color: '#1B3554' }}>
+                  <strong style={{ color: 'var(--heading-text, #1B3554)' }}>
                     {formatCurrency(item.sellInRevenue, 'EGP', lang)}
                   </strong>
                 </div>
@@ -183,7 +183,7 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
                       width: `${revPct}%`,
                       height: '100%',
                       borderRadius: '99px',
-                      background: '#1B3554',
+                      background: 'var(--link-text, #1B3554)',
                       transition: 'width 0.4s ease',
                     }}
                   />
@@ -194,9 +194,9 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginBottom: '4px' }}>
                   <span style={{ color: 'var(--muted-text)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Package size={12} style={{ color: '#059669' }} /> Sell-out:
+                    <Package size={12} style={{ color: 'var(--green-text, #059669)' }} /> Sell-out:
                   </span>
-                  <strong style={{ color: '#059669' }}>
+                  <strong style={{ color: 'var(--green-text, #059669)' }}>
                     {item.sellOutQuantity.toLocaleString()} {t('performanceAnalytics.kpi.boxes')}
                   </strong>
                 </div>
@@ -214,7 +214,7 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
                       width: `${qtyPct}%`,
                       height: '100%',
                       borderRadius: '99px',
-                      background: '#059669',
+                      background: 'var(--green-text, #059669)',
                       transition: 'width 0.4s ease',
                     }}
                   />
@@ -239,28 +239,28 @@ export function SellInVsSellOutChart({ data }: SellInVsSellOutChartProps) {
             <line x1={padX} y1={padY + chartH} x2={width - padX} y2={padY + chartH} stroke="var(--border-soft)" />
 
             {/* Revenue Trend Line */}
-            <path d={revLineD} fill="none" stroke="#1B3554" strokeWidth="2.5" strokeLinecap="round" />
+            <path d={revLineD} fill="none" stroke="var(--link-text, #1B3554)" strokeWidth="2.5" strokeLinecap="round" />
             {data.map((d, i) => (
               <circle
                 key={`rev-pt-${i}`}
                 cx={getX(i)}
                 cy={getRevY(d.sellInRevenue)}
                 r="4.5"
-                fill="#1B3554"
+                fill="var(--link-text, #1B3554)"
                 stroke="var(--surface)"
                 strokeWidth="2"
               />
             ))}
 
             {/* Quantity Trend Line */}
-            <path d={qtyLineD} fill="none" stroke="#059669" strokeWidth="2.5" strokeDasharray="5 3" strokeLinecap="round" />
+            <path d={qtyLineD} fill="none" stroke="var(--green-text, #059669)" strokeWidth="2.5" strokeDasharray="5 3" strokeLinecap="round" />
             {data.map((d, i) => (
               <circle
                 key={`qty-pt-${i}`}
                 cx={getX(i)}
                 cy={getQtyY(d.sellOutQuantity)}
                 r="4.5"
-                fill="#059669"
+                fill="var(--green-text, #059669)"
                 stroke="var(--surface)"
                 strokeWidth="2"
               />

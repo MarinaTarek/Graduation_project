@@ -106,7 +106,7 @@ export function AreaPerformanceCard({ data, onSelectArea }: AreaPerformanceCardP
                     <span style={{ fontSize: '10px', color: 'var(--muted-text)', display: 'block', textTransform: 'uppercase' }}>
                       Sell-in
                     </span>
-                    <strong style={{ fontSize: '13px', color: '#1B3554' }}>
+                    <strong style={{ fontSize: '13px', color: 'var(--heading-text, #1B3554)' }}>
                       {formatCurrency(item.sellInRevenue, 'EGP', lang)}
                     </strong>
                   </div>
@@ -115,7 +115,7 @@ export function AreaPerformanceCard({ data, onSelectArea }: AreaPerformanceCardP
                     <span style={{ fontSize: '10px', color: 'var(--muted-text)', display: 'block', textTransform: 'uppercase' }}>
                       Sell-out
                     </span>
-                    <strong style={{ fontSize: '13px', color: '#059669' }}>
+                    <strong style={{ fontSize: '13px', color: 'var(--green-text, #059669)' }}>
                       {item.sellOutQuantity.toLocaleString()} {t('performanceAnalytics.kpi.boxes')}
                     </strong>
                   </div>

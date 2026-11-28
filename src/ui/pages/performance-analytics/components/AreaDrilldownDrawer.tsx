@@ -53,7 +53,7 @@ export function AreaDrilldownDrawer({
             <span style={{ fontSize: '11px', color: 'var(--muted-text)', display: 'block' }}>
               {t('performanceAnalytics.area.revenue')}
             </span>
-            <strong style={{ fontSize: '18px', color: '#1B3554' }}>
+            <strong style={{ fontSize: '18px', color: 'var(--heading-text, #1B3554)' }}>
               {formatCurrency(area.sellInRevenue, 'EGP', lang)}
             </strong>
           </div>
@@ -62,7 +62,7 @@ export function AreaDrilldownDrawer({
             <span style={{ fontSize: '11px', color: 'var(--muted-text)', display: 'block' }}>
               {t('performanceAnalytics.area.volume')}
             </span>
-            <strong style={{ fontSize: '18px', color: '#059669' }}>
+            <strong style={{ fontSize: '18px', color: 'var(--green-text, #059669)' }}>
               {area.sellOutQuantity.toLocaleString()} {t('performanceAnalytics.kpi.boxes')}
             </strong>
           </div>
@@ -116,7 +116,7 @@ export function AreaDrilldownDrawer({
                     </div>
                   </div>
 
-                  <strong style={{ fontSize: '15px', color: '#059669' }}>
+                  <strong style={{ fontSize: '15px', color: 'var(--green-text, #059669)' }}>
                     {wh.sellOutVolume.toLocaleString()} {t('performanceAnalytics.kpi.boxes')}
                   </strong>
                 </div>

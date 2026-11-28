@@ -589,7 +589,7 @@ export function DashboardHeader({
           </span>
         </div>
 
-        <h2 style={{ margin: '4px 0 2px 0', fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.025em' }}>
+        <h2 style={{ margin: '4px 0 2px 0', fontSize: '1.65rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)', letterSpacing: '-0.025em' }}>
           {isAr ? `مرحباً، ${welcomeName}` : `Welcome, ${welcomeName}`}
         </h2>
         <p style={{ margin: 0, fontSize: '0.86rem', color: '#64748B', lineHeight: 1.4 }}>
@@ -670,10 +670,34 @@ export function ActionCenter({
   const displaySubtitle = subtitle || (isAr ? 'بنود تتطلب متابعتك واعتمادك الفوري' : 'Critical operational items awaiting your immediate review or decision')
 
   const severityColors = {
-    critical: { border: '#EF4444', bg: '#FEF2F2', badgeBg: '#FEE2E2', text: '#991B1B', iconColor: '#DC2626' },
-    warning: { border: '#F59E0B', bg: '#FFFBEB', badgeBg: '#FEF3C7', text: '#92400E', iconColor: '#D97706' },
-    info: { border: '#3B82F6', bg: '#EFF6FF', badgeBg: '#DBEAFE', text: '#1E40AF', iconColor: '#2563EB' },
-    success: { border: '#10B981', bg: '#ECFDF5', badgeBg: '#D1FAE5', text: '#065F46', iconColor: '#059669' },
+    critical: {
+      border: '#EF4444',
+      bg: 'var(--rose-bg, #FEF2F2)',
+      badgeBg: 'rgba(239, 68, 68, 0.2)',
+      text: 'var(--rose-text, #991B1B)',
+      iconColor: 'var(--rose-text, #DC2626)',
+    },
+    warning: {
+      border: '#F59E0B',
+      bg: 'var(--amber-bg, #FFFBEB)',
+      badgeBg: 'rgba(245, 158, 11, 0.2)',
+      text: 'var(--amber-text, #92400E)',
+      iconColor: 'var(--amber-text, #D97706)',
+    },
+    info: {
+      border: '#3B82F6',
+      bg: 'rgba(59, 130, 246, 0.1)',
+      badgeBg: 'rgba(59, 130, 246, 0.2)',
+      text: 'var(--link-text, #1E40AF)',
+      iconColor: 'var(--link-text, #2563EB)',
+    },
+    success: {
+      border: '#10B981',
+      bg: 'var(--green-bg, #ECFDF5)',
+      badgeBg: 'rgba(16, 185, 129, 0.2)',
+      text: 'var(--green-text, #065F46)',
+      iconColor: 'var(--green-text, #059669)',
+    },
   }
 
   return (
@@ -700,7 +724,7 @@ export function ActionCenter({
                 display: 'inline-block',
               }}
             />
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
               {displayTitle}
             </h3>
           </div>
@@ -865,7 +889,7 @@ export function RecentActivityFeed({
       <div style={{ marginBottom: '18px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Activity style={{ width: '17px', height: '17px', color: 'var(--ocean, #3F6593)' }} />
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
             {displayTitle}
           </h3>
         </div>
@@ -1006,7 +1030,7 @@ export function DonutGaugeCard({
       }}
     >
       <div>
-        <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>{title}</h4>
+        <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>{title}</h4>
         {subtitle && <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748B' }}>{subtitle}</p>}
       </div>
 
@@ -1142,12 +1166,12 @@ export function AreaTrendChartCard({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>{title}</h4>
+          <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>{title}</h4>
           {subtitle && <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>{subtitle}</p>}
         </div>
 
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A' }}>{totalText}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>{totalText}</div>
           <span
             style={{
               display: 'inline-flex',
@@ -1158,7 +1182,7 @@ export function AreaTrendChartCard({
               padding: '2px 8px',
               borderRadius: '99px',
               background: 'rgba(16, 185, 129, 0.15)',
-              color: '#065F46',
+              color: 'var(--green-text, #065F46)',
             }}
           >
             <ArrowUpRight style={{ width: '12px', height: '12px' }} />

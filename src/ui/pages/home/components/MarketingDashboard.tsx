@@ -305,12 +305,12 @@ export function MarketingDashboard({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Package style={{ width: '18px', height: '18px', color: '#2563EB' }} />
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+              <Package style={{ width: '18px', height: '18px', color: 'var(--ocean, #2563EB)' }} />
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'مصفوفة أداء المحفظة الدوائية (Formulary Breakdown)' : 'Formulary Performance & Market Share Matrix'}
               </h3>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--muted-text, #64748B)' }}>
               {isAr
                 ? 'مقارنة شاملة لأسعار المستحضرات، الكميات المباعة، الإيرادات، والحصص السوقية'
                 : 'Detailed SKU-level performance across unit price, volume, revenue, and relative market penetration.'}
@@ -344,7 +344,7 @@ export function MarketingDashboard({
                   key={prod.name}
                   style={{ borderBottom: '1px solid #F1F5F9', fontSize: '0.88rem' }}
                 >
-                  <td style={{ padding: '14px 14px', fontWeight: 700, color: '#0F172A' }}>
+                  <td style={{ padding: '14px 14px', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span
                         style={{
@@ -357,12 +357,12 @@ export function MarketingDashboard({
                       {prod.name}
                     </div>
                   </td>
-                  <td style={{ padding: '14px 14px', color: '#64748B' }}>{prod.category}</td>
-                  <td style={{ padding: '14px 14px', color: '#64748B' }}>{formatCurrencyCompact(prod.price, 'EGP', lang)}</td>
-                  <td style={{ padding: '14px 14px', fontWeight: 700, color: '#0F172A' }}>
+                  <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>{prod.category}</td>
+                  <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>{formatCurrencyCompact(prod.price, 'EGP', lang)}</td>
+                  <td style={{ padding: '14px 14px', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>
                     {prod.unitsSold.toLocaleString('en-US')}
                   </td>
-                  <td style={{ padding: '14px 14px', fontWeight: 800, color: '#0F172A' }}>
+                  <td style={{ padding: '14px 14px', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                     {formatCurrencyCompact(prod.revenue, 'EGP', lang)}
                   </td>
                   <td style={{ padding: '14px 14px' }}>
@@ -408,12 +408,12 @@ export function MarketingDashboard({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin style={{ width: '18px', height: '18px', color: '#2563EB' }} />
-              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+              <MapPin style={{ width: '18px', height: '18px', color: 'var(--ocean, #2563EB)' }} />
+              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'الطلب الإقليمي عبر المحافظات' : 'Territory Demand Distribution'}
               </h4>
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)', fontWeight: 700 }}>
               {isAr ? 'حسب الحجم المالي' : 'By Invoiced Volume'}
             </span>
           </div>
@@ -428,22 +428,22 @@ export function MarketingDashboard({
                   alignItems: 'center',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: '#F8FAFC',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--surface-raised, #F8FAFC)',
+                  border: '1px solid var(--border-soft, #E2E8F0)',
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>{reg.region}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                    {isAr ? 'الأكثر طلباً:' : 'Top SKU:'} <span style={{ fontWeight: 600, color: '#2563EB' }}>{reg.topProduct}</span>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--heading-text, #0F172A)' }}>{reg.region}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)' }}>
+                    {isAr ? 'الأكثر طلباً:' : 'Top SKU:'} <span style={{ fontWeight: 600, color: 'var(--link-text, #2563EB)' }}>{reg.topProduct}</span>
                   </div>
                 </div>
 
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.96rem' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--heading-text, #0F172A)', fontSize: '0.96rem' }}>
                     {formatCurrencyCompact(reg.totalRevenue, 'EGP', lang)}
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--muted-text, #64748B)' }}>
                     {reg.unitsSold.toLocaleString('en-US')} {isAr ? 'عبوة' : 'units'}
                   </div>
                 </div>

@@ -71,8 +71,8 @@ export function TargetCard({
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: '6px',
-                background: target.period === 'Quarterly' ? 'rgba(124, 58, 237, 0.1)' : 'rgba(2, 132, 199, 0.1)',
-                color: target.period === 'Quarterly' ? '#7c3aed' : 'var(--sky, #0284c7)',
+                background: target.period === 'Quarterly' ? 'rgba(124, 58, 237, 0.15)' : 'rgba(2, 132, 199, 0.15)',
+                color: target.period === 'Quarterly' ? 'var(--purple-text, #7c3aed)' : 'var(--sky, #0284c7)',
               }}
             >
               {target.period === 'Quarterly'

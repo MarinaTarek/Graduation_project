@@ -258,7 +258,7 @@ export default function InvoiceReviewPage({
             borderRadius: '8px',
             background: 'rgba(245, 158, 11, 0.1)',
             border: '1px solid #f59e0b',
-            color: '#b45309',
+            color: 'var(--amber-text, #b45309)',
             fontSize: '12px',
           }}
         >

@@ -314,12 +314,12 @@ export function BUMDashboard({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Users style={{ width: '18px', height: '18px', color: '#9333EA' }} />
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+              <Users style={{ width: '18px', height: '18px', color: 'var(--purple-text, #9333EA)' }} />
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'أداء المشرفين والفرق الميدانية (FLM Teams)' : 'Supervisory Teams & Rep Performance'}
               </h3>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--muted-text, #64748B)' }}>
               {isAr
                 ? 'متابعة تفصيلية للمبيعات والأهداف ونشاط الزيارات لكل مشرف ميداني في الوحدة'
                 : 'Quota pacing, rep coverage, and completed field visits organized by direct FLM team.'}
@@ -361,7 +361,7 @@ export function BUMDashboard({
                     key={flm.id}
                     style={{ borderBottom: '1px solid #F1F5F9', fontSize: '0.88rem' }}
                   >
-                    <td style={{ padding: '14px 14px', fontWeight: 700, color: '#0F172A' }}>
+                    <td style={{ padding: '14px 14px', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span
                           style={{
@@ -374,17 +374,17 @@ export function BUMDashboard({
                         {flm.name}
                       </div>
                     </td>
-                    <td style={{ padding: '14px 14px', color: '#64748B' }}>{flm.region}</td>
-                    <td style={{ padding: '14px 14px', fontWeight: 600, color: '#0F172A' }}>{flm.repsCount}</td>
-                    <td style={{ padding: '14px 14px', fontWeight: 800, color: '#0F172A' }}>
+                    <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>{flm.region}</td>
+                    <td style={{ padding: '14px 14px', fontWeight: 600, color: 'var(--heading-text, #0F172A)' }}>{flm.repsCount}</td>
+                    <td style={{ padding: '14px 14px', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                       {formatCurrencyCompact(flm.sales, 'EGP', lang)}
                     </td>
-                    <td style={{ padding: '14px 14px', color: '#64748B' }}>
+                    <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>
                       {formatCurrencyCompact(flm.target, 'EGP', lang)}
                     </td>
                     <td style={{ padding: '14px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '85px', height: '7px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: '85px', height: '7px', background: 'var(--border-soft, #E2E8F0)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div
                             style={{
                               width: `${Math.min(100, flm.achievementPct)}%`,
@@ -394,12 +394,12 @@ export function BUMDashboard({
                             }}
                           />
                         </div>
-                        <span style={{ fontWeight: 800, fontSize: '0.82rem', color: flm.achievementPct >= 100 ? '#059669' : '#0F172A' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.82rem', color: flm.achievementPct >= 100 ? 'var(--green-text, #059669)' : 'var(--heading-text, #0F172A)' }}>
                           {flm.achievementPct}%
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: '14px 14px', color: '#475569' }}>{flm.completedVisits}</td>
+                    <td style={{ padding: '14px 14px', color: 'var(--heading-text, #475569)' }}>{flm.completedVisits}</td>
                   </tr>
                 ))
               )}
@@ -427,12 +427,12 @@ export function BUMDashboard({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Package style={{ width: '18px', height: '18px', color: '#9333EA' }} />
-              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+              <Package style={{ width: '18px', height: '18px', color: 'var(--purple-text, #9333EA)' }} />
+              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'مبيعات منتجات الوحدة' : 'BU Product Sales Breakdown'}
               </h4>
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)', fontWeight: 700 }}>
               {isAr ? 'بالقيمة والوحدات' : 'By Revenue & Units'}
             </span>
           </div>

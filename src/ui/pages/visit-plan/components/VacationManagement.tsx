@@ -206,9 +206,9 @@ export function VacationManagement({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <AlertTriangle style={{ color: '#d97706', width: '20px', height: '20px', flexShrink: 0 }} />
+            <AlertTriangle style={{ color: 'var(--amber-text, #d97706)', width: '20px', height: '20px', flexShrink: 0 }} />
             <div>
-              <strong style={{ fontSize: '13px', color: '#b45309', display: 'block' }}>
+              <strong style={{ fontSize: '13px', color: 'var(--amber-text, #b45309)', display: 'block' }}>
                 {lang === 'ar' ? 'تنبيه: تعارض زيارات مجدولة مع الإجازة' : 'Notice: Scheduled Visits Conflict With Vacation'}
               </strong>
               <span style={{ fontSize: '12px', color: 'var(--heading-text)' }}>
@@ -273,7 +273,7 @@ export function VacationManagement({
                       <span
                         style={{
                           fontSize: '11px',
-                          color: '#b45309',
+                          color: 'var(--amber-text, #b45309)',
                           background: 'rgba(245, 158, 11, 0.12)',
                           padding: '1px 6px',
                           borderRadius: '4px',
@@ -353,7 +353,7 @@ export function VacationManagement({
 
           {formError && <FieldError message={formError} />}
           {formWarning && (
-            <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.1)', color: '#b45309', fontSize: '12px', marginBottom: '12px' }}>
+            <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--amber-text, #b45309)', fontSize: '12px', marginBottom: '12px' }}>
               {formWarning}
             </div>
           )}
@@ -518,7 +518,7 @@ export function VacationManagement({
               ))}
             </div>
           ) : (
-            <div style={{ padding: '20px', textAlign: 'center', color: '#059669', fontSize: '13px' }}>
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--green-text, #059669)', fontSize: '13px' }}>
               ✓ {lang === 'ar' ? 'تمت إعادة جدولة جميع الزيارات المتعارضة بنجاح.' : 'All conflicting visits have been rescheduled.'}
             </div>
           )}

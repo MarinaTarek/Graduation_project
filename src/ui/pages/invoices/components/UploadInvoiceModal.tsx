@@ -1082,7 +1082,7 @@ export function UploadInvoiceModal({
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--muted-text)' }}>
                     <span>{lang === 'ar' ? 'إجمالي الخصم (Discount):' : 'Total Discount:'}</span>
-                    <strong style={{ color: '#16a34a' }}>- {currency} {totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                    <strong style={{ color: 'var(--green-text, #16a34a)' }}>- {currency} {totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--muted-text)' }}>

@@ -25,15 +25,15 @@ export interface StockDetailSheetProps {
 const STATUS_PILL: Record<string, { background: string; color: string }> = {
   expired: { background: '#64748b', color: '#ffffff' },
   critical: { background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose-text, #ef4444)' },
-  warning: { background: 'rgba(217, 119, 6, 0.15)', color: '#d97706' },
+  warning: { background: 'rgba(217, 119, 6, 0.15)', color: 'var(--amber-text, #d97706)' },
   ok: { background: 'rgba(22, 163, 74, 0.15)', color: 'var(--green-text, #16a34a)' },
 }
 
 const MOVEMENT_CHIP: Record<string, { background: string; color: string }> = {
   receipt: { background: 'rgba(22, 163, 74, 0.15)', color: 'var(--green-text)' },
-  sell_in: { background: 'rgba(2, 132, 199, 0.15)', color: 'var(--ocean)' },
-  sell_out: { background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' },
-  sample: { background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' },
+  sell_in: { background: 'rgba(2, 132, 199, 0.15)', color: 'var(--link-text, var(--ocean))' },
+  sell_out: { background: 'rgba(168, 85, 247, 0.15)', color: 'var(--purple-text, #a855f7)' },
+  sample: { background: 'rgba(245, 158, 11, 0.15)', color: 'var(--amber-text, #d97706)' },
   other: { background: 'rgba(100, 116, 139, 0.15)', color: 'var(--muted-text, #64748b)' },
 }
 
@@ -167,7 +167,7 @@ export function StockDetailSheet({
         </div>
         <div className="stock-stat">
           <span className="stock-stat__label">{t('stock.detail.available')}</span>
-          <strong className="stock-stat__value" style={{ color: 'var(--ocean)' }}>
+          <strong className="stock-stat__value" style={{ color: 'var(--link-text, var(--ocean))' }}>
             {t('stock.detail.unitsCount', { count: derived.available_qty.toLocaleString() })}
           </strong>
         </div>

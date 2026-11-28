@@ -241,14 +241,14 @@ export function VisitAlarmModal({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)' }}>
-              <Activity size={13} style={{ color: details.isOverdue ? '#ef4444' : '#16a34a' }} />
+              <Activity size={13} style={{ color: details.isOverdue ? 'var(--rose-text, #ef4444)' : 'var(--green-text, #16a34a)' }} />
               <span>{lang === 'ar' ? 'التغطية' : 'Coverage'}</span>
             </div>
             <div
               style={{
                 fontSize: '13px',
                 fontWeight: 800,
-                color: details.isOverdue ? '#ef4444' : '#16a34a',
+                color: details.isOverdue ? 'var(--rose-text, #ef4444)' : 'var(--green-text, #16a34a)',
                 marginTop: '2px',
                 lineHeight: 1.2,
               }}
@@ -275,7 +275,7 @@ export function VisitAlarmModal({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: 'var(--muted-text)' }}>
-              <CalendarDays size={13} style={{ color: '#d97706' }} />
+              <CalendarDays size={13} style={{ color: 'var(--amber-text, #d97706)' }} />
               <span>{lang === 'ar' ? 'المعدل المطلوب' : 'Frequency'}</span>
             </div>
             <div

@@ -71,6 +71,8 @@
   --rep-goal: #4c9d7c;
   --target-panel-bg: #1B3554;
   --modal-border: #D5E2F0;
+  --purple-text: #7C3AED;
+  --navy-primary: #1B3554;
 }
 
 /* Dark mode tokens: configured purely through theme variables */
@@ -138,6 +140,8 @@ body.dark-mode,
   --rep-goal: #8FD6B6;
   --target-panel-bg: linear-gradient(145deg, #152840, #1D3553);
   --modal-border: rgba(192, 230, 253, .08);
+  --purple-text: #C084FC;
+  --navy-primary: #F0EDE6;
 
   /* Semantic Dark Text & Field Tokens */
   --placeholder-text: #6A84A3;
@@ -1321,3 +1325,42 @@ body[dir="rtl"],
   .header-right { flex-wrap: wrap; row-gap: 8px; }
   .header-search-pill kbd { display: none; }
 }
+
+/* ── Dark Mode Numeric Visibility Engine ── */
+.green-text { color: var(--green-text) !important; }
+.amber-text { color: var(--amber-text) !important; }
+.rose-text { color: var(--rose-text) !important; }
+.purple-text { color: var(--purple-text) !important; }
+
+body.dark-mode,
+.app-shell.dark-mode {
+  /* Prevent dark text inheritance on numeric table columns and metrics */
+  .table td.numeric,
+  .table td[align="right"],
+  .table th[align="right"] {
+    color: var(--heading-text);
+  }
+
+  /* Form input numeric visibility */
+  input[type="number"],
+  input[type="date"],
+  input[type="time"] {
+    color: var(--heading-text);
+    background-color: var(--input-bg);
+  }
+
+  /* Pagination numbers and page counts */
+  .pagination,
+  .pagination-numbers,
+  .pagination-indicator {
+    color: var(--heading-text);
+  }
+
+  /* KPI cards & attention numbers */
+  .kpi-value,
+  .stat-value,
+  .metric-value {
+    color: var(--heading-text);
+  }
+}
+

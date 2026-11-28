@@ -372,7 +372,7 @@ export function CustomerStatementView({
                         ) : '—'}
                       </td>
 
-                      <td style={{ padding: '14px 16px', textAlign: 'end', fontWeight: 700, color: 'var(--navy, #1B3554)' }}>
+                      <td style={{ padding: '14px 16px', textAlign: 'end', fontWeight: 700, color: 'var(--heading-text, #1B3554)' }}>
                         {formatCurrency(entry.runningBalance, 'EGP', lang)}
                       </td>
 

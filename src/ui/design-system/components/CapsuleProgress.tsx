@@ -86,9 +86,9 @@ export function CapsuleProgress({
         }}
       >
         <div>{lang === 'ar' ? 'المستلم:' : 'Received:'} <b style={{ color: 'var(--heading-text)' }}>{received || qty}</b></div>
-        <div>{lang === 'ar' ? 'مبيعات مباشرة (Sell-in):' : 'Sold to customers (Sell-in):'} <b style={{ color: 'var(--ocean)' }}>{sellIn || qty}</b></div>
+        <div>{lang === 'ar' ? 'مبيعات مباشرة (Sell-in):' : 'Sold to customers (Sell-in):'} <b style={{ color: 'var(--link-text, var(--ocean))' }}>{sellIn || qty}</b></div>
         <div>{lang === 'ar' ? 'مبيعات صيدليات (Sell-out):' : 'Sold by customers (Sell-out):'} <b style={{ color: 'var(--green-text, #16a34a)' }}>{sellOut || sold}</b></div>
-        <div>{lang === 'ar' ? 'في المستودع الآن:' : 'In warehouse now:'} <b style={{ color: '#d97706' }}>{inWarehouse || left}</b></div>
+        <div>{lang === 'ar' ? 'في المستودع الآن:' : 'In warehouse now:'} <b style={{ color: 'var(--amber-text, #d97706)' }}>{inWarehouse || left}</b></div>
         {inMarket && <div>{lang === 'ar' ? 'لا يزال في السوق:' : 'Still in market:'} <b style={{ color: 'var(--heading-text)' }}>{inMarket}</b></div>}
       </div>
     </button>

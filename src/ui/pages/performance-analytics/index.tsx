@@ -382,7 +382,7 @@ export default function PerformanceAnalyticsPage({
               <span className="eyebrow" style={{ fontSize: '11px' }}>
                 {t('performanceAnalytics.kpi.sellInRevenue')}
               </span>
-              <h3 style={{ fontSize: '22px', margin: '4px 0 0', color: '#1B3554' }}>
+              <h3 style={{ fontSize: '22px', margin: '4px 0 0', color: 'var(--heading-text, #1B3554)' }}>
                 {formatCurrency(kpis.totalSellInRevenue, 'EGP', lang)}
               </h3>
             </div>
@@ -392,7 +392,7 @@ export default function PerformanceAnalyticsPage({
                 height: '38px',
                 borderRadius: '10px',
                 background: 'rgba(27, 53, 84, 0.10)',
-                color: '#1B3554',
+                color: 'var(--link-text, var(--ocean, #1B3554))',
                 display: 'grid',
                 placeItems: 'center',
               }}
@@ -412,7 +412,7 @@ export default function PerformanceAnalyticsPage({
               <span className="eyebrow" style={{ fontSize: '11px' }}>
                 {t('performanceAnalytics.kpi.sellOutQuantity')}
               </span>
-              <h3 style={{ fontSize: '22px', margin: '4px 0 0', color: '#059669' }}>
+              <h3 style={{ fontSize: '22px', margin: '4px 0 0', color: 'var(--green-text, #059669)' }}>
                 {kpis.totalSellOutQuantity.toLocaleString()}{' '}
                 <small style={{ fontSize: '13px', fontWeight: 600 }}>
                   {t('performanceAnalytics.kpi.boxes')}
@@ -425,7 +425,7 @@ export default function PerformanceAnalyticsPage({
                 height: '38px',
                 borderRadius: '10px',
                 background: 'rgba(5, 150, 105, 0.12)',
-                color: '#059669',
+                color: 'var(--green-text, #059669)',
                 display: 'grid',
                 placeItems: 'center',
               }}

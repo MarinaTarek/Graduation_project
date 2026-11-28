@@ -508,7 +508,7 @@ export default function SellOutPage({
             <div style={{ textAlign: 'end' }}>
               <span style={{ fontSize: '13px', color: 'var(--muted-text)' }}>
                 {lang === 'ar' ? 'إجمالي الفريق' : 'Team Total'}:{' '}
-                <strong style={{ color: 'var(--navy)' }}>{teamPerformance.totalActual.toLocaleString()} / {teamPerformance.totalTarget.toLocaleString()}</strong> ({teamPerformance.totalAchievementRate}%)
+                <strong style={{ color: 'var(--heading-text, var(--navy))' }}>{teamPerformance.totalActual.toLocaleString()} / {teamPerformance.totalTarget.toLocaleString()}</strong> ({teamPerformance.totalAchievementRate}%)
               </span>
             </div>
           </div>

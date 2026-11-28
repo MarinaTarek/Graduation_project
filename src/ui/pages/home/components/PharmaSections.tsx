@@ -132,21 +132,21 @@ export function KpiStrip({
       label: t('home.kpi.visitCoverage'),
       value: `${coveragePct}%`,
       sub: t('home.kpi.visitedDoctors', { visited, total }),
-      color: coveragePct >= 80 ? 'var(--green-text, #16a34a)' : coveragePct >= 60 ? '#d97706' : 'var(--rose-text)',
+      color: coveragePct >= 80 ? 'var(--green-text, #16a34a)' : coveragePct >= 60 ? 'var(--amber-text, #d97706)' : 'var(--rose-text)',
       onClick: () => onNav?.('Clients', { filter: 'Overdue only' }),
     },
     {
       label: t('home.kpi.sellThrough'),
       value: `${homeKpiStrip.sell_through_pct}%`,
       sub: t('home.kpi.vsLastMonth'),
-      color: 'var(--ocean)',
+      color: 'var(--link-text, var(--ocean))',
       onClick: () => onNav?.('Reports'),
     },
     {
       label: t('home.kpi.invoicesPending'),
       value: String(pendingInvoicesCount),
       sub: t('home.kpi.avgApproval', { hours: homeKpiStrip.avg_approval_hours }),
-      color: '#d97706',
+      color: 'var(--amber-text, #d97706)',
       onClick: () => onNav?.('Invoices', { filter: 'Pending' }),
     },
     {
@@ -230,7 +230,7 @@ export function VisitCoverageByClass({
               <span style={{ fontSize: '12px', color: 'var(--muted-text)' }}>
                 {overdue > 0 ? t('home.pharma.overdueCount', { count: overdue }) : t('home.pharma.allVisited')}
               </span>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: pct >= 80 ? 'var(--green-text, #16a34a)' : pct >= 60 ? '#d97706' : 'var(--rose-text)' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: pct >= 80 ? 'var(--green-text, #16a34a)' : pct >= 60 ? 'var(--amber-text, #d97706)' : 'var(--rose-text)' }}>
                 {pct}%
               </span>
             </div>
@@ -301,7 +301,7 @@ export function SamplesPanel({ repId, onNav }: { repId?: string; onNav?: (page: 
             {topReps.map(([name, qty], i) => (
               <div key={name} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', color: 'var(--heading-text)' }}>{i + 1}. {name}</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ocean)' }}>{t('home.samples.units', { qty })}</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--link-text, var(--ocean))' }}>{t('home.samples.units', { qty })}</span>
               </div>
             ))}
           </div>
@@ -397,7 +397,7 @@ export function RegionsPanel({ onNav }: { onNav?: (page: string, opts?: { filter
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--heading-text)' }}>
                 {lang === 'ar' ? (REGION_NAMES_AR[r.region] || r.region) : r.region}
               </span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: pct >= 90 ? 'var(--green-text,#16a34a)' : pct >= 75 ? '#d97706' : 'var(--rose-text)' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: pct >= 90 ? 'var(--green-text, #16a34a)' : pct >= 75 ? 'var(--amber-text, #d97706)' : 'var(--rose-text)' }}>
                 {pct}%
               </span>
             </div>

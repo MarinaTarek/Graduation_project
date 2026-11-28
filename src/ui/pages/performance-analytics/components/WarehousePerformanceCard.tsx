@@ -139,7 +139,7 @@ export function WarehousePerformanceCard({ data }: WarehousePerformanceCardProps
                   <span style={{ fontSize: '11px', color: 'var(--muted-text)', display: 'block' }}>
                     {t('performanceAnalytics.warehouse.volume')}
                   </span>
-                  <strong style={{ fontSize: '15px', color: '#059669' }}>
+                  <strong style={{ fontSize: '15px', color: 'var(--green-text, #059669)' }}>
                     {wh.sellOutVolume.toLocaleString()} {t('performanceAnalytics.kpi.boxes')}
                   </strong>
                 </div>
@@ -157,7 +157,7 @@ export function WarehousePerformanceCard({ data }: WarehousePerformanceCardProps
                         fontSize: '11px',
                         fontWeight: 700,
                         background: 'rgba(5, 150, 105, 0.12)',
-                        color: '#059669',
+                        color: 'var(--green-text, #059669)',
                       }}
                     >
                       <CheckCircle2 size={13} /> {t('performanceAnalytics.warehouse.reported')}
@@ -173,7 +173,7 @@ export function WarehousePerformanceCard({ data }: WarehousePerformanceCardProps
                         fontSize: '11px',
                         fontWeight: 700,
                         background: 'rgba(245, 158, 11, 0.12)',
-                        color: '#d97706',
+                        color: 'var(--amber-text, #d97706)',
                       }}
                     >
                       <Clock size={13} /> {t('performanceAnalytics.warehouse.missing')}

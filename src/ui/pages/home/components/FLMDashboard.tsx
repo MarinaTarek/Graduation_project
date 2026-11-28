@@ -281,12 +281,12 @@ export function FLMDashboard({
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldAlert style={{ width: '18px', height: '18px', color: '#D97706' }} />
-                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+                <ShieldAlert style={{ width: '18px', height: '18px', color: 'var(--amber-text, #D97706)' }} />
+                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                   {isAr ? 'مؤشرات المتابعة والتدخل الميداني' : 'Field Coaching & Performance Alerts'}
                 </h4>
               </div>
-              <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--muted-text, #64748B)' }}>
                 {isAr
                   ? 'رصد المندوبين الذين يقل تحقيقهم عن 80% أو يتأخرون في تغطية الأطباء'
                   : 'Automated detection of reps underperforming on sales targets or doctor frequency.'}
@@ -295,7 +295,7 @@ export function FLMDashboard({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {metrics.repsNeedingAttention.length === 0 ? (
-                <div style={{ padding: '16px', background: '#ECFDF5', borderRadius: '12px', color: '#065F46', fontSize: '0.85rem', fontWeight: 600 }}>
+                <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '12px', color: 'var(--green-text, #065F46)', fontSize: '0.85rem', fontWeight: 600 }}>
                   {isAr ? 'ممتاز! جميع المندوبين على المسار الصحيح بنسبة تفوق 80%' : 'All supervised representatives are on track and pacing above 80%!'}
                 </div>
               ) : (
@@ -308,15 +308,15 @@ export function FLMDashboard({
                       alignItems: 'center',
                       padding: '12px 14px',
                       borderRadius: '12px',
-                      background: '#FFFBEB',
+                      background: 'rgba(245, 158, 11, 0.12)',
                       border: '1px solid rgba(245, 158, 11, 0.3)',
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#B45309', fontWeight: 500 }}>{item.reason}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--heading-text, #0F172A)' }}>{item.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--amber-text, #B45309)', fontWeight: 500 }}>{item.reason}</div>
                     </div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E', background: '#FEF3C7', padding: '3px 8px', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--amber-text, #92400E)', background: 'rgba(245, 158, 11, 0.2)', padding: '3px 8px', borderRadius: '6px' }}>
                       {item.metric}
                     </span>
                   </div>
@@ -344,12 +344,12 @@ export function FLMDashboard({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Users style={{ width: '18px', height: '18px', color: '#059669' }} />
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+              <Users style={{ width: '18px', height: '18px', color: 'var(--green-text, #059669)' }} />
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'لوحة أداء المندوبين التابعين لك مباشرة' : 'Supervised Representative Performance Roster'}
               </h3>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--muted-text, #64748B)' }}>
               {isAr
                 ? 'متابعة حية للمبيعات، تحقيق الأهداف، ونشاط الزيارات اليومية والشهرية لكل مندوب'
                 : 'Direct comparison of monthly quota attainment, today’s logged visits, and pace status.'}
@@ -392,17 +392,17 @@ export function FLMDashboard({
                     key={rep.id}
                     style={{ borderBottom: '1px solid #F1F5F9', fontSize: '0.88rem' }}
                   >
-                    <td style={{ padding: '14px 14px', fontWeight: 700, color: '#0F172A' }}>{rep.name}</td>
-                    <td style={{ padding: '14px 14px', color: '#64748B' }}>{rep.region}</td>
-                    <td style={{ padding: '14px 14px', fontWeight: 800, color: '#0F172A' }}>
+                    <td style={{ padding: '14px 14px', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>{rep.name}</td>
+                    <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>{rep.region}</td>
+                    <td style={{ padding: '14px 14px', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                       {formatCurrencyCompact(rep.sales, 'EGP', lang)}
                     </td>
-                    <td style={{ padding: '14px 14px', color: '#64748B' }}>
+                    <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>
                       {formatCurrencyCompact(rep.target, 'EGP', lang)}
                     </td>
                     <td style={{ padding: '14px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '80px', height: '7px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: '80px', height: '7px', background: 'var(--border-soft, #E2E8F0)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div
                             style={{
                               width: `${Math.min(100, rep.achievementPct)}%`,
@@ -412,13 +412,13 @@ export function FLMDashboard({
                             }}
                           />
                         </div>
-                        <span style={{ fontWeight: 800, fontSize: '0.82rem', color: rep.achievementPct >= 100 ? '#059669' : rep.achievementPct >= 80 ? 'var(--heading-text, #0F172A)' : '#DC2626' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.82rem', color: rep.achievementPct >= 100 ? 'var(--green-text, #059669)' : rep.achievementPct >= 80 ? 'var(--heading-text, #0F172A)' : 'var(--rose-text, #DC2626)' }}>
                           {rep.achievementPct}%
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: '14px 14px', fontWeight: 700, color: '#0F172A' }}>{rep.visitsCompletedToday}</td>
-                    <td style={{ padding: '14px 14px', color: '#475569' }}>{rep.visitsCompletedMonth}</td>
+                    <td style={{ padding: '14px 14px', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>{rep.visitsCompletedToday}</td>
+                    <td style={{ padding: '14px 14px', color: 'var(--heading-text, #475569)' }}>{rep.visitsCompletedMonth}</td>
                     <td style={{ padding: '14px 14px' }}>
                       <span
                         style={{

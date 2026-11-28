@@ -310,12 +310,12 @@ export function AdminDashboard({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layers style={{ width: '18px', height: '18px', color: '#2563EB' }} />
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+              <Layers style={{ width: '18px', height: '18px', color: 'var(--ocean, #2563EB)' }} />
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'مصفوفة أداء وحدات الأعمال (Business Units)' : 'Business Unit Commercial Performance Matrix'}
               </h3>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--muted-text, #64748B)' }}>
               {isAr
                 ? 'مقارنة دقيقة للإيرادات والأهداف ومعدلات الإنجاز على مستوى جميع وحدات الشركة'
                 : 'Direct cross-comparison of revenues, targets, and visit volumes across all 5 business units.'}
@@ -363,15 +363,15 @@ export function AdminDashboard({
                       {buItem.bu}
                     </div>
                   </td>
-                  <td style={{ padding: '14px 14px', fontWeight: 800, color: '#0F172A' }}>
+                  <td style={{ padding: '14px 14px', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                     {formatCurrencyCompact(buItem.sales, 'EGP', lang)}
                   </td>
-                  <td style={{ padding: '14px 14px', color: '#64748B' }}>
+                  <td style={{ padding: '14px 14px', color: 'var(--muted-text, #64748B)' }}>
                     {formatCurrencyCompact(buItem.target, 'EGP', lang)}
                   </td>
                   <td style={{ padding: '14px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '90px', height: '7px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: '90px', height: '7px', background: 'var(--border-soft, #E2E8F0)', borderRadius: '4px', overflow: 'hidden' }}>
                         <div
                           style={{
                             width: `${Math.min(100, buItem.achievementPct)}%`,
@@ -381,13 +381,13 @@ export function AdminDashboard({
                           }}
                         />
                       </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: buItem.achievementPct >= 100 ? '#059669' : '#0F172A' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: buItem.achievementPct >= 100 ? 'var(--green-text, #059669)' : 'var(--heading-text, #0F172A)' }}>
                         {buItem.achievementPct}%
                       </span>
                     </div>
                   </td>
-                  <td style={{ padding: '14px 14px', color: '#475569', fontWeight: 600 }}>{buItem.repsCount}</td>
-                  <td style={{ padding: '14px 14px', color: '#475569' }}>{buItem.visitsCompleted}</td>
+                  <td style={{ padding: '14px 14px', color: 'var(--heading-text, #475569)', fontWeight: 600 }}>{buItem.repsCount}</td>
+                  <td style={{ padding: '14px 14px', color: 'var(--heading-text, #475569)' }}>{buItem.visitsCompleted}</td>
                   <td style={{ padding: '14px 14px' }}>
                     <Button
                       variant="secondary"
@@ -423,12 +423,12 @@ export function AdminDashboard({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Award style={{ width: '18px', height: '18px', color: '#D97706' }} />
-              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+              <Award style={{ width: '18px', height: '18px', color: 'var(--amber-text, #D97706)' }} />
+              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>
                 {isAr ? 'المندوبون الأعلى تحقيقاً للأهداف' : 'Top Performing Field Representatives'}
               </h4>
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)', fontWeight: 700 }}>
               {isAr ? 'حسب نسبة الهدف' : 'By Quota %'}
             </span>
           </div>

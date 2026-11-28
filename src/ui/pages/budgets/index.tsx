@@ -201,7 +201,7 @@ export default function BudgetsPage({
           <span style={{ fontSize: '12px', color: 'var(--muted-text)', fontWeight: 600 }}>
             {lang === 'ar' ? 'مطالبات قيد المراجعة' : 'Pending Expenses'}
           </span>
-          <div style={{ fontSize: '22px', fontWeight: 700, color: '#d97706', margin: '6px 0 2px' }}>
+          <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--amber-text, #d97706)', margin: '6px 0 2px' }}>
             {formatCurrency(metrics.pendingExpenses, 'EGP', lang)}
           </div>
           <span style={{ fontSize: '11px', color: 'var(--muted-text)' }}>
@@ -228,7 +228,7 @@ export default function BudgetsPage({
             >
               <AlertTriangle
                 style={{
-                  color: alt.severity === 'critical' ? '#dc2626' : '#d97706',
+                  color: alt.severity === 'critical' ? 'var(--rose-text, #dc2626)' : 'var(--amber-text, #d97706)',
                   width: '20px',
                   height: '20px',
                   flexShrink: 0,
@@ -238,7 +238,7 @@ export default function BudgetsPage({
                 <strong
                   style={{
                     fontSize: '13px',
-                    color: alt.severity === 'critical' ? '#dc2626' : '#b45309',
+                    color: alt.severity === 'critical' ? 'var(--rose-text, #dc2626)' : 'var(--amber-text, #b45309)',
                     display: 'block',
                   }}
                 >
@@ -361,7 +361,7 @@ export default function BudgetsPage({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ocean)' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--link-text, var(--ocean))' }}>
                           {b.id}
                         </span>
                         <strong style={{ fontSize: '15px' }}>{b.name}</strong>
@@ -375,7 +375,7 @@ export default function BudgetsPage({
                       <strong style={{ fontSize: '16px', display: 'block' }}>
                         {formatCurrency(b.allocatedAmount, 'EGP', lang)}
                       </strong>
-                      <span style={{ fontSize: '12px', color: isOver ? '#dc2626' : 'var(--muted-text)', fontWeight: 600 }}>
+                      <span style={{ fontSize: '12px', color: isOver ? 'var(--rose-text, #dc2626)' : 'var(--muted-text)', fontWeight: 600 }}>
                         {spent.toLocaleString()} EGP {lang === 'ar' ? 'منصرف' : 'spent'} ({pct}%)
                       </span>
                     </div>

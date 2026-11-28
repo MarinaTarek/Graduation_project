@@ -139,7 +139,7 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
         </div>
         <div>
           <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.soldToCustomersSellIn')}</span>
-          <strong style={{ fontSize: '13px', color: 'var(--ocean)' }}>{sell_in.toLocaleString()}</strong>
+          <strong style={{ fontSize: '13px', color: 'var(--link-text, var(--ocean))' }}>{sell_in.toLocaleString()}</strong>
         </div>
         <div>
           <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.soldByCustomersSellOut')}</span>
@@ -147,7 +147,7 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
         </div>
         <div>
           <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.inWarehouseNow')}</span>
-          <strong style={{ fontSize: '13px', color: '#d97706' }}>{in_warehouse.toLocaleString()}</strong>
+          <strong style={{ fontSize: '13px', color: 'var(--amber-text, #d97706)' }}>{in_warehouse.toLocaleString()}</strong>
         </div>
         <div>
           <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.stillInMarket')}</span>
@@ -155,7 +155,7 @@ export function StockListItem({ item, derived, onClick }: StockListItemProps) {
         </div>
         <div>
           <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.list.sellThroughPct')}</span>
-          <strong style={{ fontSize: '13px', color: sell_through >= 70 ? 'var(--green-text, #16a34a)' : '#d97706' }}>
+          <strong style={{ fontSize: '13px', color: sell_through >= 70 ? 'var(--green-text, #16a34a)' : 'var(--amber-text, #d97706)' }}>
             {sell_through}%
           </strong>
         </div>

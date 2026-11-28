@@ -327,7 +327,7 @@ export function SampleQuotaSection() {
                       {p.doctorName || p.doctorId}
                     </td>
                     <td style={{ padding: '12px 16px' }}>{p.productName || p.productId}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--navy-primary)' }}>
+                    <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--heading-text, var(--navy-primary))' }}>
                       {p.allowedQuantity} {isAr ? 'وحدة' : 'units'}
                     </td>
                     <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{p.periodType}</td>
@@ -387,7 +387,7 @@ export function SampleQuotaSection() {
                       <td style={{ padding: '12px 16px' }}>{o.repName || o.repId}</td>
                       <td style={{ padding: '12px 16px' }}>{o.productName || o.productId}</td>
                       <td style={{ padding: '12px 16px' }}>{o.requestedQuantity}</td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#b45309' }}>+{o.approvedExcessQuantity}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--amber-text, #b45309)' }}>+{o.approvedExcessQuantity}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span
                           style={{
@@ -397,9 +397,9 @@ export function SampleQuotaSection() {
                             fontSize: '11px',
                             fontWeight: 600,
                             background:
-                              o.status === 'approved' ? '#dcfce7' : o.status === 'pending' ? '#fef3c7' : '#fee2e2',
+                              o.status === 'approved' ? 'rgba(16, 185, 129, 0.15)' : o.status === 'pending' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
                             color:
-                              o.status === 'approved' ? '#166534' : o.status === 'pending' ? '#92400e' : '#991b1b',
+                              o.status === 'approved' ? 'var(--green-text, #166534)' : o.status === 'pending' ? 'var(--amber-text, #92400e)' : 'var(--rose-text, #991b1b)',
                           }}
                         >
                           {o.status}

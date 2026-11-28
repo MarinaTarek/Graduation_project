@@ -316,11 +316,11 @@ export default function StockPage({
                     </div>
                     <div>
                       <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.inWarehouse')}</span>
-                      <strong style={{ color: '#d97706' }}>{derived?.in_warehouse.toLocaleString() ?? item.left}</strong>
+                      <strong style={{ color: 'var(--amber-text, #d97706)' }}>{derived?.in_warehouse.toLocaleString() ?? item.left}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.soldToCustomers')}</span>
-                      <strong style={{ color: 'var(--ocean)' }}>{derived?.sell_in.toLocaleString()}</strong>
+                      <strong style={{ color: 'var(--link-text, var(--ocean))' }}>{derived?.sell_in.toLocaleString()}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--muted-text)', display: 'block', fontSize: '11px' }}>{t('stock.card.soldByCustomers')}</span>
