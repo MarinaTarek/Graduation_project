@@ -77,6 +77,19 @@ function AppContent() {
     handleInitialResponsive()
   }, [])
 
+  // Synchronize dark-mode class on document.body for portals and global text inheritance
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (dark) {
+      document.body.classList.add('dark-mode')
+    } else {
+      document.body.classList.remove('dark-mode')
+    }
+    return () => {
+      document.body.classList.remove('dark-mode')
+    }
+  }, [dark])
+
   // Visit Alarm state
   // alarmDismissedIds tracks locally-dismissed alarms (hides modal even before store update propagates)
   const visitAlarms = useStore(visitAlarmsStore)
@@ -290,11 +303,8 @@ function AppContent() {
           onOpenNotifications={() => open('notifications')}
           onToggleDark={() => setDark(!dark)}
           dark={dark}
-          role={role}
           greetingName={greetingName}
-          userInitials={userInitials}
           user={user}
-          onOpenProfile={() => setProfileOpen((prev) => !prev)}
           activePage={active}
           onBack={goBack}
           onOpenMenu={() => setTabletMenuOpen(true)}

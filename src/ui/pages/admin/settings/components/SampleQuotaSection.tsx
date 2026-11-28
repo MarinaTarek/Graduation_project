@@ -339,8 +339,8 @@ export function SampleQuotaSection() {
                           borderRadius: '12px',
                           fontSize: '11px',
                           fontWeight: 600,
-                          background: p.status === 'active' ? '#dcfce7' : '#f1f5f9',
-                          color: p.status === 'active' ? '#166534' : '#475569',
+                          background: p.status === 'active' ? 'var(--green-bg)' : 'var(--surface-raised)',
+                          color: p.status === 'active' ? 'var(--green-text)' : 'var(--muted-text)',
                         }}
                       >
                         {p.status}

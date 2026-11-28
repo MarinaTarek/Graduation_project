@@ -74,6 +74,7 @@
 }
 
 /* Dark mode tokens: configured purely through theme variables */
+body.dark-mode,
 .app-shell.dark-mode {
   --mist: #C0E6FD;
   --sky: #80AAD3;
@@ -137,6 +138,13 @@
   --rep-goal: #8FD6B6;
   --target-panel-bg: linear-gradient(145deg, #152840, #1D3553);
   --modal-border: rgba(192, 230, 253, .08);
+
+  /* Semantic Dark Text & Field Tokens */
+  --placeholder-text: #6A84A3;
+  --disabled-text: #506884;
+  --table-th-text: #8FA2B8;
+  --table-tr-border: rgba(192, 230, 253, .08);
+  --table-hover-bg: rgba(192, 230, 253, .04);
 }
 
 * { box-sizing: border-box; }
@@ -155,6 +163,207 @@ button { cursor: pointer; }
 .app-shell .attention-card,
 .app-shell .collection-item,
 .app-shell .quote-card { border-radius: 20px; }
+
+/* ── Global Dark Mode Typography & Visibility Engine ────────────────────── */
+.app-shell.dark-mode input::placeholder,
+.app-shell.dark-mode textarea::placeholder,
+.app-shell.dark-mode select::placeholder {
+  color: var(--placeholder-text, #6A84A3) !important;
+  opacity: 1;
+}
+
+.app-shell.dark-mode input:disabled,
+.app-shell.dark-mode textarea:disabled,
+.app-shell.dark-mode select:disabled,
+.app-shell.dark-mode button:disabled {
+  color: var(--disabled-text, #506884) !important;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* Comprehensive Dark Mode Tables (Thead, Tbody, Th, Td, Row borders) */
+.app-shell.dark-mode table thead tr,
+.app-shell.dark-mode .table thead tr {
+  color: var(--table-th-text, #8FA2B8) !important;
+  border-color: var(--table-tr-border, rgba(192, 230, 253, .08)) !important;
+}
+
+.app-shell.dark-mode table th {
+  color: var(--table-th-text, #8FA2B8) !important;
+}
+
+.app-shell.dark-mode table td {
+  color: var(--text-primary, #F0EDE6);
+  border-color: var(--table-tr-border, rgba(192, 230, 253, .08)) !important;
+}
+
+.app-shell.dark-mode table tbody tr {
+  border-color: var(--table-tr-border, rgba(192, 230, 253, .08)) !important;
+}
+
+.app-shell.dark-mode table tbody tr:hover {
+  background-color: var(--table-hover-bg, rgba(192, 230, 253, .04));
+}
+
+/* Drawer & Modal Form Labels & Helper Text in Dark Mode */
+.app-shell.dark-mode .side-sheet,
+.app-shell.dark-mode .command-palette,
+.app-shell.dark-mode .modal-card {
+  color: var(--card-text);
+  background: var(--paper);
+}
+
+.app-shell.dark-mode .sheet-head h2,
+.app-shell.dark-mode .command-palette h2,
+.app-shell.dark-mode .command-palette h3 {
+  color: var(--heading-text);
+}
+
+.app-shell.dark-mode .form-grid label,
+.app-shell.dark-mode .block-label,
+.app-shell.dark-mode label {
+  color: var(--steel, #B4BFCC);
+}
+
+.app-shell.dark-mode .form-grid input:not([type="checkbox"]):not([type="radio"]),
+.app-shell.dark-mode .form-grid select,
+.app-shell.dark-mode .form-grid textarea,
+.app-shell.dark-mode .block-label select,
+.app-shell.dark-mode input[type="text"],
+.app-shell.dark-mode input[type="email"],
+.app-shell.dark-mode input[type="password"],
+.app-shell.dark-mode input[type="number"],
+.app-shell.dark-mode input[type="search"],
+.app-shell.dark-mode textarea,
+.app-shell.dark-mode select {
+  color: var(--midnight, #F0EDE6);
+  background-color: var(--input-bg, #274566);
+  border-color: var(--border-input, rgba(192, 230, 253, .12));
+}
+
+.app-shell.dark-mode .sheet-actions {
+  background: var(--paper);
+  border-color: var(--border-subtle);
+}
+
+/* Dropdown portals & search results */
+body.dark-mode .dropdown-portal,
+.dropdown-portal.dark-mode,
+.app-shell.dark-mode .dropdown-portal,
+.app-shell.dark-mode div[ref="menuRef"] {
+  background: var(--paper) !important;
+  color: var(--card-text) !important;
+  border-color: var(--border-subtle) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Status & Badges text clarity in dark mode */
+.app-shell.dark-mode .status.inactive,
+.app-shell.dark-mode .status.maintenance,
+.app-shell.dark-mode .status.voided,
+.app-shell.dark-mode .status.unpaid {
+  background: rgba(192, 230, 253, 0.12);
+  color: var(--steel, #B4BFCC) !important;
+}
+
+/* KPI metric cards, action centers, and dashboards in Dark Mode */
+.app-shell.dark-mode .metric-kpi-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.app-shell.dark-mode .action-center-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Specific Dark Mode overrides for Dashboard Sections with inline background/borders */
+.app-shell.dark-mode .dashboard-header-container,
+.app-shell.dark-mode .dashboard-card-section,
+.app-shell.dark-mode .report-hub-card {
+  background: var(--paper) !important;
+  border-color: var(--border-card) !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+.app-shell.dark-mode .dashboard-header-container h2,
+.app-shell.dark-mode .dashboard-card-section h3,
+.app-shell.dark-mode .dashboard-card-section h4 {
+  color: var(--heading-text) !important;
+}
+
+.app-shell.dark-mode .dashboard-header-container p,
+.app-shell.dark-mode .dashboard-card-section p {
+  color: var(--muted-text) !important;
+}
+
+/* Date range segmented pills in dark mode */
+.app-shell.dark-mode .date-range-segmented-box {
+  background: var(--surface-raised) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.app-shell.dark-mode .date-range-segmented-box button {
+  color: var(--muted-text) !important;
+}
+
+.app-shell.dark-mode .date-range-segmented-box button.active {
+  background: var(--paper) !important;
+  color: var(--heading-text) !important;
+}
+
+/* Action center cards in dark mode: preserve semantic accent while darkening background */
+.app-shell.dark-mode .action-center-card {
+  background: var(--surface-raised) !important;
+}
+
+.app-shell.dark-mode .action-center-card h4 {
+  color: var(--heading-text) !important;
+}
+
+.app-shell.dark-mode .action-center-card .action-desc {
+  color: var(--muted-text) !important;
+}
+
+/* Activity feed items in dark mode */
+.app-shell.dark-mode .activity-feed-row {
+  background: var(--surface-raised) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.app-shell.dark-mode .activity-feed-row span:first-child {
+  color: var(--heading-text) !important;
+}
+
+.app-shell.dark-mode .activity-feed-row .activity-detail {
+  color: var(--muted-text) !important;
+}
+
+/* Leaderboard rows in dark mode */
+.app-shell.dark-mode .leaderboard-row {
+  background: var(--surface-raised) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.app-shell.dark-mode .leaderboard-rep-name {
+  color: var(--heading-text) !important;
+}
+
+.app-shell.dark-mode .leaderboard-rep-sub {
+  color: var(--muted-text) !important;
+}
+
+/* Donut progress gauge dark text */
+.app-shell.dark-mode .donut-center-pct {
+  color: var(--heading-text) !important;
+}
+
+.app-shell.dark-mode .donut-center-label {
+  color: var(--muted-text) !important;
+}
+
+/* Trend area chart dark text */
+.app-shell.dark-mode .chart-card-total {
+  color: var(--heading-text) !important;
+}
 
 /* Top Header */
 .page-header { height: 80px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: var(--body-bg); position: sticky; top: 0; z-index: 10; }

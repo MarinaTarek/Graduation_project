@@ -285,6 +285,7 @@ export function RepDashboard({
         <div style={{ flex: '2 1 500px' }}>
           {/* Today's Detailing Schedule */}
           <div
+            className="dashboard-card-section"
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',
@@ -334,8 +335,8 @@ export function RepDashboard({
                       alignItems: 'center',
                       padding: '12px 14px',
                       borderRadius: '12px',
-                      background: stop.status === 'Completed' ? '#F0FDF4' : '#F8FAFC',
-                      border: stop.status === 'Completed' ? '1.5px solid #BBF7D0' : '1px solid #E2E8F0',
+                      background: stop.status === 'Completed' ? 'var(--green-bg, #F0FDF4)' : 'var(--surface-raised, #F8FAFC)',
+                      border: stop.status === 'Completed' ? '1.5px solid var(--green, #BBF7D0)' : '1px solid var(--border-soft, #E2E8F0)',
                       gap: '10px',
                     }}
                   >
@@ -345,8 +346,8 @@ export function RepDashboard({
                           width: '32px',
                           height: '32px',
                           borderRadius: '8px',
-                          background: stop.status === 'Completed' ? '#DCFCE7' : '#F1F5F9',
-                          color: stop.status === 'Completed' ? '#16A34A' : '#64748B',
+                          background: stop.status === 'Completed' ? 'var(--green-bg, #DCFCE7)' : 'var(--paper, #F1F5F9)',
+                          color: stop.status === 'Completed' ? 'var(--green-text, #16A34A)' : 'var(--muted-text, #64748B)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -357,15 +358,15 @@ export function RepDashboard({
                       </div>
 
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>{stop.clientName}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                          {stop.specialty} • <span style={{ fontWeight: 600, color: '#0F172A' }}>{stop.clientClass}</span>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--heading-text, #0F172A)' }}>{stop.clientName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)' }}>
+                          {stop.specialty} • <span style={{ fontWeight: 600, color: 'var(--heading-text, #0F172A)' }}>{stop.clientClass}</span>
                         </div>
                       </div>
                     </div>
 
                     <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>{stop.plannedTime}</div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>{stop.plannedTime}</div>
                       <span
                         style={{
                           fontSize: '0.68rem',

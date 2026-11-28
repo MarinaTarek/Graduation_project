@@ -293,6 +293,7 @@ export function MarketingDashboard({
 
       {/* ── Section E: Product Portfolio Table ─────────────────────── */}
       <div
+        className="dashboard-card-section"
         style={{
           background: '#FFFFFF',
           borderRadius: '20px',
@@ -376,7 +377,7 @@ export function MarketingDashboard({
                           }}
                         />
                       </div>
-                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#0F172A' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--heading-text, #0F172A)' }}>
                         {prod.marketSharePct}%
                       </span>
                     </div>
@@ -392,6 +393,7 @@ export function MarketingDashboard({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         {/* Regional Demand Card */}
         <div
+          className="dashboard-card-section"
           style={{
             background: '#FFFFFF',
             borderRadius: '20px',

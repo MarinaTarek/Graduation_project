@@ -264,10 +264,11 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
           return (
             <div
               key={card.id}
+              className="report-hub-card"
               style={{
-                background: '#FFFFFF',
+                background: 'var(--card-bg, #FFFFFF)',
                 borderRadius: '16px',
-                border: '1px solid rgba(226, 232, 240, 0.85)',
+                border: '1px solid var(--border-card, rgba(226, 232, 240, 0.85))',
                 boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02)',
                 padding: '24px',
                 display: 'flex',
@@ -306,8 +307,8 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
                     style={{
                       padding: '4px 10px',
                       borderRadius: '10px',
-                      background: '#F8FAFC',
-                      border: '1px solid #F1F5F9',
+                      background: 'var(--surface-raised, #F8FAFC)',
+                      border: '1px solid var(--border-subtle, #F1F5F9)',
                     }}
                   >
                     {renderSparkline(card.sparkline, card.sparklineColor)}
@@ -321,8 +322,8 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
                       fontWeight: 700,
                       padding: '2px 8px',
                       borderRadius: '6px',
-                      background: '#F1F5F9',
-                      color: '#475569',
+                      background: 'var(--surface-raised, #F1F5F9)',
+                      color: 'var(--muted-text, #475569)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
                     }}
@@ -336,7 +337,7 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
                     margin: '0 0 6px',
                     fontSize: '1.1rem',
                     fontWeight: 700,
-                    color: '#0F172A',
+                    color: 'var(--heading-text, #0F172A)',
                     letterSpacing: '-0.01em',
                   }}
                 >
@@ -347,7 +348,7 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
                     margin: 0,
                     fontSize: '0.82rem',
                     lineHeight: 1.5,
-                    color: '#64748B',
+                    color: 'var(--muted-text, #64748B)',
                   }}
                 >
                   {description}
@@ -360,7 +361,7 @@ export function ReportHubGrid({ onOpenReport, role = 'admin' }: ReportHubGridPro
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   paddingTop: '16px',
-                  borderTop: '1px solid #F1F5F9',
+                  borderTop: '1px solid var(--border-subtle, #F1F5F9)',
                 }}
               >
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94A3B8' }}>

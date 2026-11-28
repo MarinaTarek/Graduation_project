@@ -266,6 +266,7 @@ export function FLMDashboard({
         <div style={{ flex: '2 1 500px' }}>
           {/* Direct Rep Coaching Alert Strip */}
           <div
+            className="dashboard-card-section"
             style={{
               background: '#FFFFFF',
               borderRadius: '20px',
@@ -331,6 +332,7 @@ export function FLMDashboard({
 
       {/* ── Section E: Direct Rep Team Roster ──────────────────────── */}
       <div
+        className="dashboard-card-section"
         style={{
           background: '#FFFFFF',
           borderRadius: '20px',
@@ -410,7 +412,7 @@ export function FLMDashboard({
                             }}
                           />
                         </div>
-                        <span style={{ fontWeight: 800, fontSize: '0.82rem', color: rep.achievementPct >= 100 ? '#059669' : rep.achievementPct >= 80 ? '#0F172A' : '#DC2626' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.82rem', color: rep.achievementPct >= 100 ? '#059669' : rep.achievementPct >= 80 ? 'var(--heading-text, #0F172A)' : '#DC2626' }}>
                           {rep.achievementPct}%
                         </span>
                       </div>

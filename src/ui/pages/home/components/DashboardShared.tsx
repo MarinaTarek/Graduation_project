@@ -545,6 +545,7 @@ export function DashboardHeader({
 
   return (
     <div
+      className="dashboard-header-container"
       style={{
         background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
         borderRadius: '20px',
@@ -579,11 +580,11 @@ export function DashboardHeader({
             <BadgeIcon style={{ width: '13px', height: '13px' }} />
             {badgeLabel}
           </span>
-          <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>•</span>
-          <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>{contextLabel}</span>
-          <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>•</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: '#0F172A', fontWeight: 600 }}>
-            <Calendar style={{ width: '13px', height: '13px', color: '#64748B' }} />
+          <span style={{ fontSize: '0.78rem', color: 'var(--muted-text, #94A3B8)' }}>•</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--muted-text, #64748B)', fontWeight: 600 }}>{contextLabel}</span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--muted-text, #94A3B8)' }}>•</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--heading-text, #0F172A)', fontWeight: 600 }}>
+            <Calendar style={{ width: '13px', height: '13px', color: 'var(--muted-text, #64748B)' }} />
             {today}
           </span>
         </div>
@@ -599,6 +600,7 @@ export function DashboardHeader({
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
         {/* Date range segmented pills */}
         <div
+          className="date-range-segmented-box"
           style={{
             display: 'inline-flex',
             background: '#F1F5F9',
@@ -613,6 +615,7 @@ export function DashboardHeader({
               <button
                 key={opt.id}
                 type="button"
+                className={active ? 'active' : ''}
                 onClick={() => onDateRangeChange(opt.id)}
                 style={{
                   padding: '5px 12px',
@@ -675,6 +678,7 @@ export function ActionCenter({
 
   return (
     <div
+      className="dashboard-card-section"
       style={{
         background: '#FFFFFF',
         borderRadius: '20px',
@@ -762,10 +766,10 @@ export function ActionCenter({
                     <Icon style={{ width: '18px', height: '18px' }} />
                   </div>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>
                       {item.title}
                     </h4>
-                    <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                    <span className="action-desc" style={{ fontSize: '0.74rem', color: 'var(--muted-text, #64748B)' }}>
                       {item.description}
                     </span>
                   </div>
@@ -849,6 +853,7 @@ export function RecentActivityFeed({
 
   return (
     <div
+      className="dashboard-card-section"
       style={{
         background: '#FFFFFF',
         borderRadius: '20px',
@@ -882,6 +887,7 @@ export function RecentActivityFeed({
             return (
               <div
                 key={item.id}
+                className="activity-feed-row"
                 onClick={item.onClick}
                 role={item.onClick ? 'button' : undefined}
                 tabIndex={item.onClick ? 0 : undefined}
@@ -891,8 +897,8 @@ export function RecentActivityFeed({
                   alignItems: 'center',
                   padding: '12px 16px',
                   borderRadius: '12px',
-                  background: '#F8FAFC',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--surface-raised, #F8FAFC)',
+                  border: '1px solid var(--border-soft, #E2E8F0)',
                   gap: '12px',
                   cursor: item.onClick ? 'pointer' : 'default',
                   transition: 'background 0.15s ease',
@@ -900,12 +906,13 @@ export function RecentActivityFeed({
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   <div
+                    className="activity-icon-box"
                     style={{
                       width: '32px',
                       height: '32px',
                       borderRadius: '8px',
-                      background: '#FFFFFF',
-                      border: '1px solid #CBD5E1',
+                      background: 'var(--card-bg, #FFFFFF)',
+                      border: '1px solid var(--border-soft, #CBD5E1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -918,7 +925,7 @@ export function RecentActivityFeed({
 
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0F172A' }}>
+                      <span className="activity-title" style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>
                         {item.title}
                       </span>
                       {item.badgeText && (
@@ -937,8 +944,8 @@ export function RecentActivityFeed({
                       )}
                     </div>
 
-                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
-                      {item.actor && <span style={{ fontWeight: 600, color: '#475569' }}>{item.actor} • </span>}
+                    <div className="activity-detail" style={{ fontSize: '0.74rem', color: 'var(--muted-text, #64748B)', marginTop: '2px' }}>
+                      {item.actor && <span className="activity-actor" style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>{item.actor} • </span>}
                       {item.detail || item.timestamp}
                     </div>
                   </div>
@@ -985,6 +992,7 @@ export function DonutGaugeCard({
 
   return (
     <div
+      className="dashboard-card-section"
       style={{
         background: '#FFFFFF',
         border: '1.5px solid #E2E8F0',
@@ -1010,7 +1018,7 @@ export function DonutGaugeCard({
               cy={size / 2}
               r={radius}
               fill="transparent"
-              stroke="#F1F5F9"
+              stroke="var(--border-subtle, #F1F5F9)"
               strokeWidth={strokeWidth}
             />
             <circle
@@ -1036,8 +1044,8 @@ export function DonutGaugeCard({
               justifyContent: 'center',
             }}
           >
-            <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', lineHeight: 1 }}>{percent}%</span>
-            <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginTop: '3px' }}>
+            <span className="donut-center-pct" style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)', lineHeight: 1 }}>{percent}%</span>
+            <span className="donut-center-label" style={{ fontSize: '0.64rem', fontWeight: 700, color: 'var(--muted-text, #64748B)', textTransform: 'uppercase', marginTop: '3px' }}>
               {primaryLabel}
             </span>
           </div>
@@ -1049,9 +1057,9 @@ export function DonutGaugeCard({
               <div key={s.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.76rem', color: '#475569', fontWeight: 600 }}>{s.label}</span>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--muted-text, #475569)', fontWeight: 600 }}>{s.label}</span>
                 </div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A' }}>{s.value}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--heading-text, #0F172A)' }}>{s.value}</span>
               </div>
             ))}
           </div>
@@ -1059,7 +1067,7 @@ export function DonutGaugeCard({
       </div>
 
       {secondaryLabel && (
-        <div style={{ fontSize: '0.75rem', color: '#64748B', textAlign: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '8px', fontWeight: 500 }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)', textAlign: 'center', borderTop: '1px solid var(--border-subtle, #F1F5F9)', paddingTop: '8px', fontWeight: 500 }}>
           {secondaryLabel}
         </div>
       )}
@@ -1115,6 +1123,7 @@ export function AreaTrendChartCard({
 
   return (
     <div
+      className="dashboard-card-section"
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -1168,9 +1177,9 @@ export function AreaTrendChartCard({
           </defs>
 
           {/* Dotted Grid lines */}
-          <line x1={padLeft} y1={padTop} x2={width - padRight} y2={padTop} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
-          <line x1={padLeft} y1={height / 2} x2={width - padRight} y2={height / 2} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
-          <line x1={padLeft} y1={height - padBottom} x2={width - padRight} y2={height - padBottom} stroke="#E2E8F0" strokeWidth="1.5" />
+          <line x1={padLeft} y1={padTop} x2={width - padRight} y2={padTop} stroke="var(--border-subtle, #F1F5F9)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1={padLeft} y1={height / 2} x2={width - padRight} y2={height / 2} stroke="var(--border-subtle, #F1F5F9)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1={padLeft} y1={height - padBottom} x2={width - padRight} y2={height - padBottom} stroke="var(--border-card, #E2E8F0)" strokeWidth="1.5" />
 
           {/* Shaded Area */}
           <path d={areaPath} fill={`url(#${gradientId})`} />
@@ -1180,14 +1189,14 @@ export function AreaTrendChartCard({
 
           {/* Highlight Circles on data nodes */}
           {coords.map((c, i) => (
-            <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="#FFFFFF" stroke={strokeColor} strokeWidth="2.5" />
+            <circle key={i} cx={c.x} cy={c.y} r="3.5" fill="var(--card-bg, #FFFFFF)" stroke={strokeColor} strokeWidth="2.5" />
           ))}
 
           {/* X Axis Labels */}
           {labels.map((lbl, i) => {
             const x = padLeft + (i / (labels.length - 1)) * (width - padLeft - padRight)
             return (
-              <text key={i} x={x} y={height - 7} textAnchor="middle" fontSize="10.5" fill="#64748B" fontWeight="600">
+              <text key={i} x={x} y={height - 7} textAnchor="middle" fontSize="10.5" fill="var(--muted-text, #64748B)" fontWeight="600">
                 {lbl}
               </text>
             )

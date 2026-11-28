@@ -298,6 +298,7 @@ export function AdminDashboard({
 
       {/* ── Section E: Business Unit Comparison Matrix ─────────────── */}
       <div
+        className="dashboard-card-section"
         style={{
           background: '#FFFFFF',
           borderRadius: '20px',
@@ -333,7 +334,7 @@ export function AdminDashboard({
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: isAr ? 'right' : 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '1.5px solid #E2E8F0', color: '#64748B', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <tr style={{ borderBottom: '1.5px solid var(--border-soft, #E2E8F0)', color: 'var(--muted-text, #64748B)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 <th style={{ padding: '12px 14px' }}>{isAr ? 'وحدة الأعمال' : 'Business Unit'}</th>
                 <th style={{ padding: '12px 14px' }}>{isAr ? 'المبيعات الفعلية' : 'Actual Sales'}</th>
                 <th style={{ padding: '12px 14px' }}>{isAr ? 'الهدف المالي' : 'Quota Target'}</th>
@@ -347,9 +348,9 @@ export function AdminDashboard({
               {metrics.buComparison.map((buItem) => (
                 <tr
                   key={buItem.bu}
-                  style={{ borderBottom: '1px solid #F1F5F9', fontSize: '0.88rem' }}
+                  style={{ borderBottom: '1px solid var(--border-subtle, #F1F5F9)', fontSize: '0.88rem' }}
                 >
-                  <td style={{ padding: '14px 14px', fontWeight: 700, color: '#0F172A' }}>
+                  <td style={{ padding: '14px 14px', fontWeight: 700, color: 'var(--heading-text, #0F172A)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span
                         style={{
@@ -407,6 +408,7 @@ export function AdminDashboard({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         {/* Top Reps Leaderboard */}
         <div
+          className="dashboard-card-section"
           style={{
             background: '#FFFFFF',
             borderRadius: '20px',
@@ -435,14 +437,15 @@ export function AdminDashboard({
             {metrics.topPerformers.map((rep, idx) => (
               <div
                 key={rep.id}
+                className="leaderboard-row"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: idx === 0 ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)' : '#F8FAFC',
-                  border: idx === 0 ? '1.5px solid rgba(245, 158, 11, 0.3)' : '1px solid #E2E8F0',
+                  background: idx === 0 ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)' : 'var(--surface-raised, #F8FAFC)',
+                  border: idx === 0 ? '1.5px solid rgba(245, 158, 11, 0.3)' : '1px solid var(--border-soft, #E2E8F0)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -451,8 +454,8 @@ export function AdminDashboard({
                       width: '26px',
                       height: '26px',
                       borderRadius: '50%',
-                      background: idx === 0 ? '#F59E0B' : '#E2E8F0',
-                      color: idx === 0 ? '#FFFFFF' : '#475569',
+                      background: idx === 0 ? '#F59E0B' : 'var(--surface, #E2E8F0)',
+                      color: idx === 0 ? '#FFFFFF' : 'var(--muted-text, #475569)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -463,8 +466,8 @@ export function AdminDashboard({
                     #{idx + 1}
                   </span>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>{rep.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{rep.bu}</div>
+                    <div className="leaderboard-rep-name" style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--heading-text, #0F172A)' }}>{rep.name}</div>
+                    <div className="leaderboard-rep-sub" style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)' }}>{rep.bu}</div>
                   </div>
                 </div>
 
@@ -472,7 +475,7 @@ export function AdminDashboard({
                   <div style={{ fontWeight: 800, color: '#059669', fontSize: '0.98rem' }}>
                     {rep.achievementPct}%
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)' }}>
                     {formatCurrencyCompact(rep.sales, 'EGP', lang)}
                   </div>
                 </div>

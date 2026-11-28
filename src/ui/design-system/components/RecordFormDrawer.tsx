@@ -877,11 +877,11 @@ export function RecordFormDrawer({
             </div>
 
             {/* Live Variance Calculation Badge */}
-            <div className="full" style={{ padding: '10px 14px', borderRadius: '8px', background: Number(scCountedQty) === scSystemQty ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', border: `1px solid ${Number(scCountedQty) === scSystemQty ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: Number(scCountedQty) === scSystemQty ? '#059669' : '#d97706' }}>
+            <div className="full" style={{ padding: '10px 14px', borderRadius: '8px', background: Number(scCountedQty) === scSystemQty ? 'var(--green-bg, rgba(16, 185, 129, 0.1))' : 'var(--amber-bg, rgba(245, 158, 11, 0.1))', border: `1px solid ${Number(scCountedQty) === scSystemQty ? 'var(--green, rgba(16, 185, 129, 0.25))' : 'var(--amber, rgba(245, 158, 11, 0.25))'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: Number(scCountedQty) === scSystemQty ? 'var(--green-text, #059669)' : 'var(--amber-text, #d97706)' }}>
                 {Number(scCountedQty) === scSystemQty ? 'Counts Match: No variance adjustment needed' : `Discrepancy: ${Number(scCountedQty) - scSystemQty > 0 ? '+' : ''}${Number(scCountedQty) - scSystemQty} units adjustment will be applied`}
               </span>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: Number(scCountedQty) === scSystemQty ? '#059669' : '#d97706' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: Number(scCountedQty) === scSystemQty ? 'var(--green-text, #059669)' : 'var(--amber-text, #d97706)' }}>
                 Variance: {Number(scCountedQty) - scSystemQty > 0 ? '+' : ''}{Number(scCountedQty) - scSystemQty}
               </span>
             </div>

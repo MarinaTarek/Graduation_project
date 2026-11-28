@@ -34,7 +34,7 @@ const MOVEMENT_CHIP: Record<string, { background: string; color: string }> = {
   sell_in: { background: 'rgba(2, 132, 199, 0.15)', color: 'var(--ocean)' },
   sell_out: { background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' },
   sample: { background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' },
-  other: { background: 'rgba(100, 116, 139, 0.15)', color: '#64748b' },
+  other: { background: 'rgba(100, 116, 139, 0.15)', color: 'var(--muted-text, #64748b)' },
 }
 
 export function StockDetailSheet({

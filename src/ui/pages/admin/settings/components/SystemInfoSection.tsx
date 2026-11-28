@@ -170,7 +170,7 @@ export function SystemInfoSection({ onAction }: SystemInfoSectionProps) {
                   fontSize: '11px',
                   fontWeight: 700,
                   background: item.type === 'live' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(100, 116, 139, 0.1)',
-                  color: item.type === 'live' ? 'var(--emerald, #10b981)' : '#64748b',
+                  color: item.type === 'live' ? 'var(--emerald, #10b981)' : 'var(--muted-text, #64748b)',
                 }}
               >
                 {item.type === 'live'

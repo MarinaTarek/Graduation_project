@@ -87,10 +87,12 @@ export function DropdownPortal({
 
   if (!mounted || !isOpen || !anchorEl || !coords) return null
 
+  const isDark = typeof document !== 'undefined' && (document.body.classList.contains('dark-mode') || !!document.querySelector('.app-shell.dark-mode'))
+
   return createPortal(
     <div
       ref={menuRef}
-      className={`panel ${className}`}
+      className={`panel dropdown-portal ${isDark ? 'dark-mode' : ''} ${className}`}
       style={{
         position: 'fixed',
         top: coords.top !== undefined ? `${coords.top}px` : undefined,

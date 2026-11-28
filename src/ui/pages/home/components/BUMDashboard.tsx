@@ -302,6 +302,7 @@ export function BUMDashboard({
 
       {/* ── Section E: FLM & Rep Breakdown Table ───────────────────── */}
       <div
+        className="dashboard-card-section"
         style={{
           background: '#FFFFFF',
           borderRadius: '20px',
@@ -411,6 +412,7 @@ export function BUMDashboard({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         {/* BU Product Performance */}
         <div
+          className="dashboard-card-section"
           style={{
             background: '#FFFFFF',
             borderRadius: '20px',
@@ -439,25 +441,26 @@ export function BUMDashboard({
             {metrics.productPerformance.map((prod) => (
               <div
                 key={prod.productName}
+                className="leaderboard-row"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: '#F8FAFC',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--surface-raised, #F8FAFC)',
+                  border: '1px solid var(--border-soft, #E2E8F0)',
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>{prod.productName}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--heading-text, #0F172A)' }}>{prod.productName}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-text, #64748B)' }}>
                     {prod.unitsSold.toLocaleString('en-US')} {isAr ? 'عبوة مباعة' : 'Units Sold'}
                   </div>
                 </div>
 
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.96rem' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--heading-text, #0F172A)', fontSize: '0.96rem' }}>
                     {formatCurrencyCompact(prod.revenue, 'EGP', lang)}
                   </div>
                 </div>
